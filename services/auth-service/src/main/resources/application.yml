@@ -65,3 +65,13 @@ logging:
   level:
     uz.kidscard: DEBUG
     org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
+    access-token-expiry: 900
+    refresh-token-expiry: 2592000
+  otp:
+    expiry-minutes: 10
+    max-attempts: 5
+    rate-limit-per-hour: 3
