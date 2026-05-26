@@ -20,8 +20,8 @@ subprojects {
 
     configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
         imports {
-            mavenBom("org.springframework.boot:spring-boot-dependencies:${libs.versions.spring.boot.get()}")
-            mavenBom("org.springframework.cloud:spring-cloud-dependencies:${libs.versions.spring.cloud.get()}")
+            mavenBom("org.springframework.boot:spring-boot-dependencies:3.4.1")
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2024.0.0")
         }
     }
 

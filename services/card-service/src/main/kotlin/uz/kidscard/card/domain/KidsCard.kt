@@ -39,11 +39,11 @@ class KidsCard(
     @Column(name = "masked_pan", nullable = false, length = 19)
     val maskedPan: String,
 
-    @Column(name = "expiry_month", nullable = false)
-    val expiryMonth: Int,
+    @Column(name = "expiry_month", nullable = false, columnDefinition = "SMALLINT")
+    val expiryMonth: Short,
 
-    @Column(name = "expiry_year", nullable = false)
-    val expiryYear: Int,
+    @Column(name = "expiry_year", nullable = false, columnDefinition = "SMALLINT")
+    val expiryYear: Short,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "network", nullable = false, length = 32)

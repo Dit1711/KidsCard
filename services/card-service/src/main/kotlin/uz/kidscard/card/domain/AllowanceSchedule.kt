@@ -34,11 +34,11 @@ class AllowanceSchedule(
     @Column(name = "frequency", nullable = false, length = 32)
     val frequency: AllowanceFrequency,
 
-    @Column(name = "day_of_week")
-    val dayOfWeek: Int? = null,
+    @Column(name = "day_of_week", columnDefinition = "SMALLINT")
+    val dayOfWeek: Short? = null,
 
-    @Column(name = "day_of_month")
-    val dayOfMonth: Int? = null,
+    @Column(name = "day_of_month", columnDefinition = "SMALLINT")
+    val dayOfMonth: Short? = null,
 
     @Column(name = "active", nullable = false)
     var active: Boolean = true,

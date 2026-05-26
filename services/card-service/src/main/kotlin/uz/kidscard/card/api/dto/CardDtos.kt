@@ -22,8 +22,8 @@ data class IssueCardRequest(
 data class SetAllowanceRequest(
     @field:Min(1000) val amountUzs: Long,
     @field:NotNull val frequency: AllowanceFrequency,
-    val dayOfWeek: Int? = null,
-    val dayOfMonth: Int? = null,
+    val dayOfWeek: Short? = null,
+    val dayOfMonth: Short? = null,
 )
 
 // ── Responses ────────────────────────────────────────────────────────────────
@@ -48,8 +48,8 @@ data class AllowanceScheduleDto(
     val cardId: UUID,
     val amountUzs: Long,
     val frequency: AllowanceFrequency,
-    val dayOfWeek: Int?,
-    val dayOfMonth: Int?,
+    val dayOfWeek: Short?,
+    val dayOfMonth: Short?,
     val active: Boolean,
     val nextRunAt: Instant?,
 )
@@ -62,8 +62,8 @@ fun KidsCard.toDto() = KidsCardDto(
     familyId = familyId,
     cardType = cardType,
     maskedPan = maskedPan,
-    expiryMonth = expiryMonth,
-    expiryYear = expiryYear,
+    expiryMonth = expiryMonth.toInt(),
+    expiryYear = expiryYear.toInt(),
     network = network,
     status = status,
     balanceUzs = balanceUzs,

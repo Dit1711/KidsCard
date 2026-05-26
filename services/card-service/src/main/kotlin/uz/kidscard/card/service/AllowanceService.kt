@@ -32,8 +32,8 @@ class AllowanceService(
         familyId: UUID,
         amountUzs: Long,
         frequency: AllowanceFrequency,
-        dayOfWeek: Int?,
-        dayOfMonth: Int?,
+        dayOfWeek: Short?,
+        dayOfMonth: Short?,
     ): AllowanceScheduleDto {
         val card = kidsCardRepository.findByIdAndFamilyId(cardId, familyId)
             ?: throw ResourceNotFoundException("KidsCard", cardId)
@@ -109,11 +109,11 @@ class AllowanceService(
         }
     }
 
-    private fun computeNextRunAt(frequency: AllowanceFrequency, dayOfWeek: Int?, dayOfMonth: Int?): Instant {
+    private fun computeNextRunAt(frequency: AllowanceFrequency, dayOfWeek: Short?, dayOfMonth: Short?): Instant {
         val now = ZonedDateTime.now(ZoneOffset.UTC)
         return when (frequency) {
             AllowanceFrequency.WEEKLY -> {
-                val targetDow = dayOfWeek?.let { DayOfWeek.of(it) } ?: DayOfWeek.MONDAY
+                val targetDow = dayOfWeek?.let { DayOfWeek.of(it.toInt()) } ?: DayOfWeek.MONDAY
                 var next = now.with(TemporalAdjusters.nextOrSame(targetDow))
                     .withHour(0).withMinute(0).withSecond(0).withNano(0)
                 // If today is the target day but we're past midnight, move to next week
@@ -124,7 +124,7 @@ class AllowanceService(
             }
 
             AllowanceFrequency.MONTHLY -> {
-                val targetDay = (dayOfMonth ?: 1).coerceIn(1, 28)
+                val targetDay = (dayOfMonth?.toInt() ?: 1).coerceIn(1, 28)
                 var next = now.withDayOfMonth(targetDay)
                     .withHour(0).withMinute(0).withSecond(0).withNano(0)
                 if (!next.isAfter(now)) {
