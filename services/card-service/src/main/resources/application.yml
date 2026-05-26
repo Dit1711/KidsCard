@@ -35,12 +35,6 @@ spring:
       group-id: card-service
       auto-offset-reset: earliest
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${AUTH_ISSUER_URI:http://localhost:8081}
-
 server:
   port: ${SERVER_PORT:8083}
   shutdown: graceful
@@ -58,3 +52,8 @@ management:
 logging:
   level:
     uz.kidscard: DEBUG
+    org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
