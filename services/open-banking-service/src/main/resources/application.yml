@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: open-banking-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kidscard}?currentSchema=open_banking
+    username: ${DB_USER:kidscard}
+    password: ${DB_PASSWORD:kidscard_dev}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: open_banking
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: open_banking
+    baseline-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:kidscard_dev}
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: open-banking-service
+      auto-offset-reset: earliest
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_ISSUER_URI:http://localhost:8081}
+
+# Uzbek bank adapter configurations
+banks:
+  uzcard:
+    base-url: ${UZCARD_API_URL:https://sandbox.uzcard.uz/api}
+    client-id: ${UZCARD_CLIENT_ID:}
+    client-secret: ${UZCARD_CLIENT_SECRET:}
+    timeout-ms: 10000
+  humo:
+    base-url: ${HUMO_API_URL:https://sandbox.humo.uz/api}
+    client-id: ${HUMO_CLIENT_ID:}
+    client-secret: ${HUMO_CLIENT_SECRET:}
+    timeout-ms: 10000
+
+server:
+  port: ${SERVER_PORT:8085}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    uz.kidscard: DEBUG

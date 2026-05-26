@@ -1,0 +1,92 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - StripPrefix=0
+
+        - id: family-service
+          uri: ${FAMILY_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/families/**,/api/v1/parents/**,/api/v1/children/**
+          filters:
+            - StripPrefix=0
+
+        - id: card-service
+          uri: ${CARD_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/cards/**
+          filters:
+            - StripPrefix=0
+
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/payments/**,/api/v1/transactions/**
+          filters:
+            - StripPrefix=0
+
+        - id: open-banking-service
+          uri: ${OPEN_BANKING_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/open-banking/**
+          filters:
+            - StripPrefix=0
+
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - StripPrefix=0
+
+        - id: kyc-service
+          uri: ${KYC_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/v1/kyc/**
+          filters:
+            - StripPrefix=0
+
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 100
+            redis-rate-limiter.burstCapacity: 200
+            redis-rate-limiter.requestedTokens: 1
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:kidscard_dev}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_ISSUER_URI:http://localhost:8081}
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    uz.kidscard: DEBUG
+    org.springframework.cloud.gateway: INFO

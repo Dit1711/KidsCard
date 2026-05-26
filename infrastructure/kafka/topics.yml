@@ -1,0 +1,106 @@
+# Kafka topic definitions
+# Convention: <domain>.<entity>.<event> (kebab-case)
+# Retention: financial events = 7 days, notifications = 1 day
+
+topics:
+  # Auth domain
+  - name: auth.user.registered
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000   # 7 days
+
+  - name: auth.user.phone-verified
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000
+
+  # Family domain
+  - name: family.family.created
+    partitions: 8
+    replication: 1
+    retention_ms: 604800000
+
+  - name: family.child.added
+    partitions: 8
+    replication: 1
+    retention_ms: 604800000
+
+  - name: family.limit.updated
+    partitions: 8
+    replication: 1
+    retention_ms: 604800000
+
+  - name: family.chore.completed
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000
+
+  # Card domain
+  - name: card.card.issued
+    partitions: 8
+    replication: 1
+    retention_ms: 604800000
+
+  - name: card.card.frozen
+    partitions: 8
+    replication: 1
+    retention_ms: 604800000
+
+  - name: card.allowance.scheduled
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000
+
+  # Payment domain — higher priority, longer retention
+  - name: payment.transaction.authorized
+    partitions: 16
+    replication: 1
+    retention_ms: 2592000000  # 30 days
+
+  - name: payment.transaction.captured
+    partitions: 16
+    replication: 1
+    retention_ms: 2592000000
+
+  - name: payment.transaction.failed
+    partitions: 8
+    replication: 1
+    retention_ms: 2592000000
+
+  - name: payment.limit.exceeded
+    partitions: 8
+    replication: 1
+    retention_ms: 604800000
+
+  # Open Banking domain
+  - name: openbanking.consent.granted
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000
+
+  - name: openbanking.payment.completed
+    partitions: 8
+    replication: 1
+    retention_ms: 2592000000
+
+  # KYC domain
+  - name: kyc.verification.approved
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000
+
+  - name: kyc.verification.rejected
+    partitions: 4
+    replication: 1
+    retention_ms: 604800000
+
+  # Notification domain
+  - name: notification.push.requested
+    partitions: 8
+    replication: 1
+    retention_ms: 86400000    # 1 day
+
+  - name: notification.sms.requested
+    partitions: 8
+    replication: 1
+    retention_ms: 86400000
