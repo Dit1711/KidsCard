@@ -6,14 +6,16 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
+import jakarta.persistence.PostLoad
+import jakarta.persistence.PostPersist
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import jakarta.persistence.Version
+import org.springframework.data.domain.Persistable
 import java.time.Instant
 import java.util.UUID
 
@@ -23,8 +25,8 @@ enum class UserStatus { ACTIVE, BLOCKED, DELETED }
 @Table(name = "users", schema = "auth")
 class User(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @get:JvmName("getEntityId")
     val id: UUID = UUID.randomUUID(),
 
     @Column(name = "phone", nullable = false, unique = true, length = 20)
@@ -58,7 +60,25 @@ class User(
     @Version
     @Column(name = "version", nullable = false)
     var version: Long = 0L,
-) {
+) : Persistable<UUID> {
+
+    // _isNew tracks whether this entity has been persisted yet.
+    // Spring Data JPA calls isNew() to decide persist() vs merge().
+    @Transient
+    private var _isNew: Boolean = true
+
+    // getId() satisfies Persistable<UUID>. No clash with 'val id' because
+    // @get:JvmName("getEntityId") renames the property accessor in bytecode.
+    override fun getId(): UUID = id
+
+    override fun isNew(): Boolean = _isNew
+
+    @PostPersist
+    @PostLoad
+    fun markNotNew() {
+        _isNew = false
+    }
+
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY, orphanRemoval = true)
     val roles: MutableSet<UserRole> = mutableSetOf()
 

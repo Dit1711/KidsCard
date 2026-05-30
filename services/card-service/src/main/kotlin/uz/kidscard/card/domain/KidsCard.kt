@@ -4,11 +4,13 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.PostLoad
+import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import jakarta.persistence.Version
+import org.springframework.data.domain.Persistable
 import java.time.Instant
 import java.util.UUID
 
@@ -20,7 +22,7 @@ enum class CardStatus { PENDING, ACTIVE, FROZEN, BLOCKED, EXPIRED }
 @Table(name = "kids_cards", schema = "card")
 class KidsCard(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @get:JvmName("getEntityId")
     val id: UUID = UUID.randomUUID(),
 
     @Column(name = "child_id", nullable = false)
@@ -77,4 +79,17 @@ class KidsCard(
     @Version
     @Column(name = "version", nullable = false)
     var version: Long = 0,
-)
+) : Persistable<UUID> {
+
+    @Transient
+    private var _isNew: Boolean = true
+
+    override fun getId(): UUID = id
+    override fun isNew(): Boolean = _isNew
+
+    @PostPersist
+    @PostLoad
+    fun markNotNew() {
+        _isNew = false
+    }
+}

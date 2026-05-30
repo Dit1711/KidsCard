@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uz.kidscard.auth.api.dto.TokenResponse
+import uz.kidscard.auth.api.dto.UserResponse
+import uz.kidscard.auth.api.dto.toResponse
 import uz.kidscard.auth.domain.OtpPurpose
 import uz.kidscard.auth.domain.RefreshToken
 import uz.kidscard.auth.domain.Role
@@ -110,9 +112,11 @@ class AuthService(
     }
 
     @Transactional(readOnly = true)
-    fun getCurrentUser(userId: UUID): User =
-        userRepository.findById(userId)
+    fun getCurrentUser(userId: UUID): UserResponse {
+        val user = userRepository.findById(userId)
             .orElseThrow { ResourceNotFoundException("User", userId) }
+        return user.toResponse()  // roles loaded inside transaction
+    }
 
     private fun issueTokens(user: User, deviceId: String? = null): TokenResponse {
         val accessToken = jwtService.generateAccessToken(user)

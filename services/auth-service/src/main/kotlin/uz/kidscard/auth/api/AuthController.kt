@@ -20,7 +20,6 @@ import uz.kidscard.auth.api.dto.TokenResponse
 import uz.kidscard.auth.api.dto.UserResponse
 import uz.kidscard.auth.api.dto.VerifyLoginRequest
 import uz.kidscard.auth.api.dto.VerifyOtpRequest
-import uz.kidscard.auth.api.dto.toResponse
 import uz.kidscard.auth.service.AuthService
 import uz.kidscard.common.api.ApiResponse
 import java.util.UUID
@@ -85,7 +84,6 @@ class AuthController(private val authService: AuthService) {
         @AuthenticationPrincipal jwt: Jwt,
     ): ResponseEntity<ApiResponse<UserResponse>> {
         val userId = UUID.fromString(jwt.subject)
-        val user = authService.getCurrentUser(userId)
-        return ResponseEntity.ok(ApiResponse.ok(user.toResponse()))
+        return ResponseEntity.ok(ApiResponse.ok(authService.getCurrentUser(userId)))
     }
 }

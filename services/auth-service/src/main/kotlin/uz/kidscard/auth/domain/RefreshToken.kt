@@ -3,13 +3,13 @@ package uz.kidscard.auth.domain
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.UUID
 
@@ -17,7 +17,6 @@ import java.util.UUID
 @Table(name = "refresh_tokens", schema = "auth")
 class RefreshToken(
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     val id: UUID = UUID.randomUUID(),
 
@@ -32,6 +31,7 @@ class RefreshToken(
     val deviceId: String? = null,
 
     // Stored as text/JSONB containing device information JSON
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "device_info", columnDefinition = "jsonb")
     val deviceInfo: String? = null,
 
