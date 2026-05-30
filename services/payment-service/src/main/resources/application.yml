@@ -38,12 +38,6 @@ spring:
       auto-offset-reset: earliest
       enable-auto-commit: false
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${AUTH_ISSUER_URI:http://localhost:8081}
-
 server:
   port: ${SERVER_PORT:8084}
   shutdown: graceful
@@ -61,6 +55,17 @@ management:
     sampling:
       probability: 1.0
 
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 logging:
   level:
     uz.kidscard: DEBUG
+    org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}

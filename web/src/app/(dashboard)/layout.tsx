@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard", label: "Обзор", icon: "🏠" },
   { href: "/family", label: "Семья", icon: "👨‍👩‍👧" },
   { href: "/cards", label: "Карты", icon: "💳" },
+  { href: "/transactions", label: "Операции", icon: "💸" },
 ];
 
 export default function DashboardLayout({

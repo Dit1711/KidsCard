@@ -4,6 +4,8 @@ const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:8081";
 const FAMILY_URL =
   process.env.NEXT_PUBLIC_FAMILY_URL || "http://localhost:8082";
 const CARD_URL = process.env.NEXT_PUBLIC_CARD_URL || "http://localhost:8083";
+const PAYMENT_URL =
+  process.env.NEXT_PUBLIC_PAYMENT_URL || "http://localhost:8084";
 
 function makeClient(baseURL: string) {
   const client = axios.create({ baseURL });
@@ -50,6 +52,7 @@ function makeClient(baseURL: string) {
 export const authApi = makeClient(AUTH_URL);
 export const familyApi = makeClient(FAMILY_URL);
 export const cardApi = makeClient(CARD_URL);
+export const paymentApi = makeClient(PAYMENT_URL);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -128,6 +131,37 @@ export const cardService = {
     ),
 };
 
+// ── Payment ───────────────────────────────────────────────────────────────────
+
+export const paymentService = {
+  topUp: (payload: {
+    cardId: string;
+    childId: string;
+    familyId: string;
+    amountUzs: number;
+    description?: string;
+    idempotencyKey: string;
+  }) => paymentApi.post<ApiResponse<TransactionResponse>>("/api/v1/transactions/top-up", payload),
+
+  purchase: (payload: {
+    cardId: string;
+    childId: string;
+    familyId: string;
+    amountUzs: number;
+    merchantName?: string;
+    description?: string;
+    idempotencyKey: string;
+  }) => paymentApi.post<ApiResponse<TransactionResponse>>("/api/v1/transactions/purchase", payload),
+
+  getBalance: (cardId: string) =>
+    paymentApi.get<ApiResponse<BalanceResponse>>(`/api/v1/wallets/cards/${cardId}/balance`),
+
+  getCardTransactions: (cardId: string, page = 0, size = 20) =>
+    paymentApi.get<ApiResponse<PageResponse<TransactionResponse>>>(
+      `/api/v1/transactions/card/${cardId}?page=${page}&size=${size}`
+    ),
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
@@ -199,4 +233,35 @@ export interface CardResponse {
   balanceUzs: number;
   issuedAt: string | null;
   frozenAt: string | null;
+}
+
+export interface TransactionResponse {
+  id: string;
+  idempotencyKey: string;
+  cardId: string;
+  childId: string;
+  familyId: string;
+  type: string;
+  status: string;
+  amountUzs: number;
+  currency: string;
+  direction: string;
+  merchantName: string | null;
+  description: string | null;
+  balanceAfter: number;
+  createdAt: string;
+}
+
+export interface BalanceResponse {
+  cardId: string;
+  balanceUzs: number;
+  currency: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
