@@ -75,3 +75,6 @@ app:
     expiry-minutes: 10
     max-attempts: 5
     rate-limit-per-hour: 3
+    # Dev only: set to non-empty string to use a fixed OTP code instead of random.
+    # Remove or leave blank in production.
+    dev-fixed-code: "123456"

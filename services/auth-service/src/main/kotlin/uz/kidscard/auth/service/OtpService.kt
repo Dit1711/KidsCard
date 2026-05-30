@@ -20,6 +20,7 @@ class OtpService(
     @Value("\${app.otp.expiry-minutes:10}") private val expiryMinutes: Long,
     @Value("\${app.otp.max-attempts:5}") private val maxAttempts: Int,
     @Value("\${app.otp.rate-limit-per-hour:3}") private val rateLimitPerHour: Int,
+    @Value("\${app.otp.dev-fixed-code:}") private val devFixedCode: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -86,5 +87,5 @@ class OtpService(
     }
 
     private fun generateCode(): String =
-        Random.nextInt(100_000, 1_000_000).toString()
+        if (devFixedCode.isNotBlank()) devFixedCode else Random.nextInt(100_000, 1_000_000).toString()
 }
