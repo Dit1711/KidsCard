@@ -41,6 +41,15 @@ class FamilyController(
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
     }
 
+    @GetMapping("/my")
+    fun getMyFamily(
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<FamilyDto>> {
+        val userId = UUID.fromString(jwt.subject)
+        val result = familyService.getMyFamily(userId)
+        return ResponseEntity.ok(ApiResponse.ok(result))
+    }
+
     @GetMapping("/{familyId}")
     fun getFamily(
         @PathVariable familyId: UUID,

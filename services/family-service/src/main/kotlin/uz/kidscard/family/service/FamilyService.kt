@@ -74,6 +74,17 @@ class FamilyService(
     }
 
     @Transactional(readOnly = true)
+    fun getMyFamily(requestingUserId: UUID): FamilyDto {
+        val parent = parentRepository.findByUserId(requestingUserId)
+            ?: throw ResourceNotFoundException("Family", requestingUserId)
+        val family = familyRepository.findById(parent.family.id).orElseThrow {
+            ResourceNotFoundException("Family", parent.family.id)
+        }
+        family.parents.size // force lazy load within transaction
+        return family.toDto()
+    }
+
+    @Transactional(readOnly = true)
     fun getFamily(familyId: UUID, requestingUserId: UUID): FamilyDto {
         val family = familyRepository.findById(familyId).orElseThrow {
             ResourceNotFoundException("Family", familyId)

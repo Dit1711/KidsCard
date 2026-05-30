@@ -39,3 +39,11 @@ docker-compose.override.yml
 # Test output
 test-results/
 jacoco/
+
+# Kotlin incremental compilation cache
+.kotlin/
+
+# Node / Next.js
+web/node_modules/
+web/.next/
+web/.env.local
