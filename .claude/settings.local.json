@@ -3,7 +3,10 @@
     "allow": [
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "mcp__plugin_telegram_telegram__reply"
+      "mcp__plugin_telegram_telegram__reply",
+      "Bash(xargs cat)",
+      "Bash(docker exec *)",
+      "Bash(docker compose *)"
     ]
   }
 }
