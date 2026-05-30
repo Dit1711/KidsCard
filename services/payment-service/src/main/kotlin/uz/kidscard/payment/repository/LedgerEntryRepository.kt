@@ -18,4 +18,14 @@ interface LedgerEntryRepository : JpaRepository<LedgerEntry, UUID> {
     fun computeBalance(accountId: String): Long
 
     fun findTopByAccountIdOrderByCreatedAtDesc(accountId: String): LedgerEntry?
+
+    @Query("""
+        SELECT COALESCE(SUM(e.amountUzs), 0)
+        FROM LedgerEntry e
+        WHERE e.accountId = :accountId
+          AND e.accountType = uz.kidscard.payment.domain.AccountType.CARD
+          AND e.direction = uz.kidscard.payment.domain.Direction.DEBIT
+          AND e.createdAt >= :since
+    """)
+    fun computeSpentSince(accountId: String, since: java.time.Instant): Long
 }

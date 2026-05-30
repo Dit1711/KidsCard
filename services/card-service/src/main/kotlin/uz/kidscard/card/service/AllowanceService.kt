@@ -84,8 +84,11 @@ class AllowanceService(
                     eventType = "card.allowance.due",
                     topic = "card.events",
                     payload = mapOf(
+                        "eventType" to "card.allowance.due",
                         "scheduleId" to schedule.id,
                         "cardId" to schedule.card.id,
+                        "childId" to schedule.card.childId,
+                        "familyId" to schedule.card.familyId,
                         "amountUzs" to schedule.amountUzs,
                         "frequency" to schedule.frequency,
                         "triggeredAt" to now,

@@ -37,6 +37,10 @@ spring:
       group-id: payment-service
       auto-offset-reset: earliest
       enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
 
 server:
   port: ${SERVER_PORT:8084}
@@ -69,3 +73,5 @@ logging:
 app:
   jwt:
     secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
+  family-service:
+    url: ${FAMILY_SERVICE_URL:http://localhost:8082}

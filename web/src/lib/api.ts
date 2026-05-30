@@ -105,6 +105,30 @@ export const familyService = {
     ),
 };
 
+// ── Limits ────────────────────────────────────────────────────────────────────
+
+export const limitService = {
+  set: (
+    familyId: string,
+    childId: string,
+    payload: { limitType: string; category?: string; amountUzs: number }
+  ) =>
+    familyApi.post<ApiResponse<LimitResponse>>(
+      `/api/v1/families/${familyId}/children/${childId}/limits`,
+      payload
+    ),
+
+  list: (familyId: string, childId: string) =>
+    familyApi.get<ApiResponse<LimitResponse[]>>(
+      `/api/v1/families/${familyId}/children/${childId}/limits`
+    ),
+
+  remove: (familyId: string, childId: string, limitId: string) =>
+    familyApi.delete(
+      `/api/v1/families/${familyId}/children/${childId}/limits/${limitId}`
+    ),
+};
+
 // ── Cards ─────────────────────────────────────────────────────────────────────
 
 export const cardService = {
@@ -128,6 +152,30 @@ export const cardService = {
   unfreeze: (familyId: string, cardId: string) =>
     cardApi.post<ApiResponse<CardResponse>>(
       `/api/v1/families/${familyId}/cards/${cardId}/unfreeze`
+    ),
+};
+
+// ── Allowance (карманные деньги) ───────────────────────────────────────────────
+
+export const allowanceService = {
+  set: (
+    familyId: string,
+    cardId: string,
+    payload: {
+      amountUzs: number;
+      frequency: string;
+      dayOfWeek?: number;
+      dayOfMonth?: number;
+    }
+  ) =>
+    cardApi.post<ApiResponse<AllowanceResponse>>(
+      `/api/v1/families/${familyId}/cards/${cardId}/allowance`,
+      payload
+    ),
+
+  getActive: (familyId: string, cardId: string) =>
+    cardApi.get<ApiResponse<AllowanceResponse | null>>(
+      `/api/v1/families/${familyId}/cards/${cardId}/allowance`
     ),
 };
 
@@ -264,4 +312,25 @@ export interface PageResponse<T> {
   size: number;
   totalElements: number;
   totalPages: number;
+}
+
+export interface LimitResponse {
+  id: string;
+  childId: string;
+  limitType: string; // DAILY, WEEKLY, MONTHLY, CATEGORY
+  category: string | null;
+  amountUzs: number;
+  currency: string;
+  active: boolean;
+}
+
+export interface AllowanceResponse {
+  id: string;
+  cardId: string;
+  amountUzs: number;
+  frequency: string; // WEEKLY, MONTHLY
+  dayOfWeek: number | null;
+  dayOfMonth: number | null;
+  active: boolean;
+  nextRunAt: string | null;
 }

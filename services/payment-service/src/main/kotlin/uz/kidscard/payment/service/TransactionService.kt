@@ -29,6 +29,7 @@ import java.util.UUID
 class TransactionService(
     private val transactionRepository: TransactionRepository,
     private val ledgerEntryRepository: LedgerEntryRepository,
+    private val limitCheckService: LimitCheckService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -87,12 +88,24 @@ class TransactionService(
         return tx.toDto(newBalance)
     }
 
-    fun purchase(req: PurchaseRequest): TransactionDto {
+    fun purchase(req: PurchaseRequest, authToken: String? = null): TransactionDto {
         // Idempotency check
         val existing = transactionRepository.findByIdempotencyKey(req.idempotencyKey).orElse(null)
         if (existing != null) {
             val balance = ledgerEntryRepository.computeBalance(req.cardId.toString())
             return existing.toDto(balance)
+        }
+
+        // Check spending limits (best-effort — skipped if family-service is unavailable)
+        if (!authToken.isNullOrBlank()) {
+            limitCheckService.checkLimits(
+                cardId = req.cardId,
+                childId = req.childId,
+                familyId = req.familyId,
+                amountUzs = req.amountUzs,
+                merchantMcc = req.merchantMcc,
+                token = authToken,
+            )
         }
 
         val currentBalance = ledgerEntryRepository.computeBalance(req.cardId.toString())

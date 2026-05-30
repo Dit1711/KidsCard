@@ -42,8 +42,10 @@ class TransactionController(
     fun purchase(
         @Valid @RequestBody req: PurchaseRequest,
         @AuthenticationPrincipal jwt: Jwt,
+        request: jakarta.servlet.http.HttpServletRequest,
     ): ResponseEntity<ApiResponse<TransactionDto>> {
-        val result = transactionService.purchase(req)
+        val token = request.getHeader("Authorization")?.removePrefix("Bearer ")
+        val result = transactionService.purchase(req, token)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
     }
 

@@ -1,0 +1,378 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  familyService,
+  cardService,
+  limitService,
+  allowanceService,
+} from "@/lib/api";
+import { useFamilyStore } from "@/store/family";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+function formatSum(uzs: number) {
+  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
+}
+
+const LIMIT_TYPES = [
+  { value: "DAILY", label: "Дневной" },
+  { value: "WEEKLY", label: "Недельный" },
+  { value: "MONTHLY", label: "Месячный" },
+];
+
+const WEEKDAYS = [
+  { value: 1, label: "Пн" },
+  { value: 2, label: "Вт" },
+  { value: 3, label: "Ср" },
+  { value: 4, label: "Чт" },
+  { value: 5, label: "Пт" },
+  { value: 6, label: "Сб" },
+  { value: 7, label: "Вс" },
+];
+
+export default function LimitsPage() {
+  const qc = useQueryClient();
+  const { family } = useFamilyStore();
+
+  const [selectedChild, setSelectedChild] = useState<string>("");
+
+  // Limit form
+  const [limitType, setLimitType] = useState("DAILY");
+  const [limitAmount, setLimitAmount] = useState("");
+
+  // Allowance form
+  const [allowanceAmount, setAllowanceAmount] = useState("");
+  const [allowanceFreq, setAllowanceFreq] = useState("WEEKLY");
+  const [allowanceDow, setAllowanceDow] = useState(1);
+
+  const { data: children } = useQuery({
+    queryKey: ["family-children", family?.id],
+    queryFn: async () => {
+      const { data } = await familyService.getChildren(family!.id);
+      return data.data;
+    },
+    enabled: !!family?.id,
+  });
+
+  useEffect(() => {
+    if (children && children.length > 0 && !selectedChild) {
+      setSelectedChild(children[0].id);
+    }
+  }, [children, selectedChild]);
+
+  const { data: cards } = useQuery({
+    queryKey: ["family-cards", family?.id],
+    queryFn: async () => {
+      const { data } = await cardService.getByFamily(family!.id);
+      return data.data;
+    },
+    enabled: !!family?.id,
+  });
+
+  // The child's card (first one) — allowance is per-card
+  const childCard = cards?.find((c) => c.childId === selectedChild);
+
+  const { data: limits } = useQuery({
+    queryKey: ["limits", family?.id, selectedChild],
+    queryFn: async () => {
+      const { data } = await limitService.list(family!.id, selectedChild);
+      return data.data;
+    },
+    enabled: !!family?.id && !!selectedChild,
+  });
+
+  const { data: allowance } = useQuery({
+    queryKey: ["allowance", family?.id, childCard?.id],
+    queryFn: async () => {
+      const { data } = await allowanceService.getActive(family!.id, childCard!.id);
+      return data.data;
+    },
+    enabled: !!family?.id && !!childCard?.id,
+  });
+
+  const setLimit = useMutation({
+    mutationFn: () =>
+      limitService.set(family!.id, selectedChild, {
+        limitType,
+        amountUzs: Math.round(parseFloat(limitAmount)),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
+      setLimitAmount("");
+    },
+  });
+
+  const removeLimit = useMutation({
+    mutationFn: (limitId: string) =>
+      limitService.remove(family!.id, selectedChild, limitId),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] }),
+  });
+
+  const setAllowance = useMutation({
+    mutationFn: () =>
+      allowanceService.set(family!.id, childCard!.id, {
+        amountUzs: Math.round(parseFloat(allowanceAmount)),
+        frequency: allowanceFreq,
+        dayOfWeek: allowanceFreq === "WEEKLY" ? allowanceDow : undefined,
+        dayOfMonth: allowanceFreq === "MONTHLY" ? 1 : undefined,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allowance", family!.id, childCard!.id] });
+      setAllowanceAmount("");
+    },
+  });
+
+  if (!family) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Контроль</h1>
+        <p className="text-gray-400">Сначала создайте семью.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Родительский контроль</h1>
+        <p className="text-gray-500 mt-1 text-sm">
+          Лимиты трат и автоматические карманные деньги
+        </p>
+      </div>
+
+      {/* Child selector */}
+      {children && children.length > 0 ? (
+        <div className="flex gap-2 flex-wrap">
+          {children.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setSelectedChild(c.id)}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                selectedChild === c.id
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "border-gray-200 hover:border-indigo-300"
+              }`}
+            >
+              {c.fullName}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-400 text-sm">Сначала добавьте детей в разделе «Семья».</p>
+      )}
+
+      {selectedChild && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ── Limits ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Лимиты трат</CardTitle>
+              <CardDescription>Ограничьте расходы по периодам</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Active limits */}
+              <div className="space-y-2">
+                {limits?.length === 0 && (
+                  <p className="text-sm text-gray-400">Лимиты не установлены</p>
+                )}
+                {limits?.map((limit) => (
+                  <div
+                    key={limit.id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {LIMIT_TYPES.find((t) => t.value === limit.limitType)?.label ??
+                          limit.limitType}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {formatSum(limit.amountUzs)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeLimit.mutate(limit.id)}
+                      className="text-xs text-red-400 hover:text-red-600"
+                    >
+                      удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              {/* Add limit form */}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Период</Label>
+                  <div className="flex gap-2">
+                    {LIMIT_TYPES.map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => setLimitType(t.value)}
+                        className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
+                          limitType === t.value
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "border-gray-200 hover:border-indigo-300"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Сумма лимита (сум)</Label>
+                  <Input
+                    type="number"
+                    placeholder="100000"
+                    value={limitAmount}
+                    onChange={(e) => setLimitAmount(e.target.value)}
+                  />
+                </div>
+                {setLimit.isError && (
+                  <p className="text-sm text-red-500">Ошибка установки лимита</p>
+                )}
+                <Button
+                  onClick={() => setLimit.mutate()}
+                  disabled={!limitAmount || setLimit.isPending}
+                  className="w-full"
+                >
+                  {setLimit.isPending ? "Сохранение..." : "Установить лимит"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Allowance ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Карманные деньги</CardTitle>
+              <CardDescription>
+                Автоматическое пополнение карты по расписанию
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!childCard ? (
+                <p className="text-sm text-gray-400">
+                  У ребёнка нет карты. Выдайте карту в разделе «Карты».
+                </p>
+              ) : (
+                <>
+                  {/* Current allowance */}
+                  {allowance ? (
+                    <div className="p-3 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-green-800">
+                          {formatSum(allowance.amountUzs)}
+                        </span>
+                        <Badge variant="secondary">
+                          {allowance.frequency === "WEEKLY" ? "еженедельно" : "ежемесячно"}
+                        </Badge>
+                      </div>
+                      {allowance.nextRunAt && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Следующее: {new Date(allowance.nextRunAt).toLocaleDateString("ru-RU")}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">Расписание не настроено</p>
+                  )}
+
+                  <Separator />
+
+                  {/* Set allowance form */}
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Частота</Label>
+                      <div className="flex gap-2">
+                        {[
+                          { value: "WEEKLY", label: "Еженедельно" },
+                          { value: "MONTHLY", label: "Ежемесячно" },
+                        ].map((f) => (
+                          <button
+                            key={f.value}
+                            onClick={() => setAllowanceFreq(f.value)}
+                            className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
+                              allowanceFreq === f.value
+                                ? "bg-indigo-600 text-white border-indigo-600"
+                                : "border-gray-200 hover:border-indigo-300"
+                            }`}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {allowanceFreq === "WEEKLY" && (
+                      <div className="space-y-2">
+                        <Label>День недели</Label>
+                        <div className="flex gap-1 flex-wrap">
+                          {WEEKDAYS.map((d) => (
+                            <button
+                              key={d.value}
+                              onClick={() => setAllowanceDow(d.value)}
+                              className={`w-9 h-9 rounded-md text-sm border transition-colors ${
+                                allowanceDow === d.value
+                                  ? "bg-indigo-600 text-white border-indigo-600"
+                                  : "border-gray-200 hover:border-indigo-300"
+                              }`}
+                            >
+                              {d.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {allowanceFreq === "MONTHLY" && (
+                      <p className="text-xs text-gray-400">
+                        Пополнение 1-го числа каждого месяца
+                      </p>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label>Сумма (сум)</Label>
+                      <Input
+                        type="number"
+                        placeholder="50000"
+                        value={allowanceAmount}
+                        onChange={(e) => setAllowanceAmount(e.target.value)}
+                      />
+                    </div>
+
+                    {setAllowance.isError && (
+                      <p className="text-sm text-red-500">Ошибка настройки</p>
+                    )}
+                    <Button
+                      onClick={() => setAllowance.mutate()}
+                      disabled={!allowanceAmount || setAllowance.isPending}
+                      className="w-full"
+                    >
+                      {setAllowance.isPending ? "Сохранение..." : "Настроить выплату"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
