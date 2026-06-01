@@ -5,24 +5,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { useAuthStore } from "@/store/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ChildAccessPanel } from "@/components/ChildAccessPanel";
+import { Panel, DInput, DLabel, DButton, DBadge } from "@/components/dark";
+import { MotionStagger, MotionItem } from "@/components/motion";
+import { toast } from "sonner";
+import { UserPlus, Plus } from "lucide-react";
 
 function calcAge(dob: string) {
-  const birth = new Date(dob);
-  const now = new Date();
-  return now.getFullYear() - birth.getFullYear();
+  return new Date().getFullYear() - new Date(dob).getFullYear();
 }
 
 const AGE_GROUP_LABELS: Record<string, string> = {
@@ -30,32 +20,25 @@ const AGE_GROUP_LABELS: Record<string, string> = {
   CHILD_11_14: "11–14 лет",
   TEEN_15_17: "15–17 лет",
 };
-
-function ageGroupLabel(group: string) {
-  return AGE_GROUP_LABELS[group] ?? group.replace(/_/g, " ");
-}
+const ageGroupLabel = (g: string) => AGE_GROUP_LABELS[g] ?? g.replace(/_/g, " ");
 
 export default function FamilyPage() {
   const qc = useQueryClient();
   const { family, setFamily } = useFamilyStore();
   const { user } = useAuthStore();
 
-  // Invite co-parent form
   const [showInvite, setShowInvite] = useState(false);
   const [coPhone, setCoPhone] = useState("");
   const [coName, setCoName] = useState("");
   const [inviteError, setInviteError] = useState("");
 
-  // Create family form
   const [familyName, setFamilyName] = useState("");
   const [fullName, setFullName] = useState("");
 
-  // Add child form
   const [childName, setChildName] = useState("");
   const [childDob, setChildDob] = useState("");
   const [showAddChild, setShowAddChild] = useState(false);
 
-  // Load family
   const { isLoading, error } = useQuery({
     queryKey: ["my-family"],
     queryFn: async () => {
@@ -66,7 +49,6 @@ export default function FamilyPage() {
     retry: false,
   });
 
-  // Load children
   const { data: children, isLoading: childrenLoading } = useQuery({
     queryKey: ["family-children", family?.id],
     queryFn: async () => {
@@ -76,28 +58,26 @@ export default function FamilyPage() {
     enabled: !!family?.id,
   });
 
-  // Create family mutation
   const createFamily = useMutation({
     mutationFn: () => familyService.create(familyName, fullName),
     onSuccess: ({ data }) => {
       setFamily(data.data);
       qc.invalidateQueries({ queryKey: ["my-family"] });
+      toast.success("Семья создана");
     },
+    onError: () => toast.error("Не удалось создать семью"),
   });
 
-  // Add child mutation
   const addChild = useMutation({
-    mutationFn: () =>
-      familyService.addChild(family!.id, {
-        fullName: childName,
-        dateOfBirth: childDob,
-      }),
+    mutationFn: () => familyService.addChild(family!.id, { fullName: childName, dateOfBirth: childDob }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["family-children", family!.id] });
       setChildName("");
       setChildDob("");
       setShowAddChild(false);
+      toast.success("Ребёнок добавлен");
     },
+    onError: () => toast.error("Ошибка добавления"),
   });
 
   const inviteCoParent = useMutation({
@@ -110,6 +90,7 @@ export default function FamilyPage() {
       setCoName("");
       setInviteError("");
       setShowInvite(false);
+      toast.success("Со-родитель добавлен");
     },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
@@ -119,235 +100,154 @@ export default function FamilyPage() {
 
   const myRole = family?.parents.find((p) => p.userId === user?.id)?.role;
   const isOwner = myRole === "OWNER";
-
   const noFamily = !isLoading && !family && error;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Семья</h1>
+    <MotionStagger className="space-y-6">
+      <MotionItem>
+        <h1 className="text-2xl font-bold tracking-tight">Семья</h1>
+      </MotionItem>
 
-      {isLoading && <p className="text-muted-foreground">Загрузка...</p>}
+      {isLoading && <p className="text-white/50">Загрузка…</p>}
 
-      {/* No family yet */}
       {noFamily && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Создайте семью</CardTitle>
-            <CardDescription>
-              Семья — это центр управления картами и детьми
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="familyName">Название семьи</Label>
-              <Input
-                id="familyName"
-                placeholder="Семья Ивановых"
-                value={familyName}
-                onChange={(e) => setFamilyName(e.target.value)}
-              />
+        <MotionItem>
+          <Panel>
+            <p className="font-semibold text-lg">Создайте семью</p>
+            <p className="text-white/50 text-sm mt-1 mb-4">Семья — это центр управления картами и детьми</p>
+            <div className="space-y-3">
+              <div>
+                <DLabel>Название семьи</DLabel>
+                <DInput placeholder="Семья Ивановых" value={familyName} onChange={(e) => setFamilyName(e.target.value)} />
+              </div>
+              <div>
+                <DLabel>Ваше имя</DLabel>
+                <DInput placeholder="Иван Иванов" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              </div>
+              <DButton onClick={() => createFamily.mutate()} disabled={!familyName || !fullName || createFamily.isPending} className="w-full">
+                {createFamily.isPending ? "Создание…" : "Создать семью"}
+              </DButton>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Ваше имя</Label>
-              <Input
-                id="fullName"
-                placeholder="Иван Иванов"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-            {createFamily.isError && (
-              <p className="text-sm text-red-500">
-                Ошибка при создании семьи
-              </p>
-            )}
-            <Button
-              onClick={() => createFamily.mutate()}
-              disabled={!familyName || !fullName || createFamily.isPending}
-              className="w-full"
-            >
-              {createFamily.isPending ? "Создание..." : "Создать семью"}
-            </Button>
-          </CardContent>
-        </Card>
+          </Panel>
+        </MotionItem>
       )}
 
-      {/* Family exists */}
       {family && (
         <>
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{family.name}</CardTitle>
-                <Badge>{family.status}</Badge>
+          <MotionItem>
+            <Panel className="p-5 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-lg">{family.name}</p>
+                <p className="text-xs text-white/40 mt-0.5">Создана {new Date(family.createdAt).toLocaleDateString("ru-RU")}</p>
               </div>
-              <CardDescription>
-                Создана {new Date(family.createdAt).toLocaleDateString("ru-RU")}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Separator />
+              <DBadge tone={family.status === "ACTIVE" ? "success" : "muted"}>{family.status}</DBadge>
+            </Panel>
+          </MotionItem>
 
           {/* Parents */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Родители</h2>
+          <MotionItem>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold tracking-tight">Родители</h2>
               {isOwner && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setShowInvite(!showInvite); setInviteError(""); }}
-                >
-                  {showInvite ? "Отмена" : "+ Пригласить со-родителя"}
-                </Button>
+                <DButton variant="outline" onClick={() => { setShowInvite(!showInvite); setInviteError(""); }} className="py-2">
+                  {showInvite ? "Отмена" : <><UserPlus className="h-4 w-4" /> Пригласить</>}
+                </DButton>
               )}
             </div>
 
             {showInvite && isOwner && (
-              <Card className="mb-4">
-                <CardContent className="pt-4 space-y-3">
-                  <CardDescription>
-                    Со-родитель должен быть уже зарегистрирован в KidsCard по своему номеру телефона.
-                  </CardDescription>
-                  <div className="space-y-2">
-                    <Label>Телефон</Label>
-                    <Input
-                      placeholder="+998901112233"
-                      value={coPhone}
-                      onChange={(e) => setCoPhone(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Имя</Label>
-                    <Input
-                      placeholder="Мама / Папа / Имя"
-                      value={coName}
-                      onChange={(e) => setCoName(e.target.value)}
-                    />
-                  </div>
-                  {inviteError && <p className="text-sm text-red-500">{inviteError}</p>}
-                  <Button
-                    onClick={() => inviteCoParent.mutate()}
-                    disabled={!coPhone || !coName || inviteCoParent.isPending}
-                    className="w-full"
-                  >
-                    {inviteCoParent.isPending ? "Приглашаем…" : "Пригласить"}
-                  </Button>
-                </CardContent>
-              </Card>
+              <Panel className="p-5 mb-3 space-y-3">
+                <p className="text-sm text-white/50">Со-родитель должен быть уже зарегистрирован в KidsCard по своему номеру.</p>
+                <div>
+                  <DLabel>Телефон</DLabel>
+                  <DInput placeholder="+998901112233" value={coPhone} onChange={(e) => setCoPhone(e.target.value)} />
+                </div>
+                <div>
+                  <DLabel>Имя</DLabel>
+                  <DInput placeholder="Мама / Папа / Имя" value={coName} onChange={(e) => setCoName(e.target.value)} />
+                </div>
+                {inviteError && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{inviteError}</p>}
+                <DButton onClick={() => inviteCoParent.mutate()} disabled={!coPhone || !coName || inviteCoParent.isPending} className="w-full">
+                  {inviteCoParent.isPending ? "Приглашаем…" : "Пригласить"}
+                </DButton>
+              </Panel>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {family.parents.map((p) => (
-                <Card key={p.id}>
-                  <CardContent className="pt-4 pb-4 flex items-center justify-between">
+                <Panel key={p.id} className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-xs font-semibold">
+                      {p.fullName.slice(0, 2).toUpperCase()}
+                    </span>
                     <div>
                       <p className="font-medium">
                         {p.fullName}
-                        {p.userId === user?.id && (
-                          <span className="ml-2 text-xs text-muted-foreground">(вы)</span>
-                        )}
+                        {p.userId === user?.id && <span className="ml-2 text-xs text-white/40">(вы)</span>}
                       </p>
-                      <p className="text-sm text-muted-foreground">{p.phone}</p>
+                      <p className="text-sm text-white/40 tabular-nums">{p.phone}</p>
                     </div>
-                    <Badge variant={p.role === "OWNER" ? "default" : "secondary"}>
-                      {p.role === "OWNER" ? "Владелец" : "Со-родитель"}
-                    </Badge>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <DBadge tone={p.role === "OWNER" ? "default" : "muted"}>
+                    {p.role === "OWNER" ? "Владелец" : "Со-родитель"}
+                  </DBadge>
+                </Panel>
               ))}
             </div>
-          </div>
-
-          <Separator />
+          </MotionItem>
 
           {/* Children */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Дети</h2>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowAddChild(!showAddChild)}
-              >
-                {showAddChild ? "Отмена" : "+ Добавить ребёнка"}
-              </Button>
+          <MotionItem>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold tracking-tight">Дети</h2>
+              <DButton variant="outline" onClick={() => setShowAddChild(!showAddChild)} className="py-2">
+                {showAddChild ? "Отмена" : <><Plus className="h-4 w-4" /> Добавить</>}
+              </DButton>
             </div>
 
             {showAddChild && (
-              <Card className="mb-4">
-                <CardContent className="pt-4 space-y-3">
-                  <div className="space-y-2">
-                    <Label>Имя ребёнка</Label>
-                    <Input
-                      placeholder="Анна Иванова"
-                      value={childName}
-                      onChange={(e) => setChildName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Дата рождения</Label>
-                    <Input
-                      type="date"
-                      value={childDob}
-                      onChange={(e) => setChildDob(e.target.value)}
-                      max={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                  {addChild.isError && (
-                    <p className="text-sm text-red-500">Ошибка добавления</p>
-                  )}
-                  <Button
-                    onClick={() => addChild.mutate()}
-                    disabled={!childName || !childDob || addChild.isPending}
-                    className="w-full"
-                  >
-                    {addChild.isPending ? "Добавление..." : "Добавить"}
-                  </Button>
-                </CardContent>
-              </Card>
+              <Panel className="p-5 mb-3 space-y-3">
+                <div>
+                  <DLabel>Имя ребёнка</DLabel>
+                  <DInput placeholder="Анна Иванова" value={childName} onChange={(e) => setChildName(e.target.value)} />
+                </div>
+                <div>
+                  <DLabel>Дата рождения</DLabel>
+                  <DInput type="date" value={childDob} onChange={(e) => setChildDob(e.target.value)} max={new Date().toISOString().split("T")[0]} className="[color-scheme:dark]" />
+                </div>
+                <DButton onClick={() => addChild.mutate()} disabled={!childName || !childDob || addChild.isPending} className="w-full">
+                  {addChild.isPending ? "Добавление…" : "Добавить"}
+                </DButton>
+              </Panel>
             )}
 
-            {childrenLoading && <p className="text-muted-foreground">Загрузка детей...</p>}
+            {childrenLoading && <p className="text-white/50">Загрузка детей…</p>}
+            {children?.length === 0 && <p className="text-white/50 text-sm">Детей ещё нет. Добавьте первого ребёнка.</p>}
 
-            {children?.length === 0 && (
-              <p className="text-muted-foreground text-sm">
-                Детей ещё нет. Добавьте первого ребёнка.
-              </p>
-            )}
-
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {children?.map((child) => (
-                <Card key={child.id}>
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-center justify-between">
+                <Panel key={child.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-xs font-semibold">
+                        {child.fullName.slice(0, 2).toUpperCase()}
+                      </span>
                       <div>
                         <p className="font-medium">{child.fullName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}
-                        </p>
+                        <p className="text-sm text-white/40">{calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}</p>
                       </div>
-                      <Badge
-                        variant={child.status === "ACTIVE" ? "default" : "secondary"}
-                      >
-                        {child.status}
-                      </Badge>
                     </div>
-                    {family && (
-                      <ChildAccessPanel
-                        childId={child.id}
-                        familyId={family.id}
-                        childName={child.fullName}
-                      />
-                    )}
-                  </CardContent>
-                </Card>
+                    <DBadge tone={child.status === "ACTIVE" ? "success" : "muted"}>{child.status}</DBadge>
+                  </div>
+                  {family && (
+                    <ChildAccessPanel childId={child.id} familyId={family.id} childName={child.fullName} />
+                  )}
+                </Panel>
               ))}
             </div>
-          </div>
+          </MotionItem>
         </>
       )}
-    </div>
+    </MotionStagger>
   );
 }

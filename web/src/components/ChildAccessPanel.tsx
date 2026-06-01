@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DInput, DButton, DLabel } from "@/components/dark";
 
 export function ChildAccessPanel({
   childId,
@@ -39,10 +37,10 @@ export function ChildAccessPanel({
   });
 
   return (
-    <div className="mt-3 border-t pt-3">
+    <div className="mt-3 border-t border-white/[0.06] pt-3">
       <button
         onClick={() => setOpen(!open)}
-        className="text-sm text-indigo-600 hover:underline"
+        className="text-sm text-fuchsia-300/80 hover:text-fuchsia-300"
       >
         {open ? "▾ Вход для ребёнка" : "▸ Вход для ребёнка"}
       </button>
@@ -50,23 +48,21 @@ export function ChildAccessPanel({
       {open && (
         <div className="mt-3 space-y-3">
           {access && (
-            <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3">
-              <p className="text-xs text-gray-500 mb-1">Код для входа ребёнка</p>
-              <p className="text-2xl font-mono font-bold tracking-widest text-indigo-700">
+            <div className="rounded-xl bg-white/[0.05] border border-white/10 p-3">
+              <p className="text-xs text-white/40 mb-1">Код для входа ребёнка</p>
+              <p className="text-2xl font-mono font-bold tracking-widest text-fuchsia-200">
                 {access.loginCode}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-white/40 mt-1">
                 Ребёнок входит на <span className="font-mono">/child-login</span> с этим кодом и PIN
               </p>
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label className="text-xs">
-              {access ? "Сбросить PIN" : "Задать PIN (4–6 цифр)"}
-            </Label>
+          <div>
+            <DLabel>{access ? "Сбросить PIN" : "Задать PIN (4–6 цифр)"}</DLabel>
             <div className="flex gap-2">
-              <Input
+              <DInput
                 type="text"
                 inputMode="numeric"
                 placeholder="1234"
@@ -74,20 +70,12 @@ export function ChildAccessPanel({
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 className="font-mono"
               />
-              <Button
-                size="sm"
-                onClick={() => create.mutate()}
-                disabled={pin.length < 4 || create.isPending}
-              >
+              <DButton onClick={() => create.mutate()} disabled={pin.length < 4 || create.isPending} className="shrink-0">
                 {create.isPending ? "…" : access ? "Сбросить" : "Создать"}
-              </Button>
+              </DButton>
             </div>
-            {create.isError && (
-              <p className="text-xs text-red-500">Ошибка. Попробуйте ещё раз.</p>
-            )}
-            {create.isSuccess && (
-              <p className="text-xs text-green-600">Готово! Код выше, PIN сохранён.</p>
-            )}
+            {create.isError && <p className="text-xs text-rose-300 mt-1">Ошибка. Попробуйте ещё раз.</p>}
+            {create.isSuccess && <p className="text-xs text-emerald-300 mt-1">Готово! Код выше, PIN сохранён.</p>}
           </div>
         </div>
       )}
