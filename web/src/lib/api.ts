@@ -221,6 +221,11 @@ export const childAuthService = {
       { stars, quizCorrect }
     ),
 
+  gamification: () =>
+    childFamilyApi.get<ApiResponse<GamificationResponse>>(
+      "/api/v1/child/gamification"
+    ),
+
   myRequests: () =>
     childFamilyApi.get<ApiResponse<MoneyRequestResponse[]>>(
       "/api/v1/child/money-requests"
@@ -239,6 +244,27 @@ export const childAuthService = {
       payload
     ),
 };
+
+export interface BadgeResponse {
+  key: string;
+  title: string;
+  description: string;
+  earned: boolean;
+  earnedAt: string | null;
+}
+
+export interface GamificationResponse {
+  xp: number;
+  level: number;
+  title: string;
+  xpIntoLevel: number;
+  xpForNext: number;
+  streakDays: number;
+  longestStreak: number;
+  activeToday: boolean;
+  league: string; // BRONZE | SILVER | GOLD | PLATINUM
+  badges: BadgeResponse[];
+}
 
 export interface MoneyRequestResponse {
   id: string;

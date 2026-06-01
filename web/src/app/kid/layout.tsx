@@ -3,14 +3,21 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { Golos_Text } from "next/font/google";
+import { useQuery } from "@tanstack/react-query";
+import { Home, ShoppingBag, Target, PiggyBank, GraduationCap, LogOut } from "lucide-react";
 import { useChildStore } from "@/store/child";
+import { childAuthService } from "@/lib/api";
+import { XpRing, StreakChip } from "@/components/kidkit";
+
+const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 const navItems = [
-  { href: "/kid", label: "Главная", icon: "🏠" },
-  { href: "/kid/shop", label: "Магазин", icon: "🛍️" },
-  { href: "/kid/chores", label: "Задания", icon: "🎯" },
-  { href: "/kid/goals", label: "Цели", icon: "🐷" },
-  { href: "/kid/learn", label: "Учёба", icon: "🎓" },
+  { href: "/kid", label: "Главная", Icon: Home },
+  { href: "/kid/shop", label: "Магазин", Icon: ShoppingBag },
+  { href: "/kid/chores", label: "Квесты", Icon: Target },
+  { href: "/kid/goals", label: "Цели", Icon: PiggyBank },
+  { href: "/kid/learn", label: "Учёба", Icon: GraduationCap },
 ];
 
 export default function KidLayout({ children }: { children: React.ReactNode }) {
@@ -18,58 +25,83 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isChildAuthed, hasHydrated, displayName, logout } = useChildStore();
 
+  const { data: gami } = useQuery({
+    queryKey: ["child-gamification"],
+    queryFn: async () => (await childAuthService.gamification()).data.data,
+    enabled: isChildAuthed,
+    refetchInterval: 30_000,
+  });
+
   useEffect(() => {
     if (hasHydrated && !isChildAuthed) router.replace("/child-login");
   }, [hasHydrated, isChildAuthed, router]);
 
   if (!hasHydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-purple-50">
-        <p className="text-purple-300 animate-pulse">Загрузка…</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
+        <p className="text-fuchsia-300/70 animate-pulse">Загрузка…</p>
       </div>
     );
   }
   if (!isChildAuthed) return null;
 
+  const name = displayName ?? "друг";
+  const initial = name.charAt(0).toUpperCase();
+  const pct = gami ? gami.xpIntoLevel / gami.xpForNext : 0;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-50 flex flex-col">
-      {/* Header */}
-      <header className="px-5 pt-6 pb-2 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-purple-400">Привет,</p>
-          <p className="text-xl font-bold text-purple-800">{displayName ?? "друг"}! 👋</p>
-        </div>
-        <button
-          onClick={() => { logout(); router.replace("/child-login"); }}
-          className="text-sm text-purple-400 hover:text-purple-600"
-        >
-          Выйти
-        </button>
-      </header>
+    <div className={`fixed inset-0 overflow-y-auto bg-[#08080f] text-white ${golos.className}`}>
+      {/* glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="absolute top-1/3 -right-24 h-96 w-96 rounded-full bg-fuchsia-600/10 blur-3xl" />
+      </div>
 
-      <main className="flex-1 px-5 pb-24 max-w-md mx-auto w-full space-y-6">
-        {children}
-      </main>
-
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-purple-100 flex max-w-md mx-auto rounded-t-2xl shadow-lg">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/kid" ? pathname === "/kid" : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center py-2.5 text-xs font-medium transition-colors ${
-                isActive ? "text-purple-700" : "text-purple-300"
-              }`}
+      <div className="relative max-w-md mx-auto w-full min-h-full flex flex-col">
+        {/* Header */}
+        <header className="px-5 pt-6 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <XpRing initial={initial} pct={pct} />
+            <div>
+              <p className="text-sm font-semibold leading-tight">{name}</p>
+              <p className="text-[11px] text-fuchsia-300/90">
+                {gami ? `Ур. ${gami.level} · ${gami.title}` : "Загрузка…"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <StreakChip days={gami?.streakDays ?? 0} />
+            <button
+              onClick={() => { logout(); router.replace("/child-login"); }}
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.05] border border-white/10 text-white/50 hover:text-white transition-colors"
+              title="Выйти"
             >
-              <span className="text-xl">{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 px-5 pb-28 w-full space-y-5">{children}</main>
+
+        {/* Bottom nav */}
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0c0c16]/95 backdrop-blur border-t border-white/[0.07] flex rounded-t-3xl">
+          {navItems.map(({ href, label, Icon }) => {
+            const isActive = href === "/kid" ? pathname === "/kid" : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors ${
+                  isActive ? "text-fuchsia-300" : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 }

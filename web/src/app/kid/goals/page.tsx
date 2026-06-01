@@ -5,6 +5,8 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
+import { KCard } from "@/components/kidkit";
+import { PiggyBank, TrendingUp, Trophy, Plus } from "lucide-react";
 
 export default function KidGoalsPage() {
   const { isChildAuthed } = useChildStore();
@@ -70,61 +72,53 @@ export default function KidGoalsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["child-goals"] });
       qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
+      qc.invalidateQueries({ queryKey: ["child-gamification"] });
     },
   });
 
   if (!card) {
-    return (
-      <div className="bg-white rounded-2xl p-8 text-center text-gray-400 shadow">
-        У тебя пока нет карты 🙃
-      </div>
-    );
+    return <KCard className="p-8 text-center text-white/40">У тебя пока нет карты 🙃</KCard>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-1 px-1">
-        <h2 className="text-base font-bold text-purple-800">🐷 Мои цели</h2>
-        <button
-          onClick={() => setShowGoal(!showGoal)}
-          className="text-sm text-purple-600 font-medium"
-        >
-          {showGoal ? "Отмена" : "+ Новая цель"}
+        <h2 className="text-base font-bold flex items-center gap-1.5"><PiggyBank className="h-4 w-4 text-fuchsia-300" /> Мои цели</h2>
+        <button onClick={() => setShowGoal(!showGoal)} className="text-sm text-fuchsia-300 font-medium inline-flex items-center gap-1">
+          {showGoal ? "Отмена" : <><Plus className="h-3.5 w-3.5" /> Новая цель</>}
         </button>
       </div>
       {savingsRate != null && (
-        <p className="px-1 mb-3 text-xs text-gray-400">
-          На накопления капает процент 🌱
-        </p>
+        <p className="px-1 mb-3 text-xs text-white/40">На накопления капает процент 🌱 · завершённая цель = +200 XP</p>
       )}
 
       {showGoal && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm mb-3 space-y-3">
+        <KCard className="p-4 space-y-3 mb-3">
           <input
             placeholder="На что копишь? (Велосипед)"
             value={goalTitle}
             onChange={(e) => setGoalTitle(e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:border-fuchsia-400/60"
           />
           <input
             type="number"
             placeholder="Сколько нужно (100000)"
             value={goalTarget}
             onChange={(e) => setGoalTarget(e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:border-fuchsia-400/60"
           />
           <button
             onClick={() => createGoal.mutate()}
             disabled={!goalTitle || !goalTarget || createGoal.isPending}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-2 text-sm font-medium disabled:opacity-50"
+            className="w-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            {createGoal.isPending ? "Создаём…" : "Создать цель 🌟"}
+            {createGoal.isPending ? "Создаём…" : "Создать цель"}
           </button>
-        </div>
+        </KCard>
       )}
 
       {goals?.length === 0 && !showGoal && (
-        <p className="text-gray-400 text-sm px-1">Создай цель и начни копить!</p>
+        <p className="text-white/40 text-sm px-1">Создай цель и начни копить!</p>
       )}
 
       <div className="space-y-3">
@@ -132,34 +126,31 @@ export default function KidGoalsPage() {
           const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
           const done = g.status === "COMPLETED";
           return (
-            <div key={g.id} className="bg-white rounded-2xl p-4 shadow-sm">
+            <KCard key={g.id} className="p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-gray-800">
-                  {done ? "🎉 " : ""}{g.title}
+                <p className="font-medium flex items-center gap-1.5">
+                  {done && <Trophy className="h-4 w-4 text-amber-400" />}{g.title}
                 </p>
-                <p className="text-sm text-purple-600 font-semibold">
+                <p className="text-sm text-fuchsia-300 font-semibold">
                   {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
                 </p>
               </div>
-              <div className="h-3 rounded-full bg-purple-100 overflow-hidden mb-2">
+              <div className="h-3 rounded-full bg-white/10 overflow-hidden mb-2">
                 <div
-                  className={`h-full rounded-full transition-all ${done ? "bg-green-500" : "bg-purple-500"}`}
+                  className={`h-full rounded-full transition-all ${done ? "bg-emerald-400" : "bg-gradient-to-r from-violet-500 to-fuchsia-500"}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
 
-              {/* Interest on this goal */}
               {savingsRate != null && (
                 <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                  <span className="rounded-full bg-green-50 text-green-700 px-2 py-0.5 font-medium">
-                    📈 {savingsRate}% годовых
+                  <span className="rounded-full bg-emerald-500/15 text-emerald-300 px-2 py-0.5 font-medium inline-flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> {savingsRate}% годовых
                   </span>
                   {g.interestEarned > 0 && (
-                    <span className="text-green-600">
-                      заработано {formatSum(g.interestEarned)}
-                    </span>
+                    <span className="text-emerald-300">заработано {formatSum(g.interestEarned)}</span>
                   )}
-                  <span className="text-gray-400">
+                  <span className="text-white/40">
                     ≈ +{formatSum(Math.round((g.currentAmount * savingsRate) / 100 / 12))}/мес
                   </span>
                 </div>
@@ -172,7 +163,7 @@ export default function KidGoalsPage() {
                       key={amt}
                       onClick={() => depositGoal.mutate({ goalId: g.id, amount: amt })}
                       disabled={depositGoal.isPending || (balance ?? 0) < amt}
-                      className="flex-1 rounded-full border border-purple-200 text-purple-700 text-xs py-1.5 font-medium hover:bg-purple-50 disabled:opacity-40"
+                      className="flex-1 rounded-full border border-white/15 text-white/80 text-xs py-1.5 font-medium hover:bg-white/[0.06] disabled:opacity-40"
                     >
                       +{new Intl.NumberFormat("ru-UZ").format(amt)}
                     </button>
@@ -180,9 +171,11 @@ export default function KidGoalsPage() {
                 </div>
               )}
               {done && (
-                <p className="text-center text-green-600 text-sm font-medium">Цель достигнута! 🏆</p>
+                <p className="text-center text-emerald-300 text-sm font-medium flex items-center justify-center gap-1.5">
+                  <Trophy className="h-4 w-4" /> Цель достигнута!
+                </p>
               )}
-            </div>
+            </KCard>
           );
         })}
       </div>

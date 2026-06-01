@@ -81,6 +81,28 @@ data class LessonProgressDto(
     val completedLessonIds: List<String>,
 )
 
+/** Gamification snapshot for the teen kid cabinet — all values derived at read time. */
+data class GamificationDto(
+    val xp: Int,
+    val level: Int,
+    val title: String,        // level title, e.g. "Инвестор"
+    val xpIntoLevel: Int,     // XP earned within the current level
+    val xpForNext: Int,       // XP needed to clear the current level
+    val streakDays: Int,      // consecutive active days ending today/yesterday
+    val longestStreak: Int,
+    val activeToday: Boolean, // did something XP-worthy today
+    val league: String,       // BRONZE / SILVER / GOLD / PLATINUM
+    val badges: List<BadgeDto>,
+)
+
+data class BadgeDto(
+    val key: String,
+    val title: String,
+    val description: String,
+    val earned: Boolean,
+    val earnedAt: Instant?,
+)
+
 data class MoneyRequestDto(
     val id: UUID,
     val familyId: UUID,

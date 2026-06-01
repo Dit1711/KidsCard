@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { LESSONS, BADGES, type Lesson } from "@/lib/lessons";
+import { KCard } from "@/components/kidkit";
+import { GraduationCap, Star, ArrowLeft, CheckCircle2, Zap } from "lucide-react";
 
 export default function KidLearnPage() {
   const { isChildAuthed } = useChildStore();
@@ -22,7 +24,10 @@ export default function KidLearnPage() {
   const completeLesson = useMutation({
     mutationFn: ({ lessonId, stars, correct }: { lessonId: string; stars: number; correct: boolean }) =>
       childAuthService.completeLesson(lessonId, stars, correct),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["child-lessons"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["child-lessons"] });
+      qc.invalidateQueries({ queryKey: ["child-gamification"] });
+    },
   });
 
   const [active, setActive] = useState<Lesson | null>(null);
@@ -60,34 +65,34 @@ export default function KidLearnPage() {
       <div>
         <button
           onClick={() => setActive(null)}
-          className="text-sm text-purple-500 mb-3"
+          className="text-sm text-fuchsia-300 mb-3 inline-flex items-center gap-1"
         >
-          ← Назад к урокам
+          <ArrowLeft className="h-4 w-4" /> Назад к урокам
         </button>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <KCard className="p-5">
           <div className="text-center mb-3">
             <div className="text-5xl mb-2">{active.emoji}</div>
-            <h2 className="text-lg font-bold text-purple-800">{active.title}</h2>
+            <h2 className="text-lg font-bold">{active.title}</h2>
           </div>
-          <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
+          <div className="space-y-3 text-sm text-white/70 leading-relaxed">
             {active.body.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
 
           {/* Quiz */}
-          <div className="mt-5 pt-4 border-t border-gray-100">
-            <p className="font-semibold text-purple-800 mb-3">❓ {active.quiz.question}</p>
+          <div className="mt-5 pt-4 border-t border-white/[0.08]">
+            <p className="font-semibold mb-3">{active.quiz.question}</p>
             <div className="space-y-2">
               {active.quiz.options.map((opt, idx) => {
                 const isPicked = answered === idx;
                 const isRight = idx === active.quiz.correctIndex;
-                let cls = "border-gray-200 hover:border-purple-300";
+                let cls = "border-white/10 hover:border-fuchsia-400/50 text-white/80";
                 if (answered !== null) {
-                  if (isRight) cls = "border-green-400 bg-green-50 text-green-700";
-                  else if (isPicked) cls = "border-red-300 bg-red-50 text-red-600";
-                  else cls = "border-gray-100 text-gray-400";
+                  if (isRight) cls = "border-emerald-400/50 bg-emerald-500/15 text-emerald-200";
+                  else if (isPicked) cls = "border-rose-400/40 bg-rose-500/15 text-rose-200";
+                  else cls = "border-white/5 text-white/30";
                 }
                 return (
                   <button
@@ -97,8 +102,8 @@ export default function KidLearnPage() {
                     className={`w-full text-left rounded-xl border px-4 py-2.5 text-sm transition-colors ${cls}`}
                   >
                     {opt}
-                    {answered !== null && isRight && " ✅"}
-                    {answered !== null && isPicked && !isRight && " ❌"}
+                    {answered !== null && isRight && " ✓"}
+                    {answered !== null && isPicked && !isRight && " ✕"}
                   </button>
                 );
               })}
@@ -107,16 +112,13 @@ export default function KidLearnPage() {
             {answered !== null && (
               <div className="mt-4 text-center">
                 {correct ? (
-                  <p className="text-green-600 font-semibold">
-                    {alreadyDone ? "Снова верно! 🎉" : `Верно! +${active.stars} ⭐`}
+                  <p className="text-emerald-300 font-semibold inline-flex items-center gap-1.5">
+                    {alreadyDone ? "Снова верно! 🎉" : <>Верно! +{active.stars} <Star className="h-4 w-4 fill-current" /> <span className="text-cyan-300 inline-flex items-center gap-0.5"><Zap className="h-3.5 w-3.5" /> XP</span></>}
                   </p>
                 ) : (
                   <div>
-                    <p className="text-red-500 font-medium mb-2">Почти! Попробуй ещё разок 🙂</p>
-                    <button
-                      onClick={() => setAnswered(null)}
-                      className="text-sm text-purple-600 font-medium"
-                    >
+                    <p className="text-rose-300 font-medium mb-2">Почти! Попробуй ещё разок 🙂</p>
+                    <button onClick={() => setAnswered(null)} className="text-sm text-fuchsia-300 font-medium">
                       Ответить заново
                     </button>
                   </div>
@@ -124,7 +126,7 @@ export default function KidLearnPage() {
                 {correct && (
                   <button
                     onClick={() => setActive(null)}
-                    className="mt-3 bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 py-2 text-sm font-medium"
+                    className="mt-3 block mx-auto bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-full px-6 py-2 text-sm font-semibold"
                   >
                     Дальше
                   </button>
@@ -132,7 +134,7 @@ export default function KidLearnPage() {
               </div>
             )}
           </div>
-        </div>
+        </KCard>
       </div>
     );
   }
@@ -140,18 +142,18 @@ export default function KidLearnPage() {
   // ── Lesson list ──
   return (
     <div>
-      <h2 className="text-base font-bold text-purple-800 mb-1 px-1">🎓 Учёба про деньги</h2>
-      <p className="text-xs text-gray-400 mb-3 px-1">Проходи уроки, отвечай на вопросы, копи звёзды</p>
+      <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><GraduationCap className="h-4 w-4 text-fuchsia-300" /> Учёба про деньги</h2>
+      <p className="text-xs text-white/40 mb-3 px-1">Проходи уроки, отвечай на вопросы — копи звёзды и XP</p>
 
       {/* Stars + badges */}
-      <div className="bg-gradient-to-br from-amber-400 to-orange-400 text-white rounded-2xl p-4 shadow-sm mb-4">
+      <KCard className="p-4 mb-4 bg-gradient-to-br from-amber-500/20 to-orange-500/10 border-amber-500/20">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white/80 text-xs">Мои звёзды</p>
-            <p className="text-3xl font-extrabold">{totalStars} ⭐</p>
+            <p className="text-white/60 text-xs">Мои звёзды</p>
+            <p className="text-3xl font-extrabold flex items-center gap-1.5">{totalStars} <Star className="h-6 w-6 text-amber-400 fill-amber-400" /></p>
           </div>
           <div className="text-right">
-            <p className="text-white/80 text-xs">Уроков пройдено</p>
+            <p className="text-white/60 text-xs">Уроков пройдено</p>
             <p className="text-2xl font-bold">{completedCount} / {LESSONS.length}</p>
           </div>
         </div>
@@ -163,7 +165,7 @@ export default function KidLearnPage() {
                 key={b.threshold}
                 title={b.label}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                  earned ? "bg-white/25" : "bg-black/10 opacity-50"
+                  earned ? "bg-white/15 text-white" : "bg-white/[0.04] text-white/30"
                 }`}
               >
                 {b.emoji} {b.label}
@@ -171,7 +173,7 @@ export default function KidLearnPage() {
             );
           })}
         </div>
-      </div>
+      </KCard>
 
       {/* Lessons */}
       <div className="space-y-2">
@@ -181,17 +183,17 @@ export default function KidLearnPage() {
             <button
               key={l.id}
               onClick={() => openLesson(l)}
-              className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3 text-left hover:bg-purple-50 transition-colors"
+              className="w-full rounded-3xl bg-white/[0.04] border border-white/[0.07] p-4 flex items-center gap-3 text-left hover:bg-white/[0.07] transition-colors"
             >
-              <div className="w-11 h-11 rounded-full bg-purple-50 flex items-center justify-center text-xl shrink-0">
+              <div className="w-11 h-11 rounded-full bg-white/[0.06] flex items-center justify-center text-xl shrink-0">
                 {l.emoji}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 truncate">{l.title}</p>
-                <p className="text-xs text-gray-400 truncate">{l.intro}</p>
+                <p className="font-medium truncate">{l.title}</p>
+                <p className="text-xs text-white/40 truncate">{l.intro}</p>
               </div>
-              <span className={`shrink-0 text-sm font-semibold ${isDone ? "text-green-600" : "text-purple-400"}`}>
-                {isDone ? "✅" : `${l.stars} ⭐`}
+              <span className={`shrink-0 text-sm font-semibold inline-flex items-center gap-1 ${isDone ? "text-emerald-300" : "text-fuchsia-300"}`}>
+                {isDone ? <CheckCircle2 className="h-4 w-4" /> : <>{l.stars} <Star className="h-3.5 w-3.5 fill-current" /></>}
               </span>
             </button>
           );
