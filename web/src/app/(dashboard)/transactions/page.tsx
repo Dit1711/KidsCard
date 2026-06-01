@@ -110,7 +110,7 @@ export default function TransactionsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Транзакции</h1>
-        <p className="text-gray-400">Сначала создайте семью и выдайте карту.</p>
+        <p className="text-muted-foreground">Сначала создайте семью и выдайте карту.</p>
       </div>
     );
   }
@@ -130,8 +130,8 @@ export default function TransactionsPage() {
                 onClick={() => setSelectedCard(c.id)}
                 className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                   selectedCard === c.id
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "border-gray-200 hover:border-indigo-300"
+                    ? "bg-primary text-white border-primary"
+                    : "border-border hover:border-primary/40"
                 }`}
               >
                 {ch?.fullName ?? c.maskedPan}
@@ -142,7 +142,7 @@ export default function TransactionsPage() {
       )}
 
       {!selectedCard && cards?.length === 0 && (
-        <p className="text-gray-400">Карты не выданы.</p>
+        <p className="text-muted-foreground">Карты не выданы.</p>
       )}
 
       {selectedCard && card && (
@@ -152,9 +152,9 @@ export default function TransactionsPage() {
             <CardContent className="pt-5 pb-5">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="text-indigo-200 text-xs">{card.cardType} · {card.network}</p>
+                  <p className="text-white/70 text-xs">{card.cardType} · {card.network}</p>
                   <p className="font-semibold text-lg">{child?.fullName ?? "Ребёнок"}</p>
-                  <p className="font-mono text-sm tracking-wider text-indigo-200">{card.maskedPan}</p>
+                  <p className="font-mono text-sm tracking-wider text-white/70">{card.maskedPan}</p>
                 </div>
                 <Badge
                   variant="outline"
@@ -168,7 +168,7 @@ export default function TransactionsPage() {
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-indigo-200 text-xs mb-1">Текущий баланс</p>
+                  <p className="text-white/70 text-xs mb-1">Текущий баланс</p>
                   <p className="text-3xl font-bold">
                     {balance ? formatSum(balance.balanceUzs) : "—"}
                   </p>
@@ -219,7 +219,7 @@ export default function TransactionsPage() {
                     <button
                       key={amt}
                       onClick={() => setTopUpAmount(String(amt))}
-                      className="px-2 py-1 text-xs border rounded hover:border-indigo-400 transition-colors"
+                      className="px-2 py-1 text-xs border rounded hover:border-primary/50 transition-colors"
                     >
                       {formatSum(amt)}
                     </button>
@@ -246,9 +246,9 @@ export default function TransactionsPage() {
           {/* Transaction history */}
           <div>
             <h2 className="text-lg font-semibold mb-3">История операций</h2>
-            {txLoading && <p className="text-gray-400">Загрузка...</p>}
+            {txLoading && <p className="text-muted-foreground">Загрузка...</p>}
             {txPage?.content.length === 0 && (
-              <p className="text-gray-400 text-sm">Операций ещё нет.</p>
+              <p className="text-muted-foreground text-sm">Операций ещё нет.</p>
             )}
             <div className="space-y-2">
               {txPage?.content.map((tx) => {
@@ -263,7 +263,7 @@ export default function TransactionsPage() {
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-white hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg border bg-white hover:bg-muted/60 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
@@ -275,14 +275,14 @@ export default function TransactionsPage() {
                         <p className="text-sm font-medium">
                           {tx.merchantName ?? typeLabel[tx.type] ?? tx.type}
                         </p>
-                        <p className="text-xs text-gray-400">{formatDate(tx.createdAt)}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-semibold text-sm ${isCredit ? "text-green-600" : "text-gray-900"}`}>
+                      <p className={`font-semibold text-sm ${isCredit ? "text-green-600" : "text-foreground"}`}>
                         {isCredit ? "+" : "−"}{formatSum(tx.amountUzs)}
                       </p>
-                      <p className="text-xs text-gray-400">{formatSum(tx.balanceAfter)}</p>
+                      <p className="text-xs text-muted-foreground">{formatSum(tx.balanceAfter)}</p>
                     </div>
                   </div>
                 );
@@ -290,7 +290,7 @@ export default function TransactionsPage() {
             </div>
 
             {txPage && txPage.totalElements > txPage.content.length && (
-              <p className="text-xs text-center text-gray-400 mt-3">
+              <p className="text-xs text-center text-muted-foreground mt-3">
                 Показано {txPage.content.length} из {txPage.totalElements}
               </p>
             )}

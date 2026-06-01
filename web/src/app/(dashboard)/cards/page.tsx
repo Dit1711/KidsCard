@@ -76,7 +76,7 @@ export default function CardsPage() {
         <h1 className="text-2xl font-bold">Карты</h1>
         <Card className="border-dashed border-2">
           <CardContent className="flex flex-col items-center py-10 gap-3">
-            <p className="text-gray-400">Сначала создайте семью</p>
+            <p className="text-muted-foreground">Сначала создайте семью</p>
             <Link href="/family"><Button>Перейти к семье</Button></Link>
           </CardContent>
         </Card>
@@ -124,8 +124,8 @@ export default function CardsPage() {
                     onClick={() => setCardType(t)}
                     className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
                       cardType === t
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "border-gray-200 hover:border-indigo-300"
+                        ? "bg-primary text-white border-primary"
+                        : "border-border hover:border-primary/40"
                     }`}
                   >
                     {t === "VIRTUAL" ? "💻 Виртуальная" : "💳 Физическая"}
@@ -143,8 +143,8 @@ export default function CardsPage() {
                     onClick={() => setNetwork(n)}
                     className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
                       network === n
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "border-gray-200 hover:border-indigo-300"
+                        ? "bg-primary text-white border-primary"
+                        : "border-border hover:border-primary/40"
                     }`}
                   >
                     {n}
@@ -169,12 +169,12 @@ export default function CardsPage() {
       )}
 
       {/* Cards list */}
-      {isLoading && <p className="text-gray-400">Загрузка...</p>}
+      {isLoading && <p className="text-muted-foreground">Загрузка...</p>}
 
       {cards?.length === 0 && !showIssue && (
         <Card className="border-dashed border-2">
           <CardContent className="flex flex-col items-center py-10 gap-3">
-            <p className="text-gray-400">Карты ещё не выданы</p>
+            <p className="text-muted-foreground">Карты ещё не выданы</p>
           </CardContent>
         </Card>
       )}
@@ -192,7 +192,7 @@ export default function CardsPage() {
                 <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-4 mb-4">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <p className="text-xs text-indigo-200">{card.cardType} · {card.network}</p>
+                      <p className="text-xs text-white/70">{card.cardType} · {card.network}</p>
                       <p className="font-semibold">{child?.fullName ?? "Ребёнок"}</p>
                     </div>
                     <Badge
@@ -206,7 +206,7 @@ export default function CardsPage() {
                   </div>
                   <p className="font-mono text-lg tracking-widest mb-3">{card.maskedPan}</p>
                   <div className="flex justify-between">
-                    <span className="text-indigo-200 text-sm">
+                    <span className="text-white/70 text-sm">
                       {String(card.expiryMonth).padStart(2, "0")}/{card.expiryYear}
                     </span>
                     <span className="font-bold">{formatSum(balances[card.id] ?? 0)}</span>

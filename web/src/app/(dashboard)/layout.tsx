@@ -67,8 +67,8 @@ export default function DashboardLayout({
   // instead of flashing the login redirect.
   if (!hasHydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-300 text-sm animate-pulse">Загрузка…</div>
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <div className="text-muted-foreground/60 text-sm animate-pulse">Загрузка…</div>
       </div>
     );
   }

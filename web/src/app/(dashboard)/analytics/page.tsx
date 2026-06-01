@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Аналитика</h1>
-        <p className="text-gray-400">Сначала создайте семью.</p>
+        <p className="text-muted-foreground">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Аналитика</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Траты, накопления и задания ребёнка
         </p>
       </div>
@@ -123,8 +123,8 @@ export default function AnalyticsPage() {
               onClick={() => setSelectedChild(c.id)}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedChild === c.id
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "border-gray-200 hover:border-indigo-300"
+                  ? "bg-primary text-white border-primary"
+                  : "border-border hover:border-primary/40"
               }`}
             >
               {c.fullName}
@@ -132,11 +132,11 @@ export default function AnalyticsPage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-400 text-sm">Сначала добавьте детей в разделе «Семья».</p>
+        <p className="text-muted-foreground text-sm">Сначала добавьте детей в разделе «Семья».</p>
       )}
 
       {!card && selectedChild && (
-        <p className="text-gray-400 text-sm">У ребёнка пока нет карты.</p>
+        <p className="text-muted-foreground text-sm">У ребёнка пока нет карты.</p>
       )}
 
       {card && (
@@ -149,8 +149,8 @@ export default function AnalyticsPage() {
                 onClick={() => setDays(p.days)}
                 className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                   days === p.days
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "border-gray-200 hover:border-indigo-300"
+                    ? "bg-primary text-white border-primary"
+                    : "border-border hover:border-primary/40"
                 }`}
               >
                 {p.label}
@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 {total === 0 ? (
-                  <p className="text-sm text-gray-400">Покупок за период не было</p>
+                  <p className="text-sm text-muted-foreground">Покупок за период не было</p>
                 ) : (
                   <div className="space-y-3">
                     {analytics?.byCategory.map((c) => {
@@ -176,14 +176,14 @@ export default function AnalyticsPage() {
                       return (
                         <div key={c.mcc}>
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="font-medium text-gray-700">
+                            <span className="font-medium text-foreground">
                               {meta.icon} {meta.label}
                             </span>
-                            <span className="text-gray-500">
+                            <span className="text-muted-foreground">
                               {formatSum(c.amountUzs)} · {pct}%
                             </span>
                           </div>
-                          <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                             <div
                               className="h-full rounded-full"
                               style={{ width: `${pct}%`, backgroundColor: meta.color }}
@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 {total === 0 ? (
-                  <p className="text-sm text-gray-400">Нет данных</p>
+                  <p className="text-sm text-muted-foreground">Нет данных</p>
                 ) : (
                   <div className="flex items-end gap-[2px] h-32">
                     {analytics?.byDay.map((d) => {
@@ -213,7 +213,7 @@ export default function AnalyticsPage() {
                       return (
                         <div
                           key={d.date}
-                          className="flex-1 bg-indigo-200 rounded-t hover:bg-indigo-400 transition-colors"
+                          className="flex-1 bg-primary/25 rounded-t hover:bg-primary/60 transition-colors"
                           style={{ height: `${Math.max(2, h)}%` }}
                           title={`${d.date}: ${formatSum(d.amountUzs)}`}
                         />
@@ -222,7 +222,7 @@ export default function AnalyticsPage() {
                   </div>
                 )}
                 {analytics && analytics.byDay.length > 0 && (
-                  <div className="flex justify-between text-[11px] text-gray-400 mt-2">
+                  <div className="flex justify-between text-[11px] text-muted-foreground mt-2">
                     <span>{analytics.byDay[0].date.slice(5)}</span>
                     <span>{analytics.byDay[analytics.byDay.length - 1].date.slice(5)}</span>
                   </div>
@@ -238,7 +238,7 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {childGoals.length === 0 && (
-                  <p className="text-sm text-gray-400">Целей пока нет</p>
+                  <p className="text-sm text-muted-foreground">Целей пока нет</p>
                 )}
                 {childGoals.map((g) => {
                   const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
@@ -246,14 +246,14 @@ export default function AnalyticsPage() {
                   return (
                     <div key={g.id}>
                       <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-foreground">
                           {done ? "🎉 " : ""}{g.title}
                         </span>
-                        <span className="text-gray-500">
+                        <span className="text-muted-foreground">
                           {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
                         </span>
                       </div>
-                      <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                         <div
                           className={`h-full rounded-full ${done ? "bg-green-500" : "bg-purple-500"}`}
                           style={{ width: `${pct}%` }}
@@ -278,21 +278,21 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-xl bg-gray-50 py-4">
-                    <p className="text-2xl font-bold text-gray-700">{choresOpen}</p>
-                    <p className="text-xs text-gray-400 mt-1">К выполнению</p>
+                  <div className="rounded-xl bg-muted/50 py-4">
+                    <p className="text-2xl font-bold text-foreground">{choresOpen}</p>
+                    <p className="text-xs text-muted-foreground mt-1">К выполнению</p>
                   </div>
                   <div className="rounded-xl bg-amber-50 py-4">
                     <p className="text-2xl font-bold text-amber-600">{choresPending}</p>
-                    <p className="text-xs text-gray-400 mt-1">На проверке</p>
+                    <p className="text-xs text-muted-foreground mt-1">На проверке</p>
                   </div>
                   <div className="rounded-xl bg-green-50 py-4">
                     <p className="text-2xl font-bold text-green-600">{choresDone}</p>
-                    <p className="text-xs text-gray-400 mt-1">Выполнено</p>
+                    <p className="text-xs text-muted-foreground mt-1">Выполнено</p>
                   </div>
                 </div>
                 {childChores.length > 0 && (
-                  <p className="text-xs text-gray-400 mt-3 text-center">
+                  <p className="text-xs text-muted-foreground mt-3 text-center">
                     Заработано на заданиях:{" "}
                     {formatSum(
                       childChores

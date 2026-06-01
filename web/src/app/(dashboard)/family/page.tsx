@@ -126,7 +126,7 @@ export default function FamilyPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Семья</h1>
 
-      {isLoading && <p className="text-gray-400">Загрузка...</p>}
+      {isLoading && <p className="text-muted-foreground">Загрузка...</p>}
 
       {/* No family yet */}
       {noFamily && (
@@ -246,10 +246,10 @@ export default function FamilyPage() {
                       <p className="font-medium">
                         {p.fullName}
                         {p.userId === user?.id && (
-                          <span className="ml-2 text-xs text-gray-400">(вы)</span>
+                          <span className="ml-2 text-xs text-muted-foreground">(вы)</span>
                         )}
                       </p>
-                      <p className="text-sm text-gray-400">{p.phone}</p>
+                      <p className="text-sm text-muted-foreground">{p.phone}</p>
                     </div>
                     <Badge variant={p.role === "OWNER" ? "default" : "secondary"}>
                       {p.role === "OWNER" ? "👑 Владелец" : "Со-родитель"}
@@ -309,10 +309,10 @@ export default function FamilyPage() {
               </Card>
             )}
 
-            {childrenLoading && <p className="text-gray-400">Загрузка детей...</p>}
+            {childrenLoading && <p className="text-muted-foreground">Загрузка детей...</p>}
 
             {children?.length === 0 && (
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Детей ещё нет. Добавьте первого ребёнка.
               </p>
             )}
@@ -324,7 +324,7 @@ export default function FamilyPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{child.fullName}</p>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                           {calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}
                         </p>
                       </div>

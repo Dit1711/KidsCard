@@ -125,7 +125,7 @@ export default function ChoresPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Задания</h1>
-        <p className="text-gray-400">Сначала создайте семью.</p>
+        <p className="text-muted-foreground">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function ChoresPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Задания</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Ставьте задания с наградой — за выполнение деньги падают на карту
           </p>
         </div>
@@ -208,7 +208,7 @@ export default function ChoresPage() {
               <Input type="number" placeholder="15000" value={reward} onChange={(e) => setReward(e.target.value)} />
               <div className="flex gap-2 flex-wrap">
                 {[5000, 10000, 15000, 25000].map((a) => (
-                  <button key={a} onClick={() => setReward(String(a))} className="px-2 py-1 text-xs border rounded hover:border-indigo-400">
+                  <button key={a} onClick={() => setReward(String(a))} className="px-2 py-1 text-xs border rounded hover:border-primary/50">
                     {formatSum(a)}
                   </button>
                 ))}
@@ -227,8 +227,8 @@ export default function ChoresPage() {
                     onClick={() => setRecurrence(r.v as "NONE" | "DAILY" | "WEEKLY")}
                     className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
                       recurrence === r.v
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                        : "border-gray-200 text-gray-600 hover:border-indigo-300"
+                        ? "border-primary bg-accent text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/40"
                     }`}
                   >
                     {r.l}
@@ -236,7 +236,7 @@ export default function ChoresPage() {
                 ))}
               </div>
               {recurrence !== "NONE" && (
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-muted-foreground">
                   После подтверждения задание появится снова — награда резервируется каждый раз.
                 </p>
               )}
@@ -253,7 +253,7 @@ export default function ChoresPage() {
                 ? "Резервируем награду…"
                 : "Создать задание"}
             </Button>
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               Доступно в кошельке: {formatSum(wallet?.availableUzs ?? 0)}
             </p>
           </CardContent>
@@ -272,10 +272,10 @@ export default function ChoresPage() {
                     <p className="font-medium">
                       {c.title}
                       {c.recurrence !== "NONE" && (
-                        <span className="ml-2 text-[11px] font-normal text-indigo-500">{recurBadge(c.recurrence)}</span>
+                        <span className="ml-2 text-[11px] font-normal text-primary">{recurBadge(c.recurrence)}</span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500">{childName(c.childId)} · награда {formatSum(c.rewardAmount)}</p>
+                    <p className="text-xs text-muted-foreground">{childName(c.childId)} · награда {formatSum(c.rewardAmount)}</p>
                   </div>
                   <Button size="sm" onClick={() => approve.mutate(c.id)} disabled={approve.isPending}>
                     Подтвердить и наградить
@@ -289,8 +289,8 @@ export default function ChoresPage() {
 
       {/* Active */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-600 mb-2">📋 Активные</h2>
-        {pending.length === 0 && <p className="text-gray-400 text-sm">Нет активных заданий</p>}
+        <h2 className="text-sm font-semibold text-muted-foreground mb-2">📋 Активные</h2>
+        {pending.length === 0 && <p className="text-muted-foreground text-sm">Нет активных заданий</p>}
         <div className="space-y-2">
           {pending.map((c) => (
             <Card key={c.id}>
@@ -299,10 +299,10 @@ export default function ChoresPage() {
                   <p className="font-medium">
                     {c.title}
                     {c.recurrence !== "NONE" && (
-                      <span className="ml-2 text-[11px] font-normal text-indigo-500">{recurBadge(c.recurrence)}</span>
+                      <span className="ml-2 text-[11px] font-normal text-primary">{recurBadge(c.recurrence)}</span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-400">{childName(c.childId)}</p>
+                  <p className="text-xs text-muted-foreground">{childName(c.childId)}</p>
                 </div>
                 <Badge variant="secondary">{formatSum(c.rewardAmount)}</Badge>
               </CardContent>
@@ -321,7 +321,7 @@ export default function ChoresPage() {
                 <CardContent className="flex items-center justify-between py-3">
                   <div>
                     <p className="font-medium">{c.title}</p>
-                    <p className="text-xs text-gray-400">{childName(c.childId)} · награждено {formatSum(c.rewardAmount)}</p>
+                    <p className="text-xs text-muted-foreground">{childName(c.childId)} · награждено {formatSum(c.rewardAmount)}</p>
                   </div>
                   <span className="text-green-600 text-lg">✓</span>
                 </CardContent>
@@ -345,7 +345,7 @@ export default function ChoresPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <p className="font-medium">{done ? "🎉 " : ""}{g.title}</p>
-                        <p className="text-xs text-gray-400">{childName(g.childId)}</p>
+                        <p className="text-xs text-muted-foreground">{childName(g.childId)}</p>
                       </div>
                       <p className="text-sm font-semibold text-purple-600">
                         {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
@@ -359,7 +359,7 @@ export default function ChoresPage() {
                     </div>
                     {!done && (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 mr-auto">Подкинуть из кошелька:</span>
+                        <span className="text-xs text-muted-foreground mr-auto">Подкинуть из кошелька:</span>
                         {[10000, 25000, 50000].map((amt) => (
                           <button
                             key={amt}

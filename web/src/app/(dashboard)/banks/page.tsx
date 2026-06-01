@@ -101,19 +101,19 @@ export default function BanksPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Банковские счета</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Open Banking: привяжите счёт и пополняйте карты детей напрямую
         </p>
       </div>
 
-      {isLoading && <p className="text-gray-400">Загрузка…</p>}
+      {isLoading && <p className="text-muted-foreground">Загрузка…</p>}
 
       {/* No accounts → link */}
       {accounts && accounts.length === 0 && (
-        <Card className="border-dashed border-2 border-indigo-200">
+        <Card className="border-dashed border-2 border-border">
           <CardContent className="flex flex-col items-center py-10 gap-4">
             <span className="text-4xl">🏦</span>
-            <p className="text-gray-500">Нет привязанных счетов</p>
+            <p className="text-muted-foreground">Нет привязанных счетов</p>
             <div className="flex gap-2">
               {banks?.map((b) => (
                 <Button
@@ -125,7 +125,7 @@ export default function BanksPage() {
                 </Button>
               ))}
             </div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               В демо-режиме банк авторизует доступ автоматически
             </p>
           </CardContent>
@@ -141,7 +141,7 @@ export default function BanksPage() {
                 <div className="rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 text-white p-4 mb-4">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <p className="text-xs text-slate-300">{acc.bankCode} · {acc.accountType}</p>
+                      <p className="text-xs text-white/60">{acc.bankCode} · {acc.accountType}</p>
                       <p className="font-semibold">{acc.holderName ?? "Счёт"}</p>
                     </div>
                     <Badge variant="outline" className="border-white/30 text-green-300 text-xs">
@@ -150,7 +150,7 @@ export default function BanksPage() {
                   </div>
                   <p className="font-mono text-lg tracking-widest mb-3">{acc.maskedNumber}</p>
                   <div className="flex justify-between items-end">
-                    <span className="text-slate-300 text-sm">Доступно</span>
+                    <span className="text-white/60 text-sm">Доступно</span>
                     <span className="font-bold text-xl">{formatSum(acc.balanceUzs)}</span>
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export default function BanksPage() {
                           <button
                             key={amt}
                             onClick={() => setFundAmount(String(amt))}
-                            className="px-2 py-1 text-xs border rounded hover:border-indigo-400 transition-colors"
+                            className="px-2 py-1 text-xs border rounded hover:border-primary/50 transition-colors"
                           >
                             {formatSum(amt)}
                           </button>

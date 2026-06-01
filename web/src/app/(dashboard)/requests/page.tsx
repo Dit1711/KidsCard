@@ -63,7 +63,7 @@ export default function RequestsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Запросы</h1>
-        <p className="text-gray-400">Сначала создайте семью.</p>
+        <p className="text-muted-foreground">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function RequestsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Запросы от детей</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Пополнение карты и повышение лимитов — по просьбе ребёнка
         </p>
       </div>
@@ -95,15 +95,15 @@ export default function RequestsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {pending.length === 0 && (
-            <p className="text-sm text-gray-400">Новых запросов нет</p>
+            <p className="text-sm text-muted-foreground">Новых запросов нет</p>
           )}
           {pending.map((r) => (
-            <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-50">
+            <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/50">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-foreground">
                   {r.type === "TOPUP" ? "💰" : "🛡️"} {childName(r.childId)}: {describe(r)}
                 </p>
-                {r.note && <p className="text-xs text-gray-500 mt-0.5">«{r.note}»</p>}
+                {r.note && <p className="text-xs text-muted-foreground mt-0.5">«{r.note}»</p>}
               </div>
               <div className="flex gap-2 shrink-0">
                 <Button
@@ -134,13 +134,13 @@ export default function RequestsPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           {resolved.length === 0 && (
-            <p className="text-sm text-gray-400">Пока пусто</p>
+            <p className="text-sm text-muted-foreground">Пока пусто</p>
           )}
           {resolved.map((r) => {
             const st = STATUS[r.status] ?? { label: r.status, variant: "secondary" as const };
             return (
               <div key={r.id} className="flex items-center justify-between gap-3 p-2 rounded-lg">
-                <p className="text-sm text-gray-700 min-w-0 truncate">
+                <p className="text-sm text-foreground min-w-0 truncate">
                   {r.type === "TOPUP" ? "💰" : "🛡️"} {childName(r.childId)}: {describe(r)}
                 </p>
                 <Badge variant={st.variant}>{st.label}</Badge>

@@ -87,7 +87,7 @@ export default function LimitsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Лимиты</h1>
-        <p className="text-gray-400">Сначала создайте семью.</p>
+        <p className="text-muted-foreground">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function LimitsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Лимиты трат</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Ограничьте расходы ребёнка по периодам и категориям
         </p>
       </div>
@@ -113,8 +113,8 @@ export default function LimitsPage() {
               onClick={() => setSelectedChild(c.id)}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedChild === c.id
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "border-gray-200 hover:border-indigo-300"
+                  ? "bg-primary text-white border-primary"
+                  : "border-border hover:border-primary/40"
               }`}
             >
               {c.fullName}
@@ -122,7 +122,7 @@ export default function LimitsPage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-400 text-sm">Сначала добавьте детей в разделе «Семья».</p>
+        <p className="text-muted-foreground text-sm">Сначала добавьте детей в разделе «Семья».</p>
       )}
 
       {selectedChild && (
@@ -136,10 +136,10 @@ export default function LimitsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 {periodLimits.length === 0 && (
-                  <p className="text-sm text-gray-400">Лимиты не установлены</p>
+                  <p className="text-sm text-muted-foreground">Лимиты не установлены</p>
                 )}
                 {periodLimits.map((limit) => (
-                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{periodLabel(limit.limitType)}</Badge>
                       <span className="text-sm font-medium">{formatSum(limit.amountUzs)}</span>
@@ -163,8 +163,8 @@ export default function LimitsPage() {
                         onClick={() => setPeriodType(t.value)}
                         className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
                           periodType === t.value
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "border-gray-200 hover:border-indigo-300"
+                            ? "bg-primary text-white border-primary"
+                            : "border-border hover:border-primary/40"
                         }`}
                       >
                         {t.label}
@@ -196,14 +196,14 @@ export default function LimitsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 {categoryLimits.length === 0 && (
-                  <p className="text-sm text-gray-400">Категорийные лимиты не установлены</p>
+                  <p className="text-sm text-muted-foreground">Категорийные лимиты не установлены</p>
                 )}
                 {categoryLimits.map((limit) => (
-                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{categoryLabel(limit.category)}</Badge>
                       <span className="text-sm font-medium">
-                        {formatSum(limit.amountUzs)} <span className="text-xs text-gray-400">/ мес</span>
+                        {formatSum(limit.amountUzs)} <span className="text-xs text-muted-foreground">/ мес</span>
                       </span>
                     </div>
                     <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-red-400 hover:text-red-600">
@@ -225,12 +225,12 @@ export default function LimitsPage() {
                         onClick={() => setCatMcc(c.mcc)}
                         className={`flex flex-col items-center gap-1 rounded-lg border py-2 transition-colors ${
                           catMcc === c.mcc
-                            ? "border-indigo-600 bg-indigo-50"
-                            : "border-gray-200 hover:border-indigo-300"
+                            ? "border-primary bg-accent"
+                            : "border-border hover:border-primary/40"
                         }`}
                       >
                         <span className="text-xl">{c.icon}</span>
-                        <span className="text-[11px] text-gray-600">{c.label}</span>
+                        <span className="text-[11px] text-muted-foreground">{c.label}</span>
                       </button>
                     ))}
                   </div>

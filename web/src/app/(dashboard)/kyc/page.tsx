@@ -79,14 +79,14 @@ export default function KycPage() {
   };
 
   if (isLoading) {
-    return <p className="text-gray-400">Загрузка…</p>;
+    return <p className="text-muted-foreground">Загрузка…</p>;
   }
 
   return (
     <div className="max-w-xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Верификация личности</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Требуется для выпуска карт и соответствия требованиям ЦБ РУз
         </p>
       </div>
@@ -124,13 +124,13 @@ export default function KycPage() {
                 <div key={label} className="flex items-center gap-2 flex-1">
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                      reached ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-400"
+                      reached ? "bg-primary text-white" : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {i + 1}
                   </div>
-                  <span className={reached ? "text-gray-900" : "text-gray-400"}>{label}</span>
-                  {i < 2 && <div className="flex-1 h-px bg-gray-200" />}
+                  <span className={reached ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+                  {i < 2 && <div className="flex-1 h-px bg-muted" />}
                 </div>
               );
             })}
@@ -152,8 +152,8 @@ export default function KycPage() {
                       onClick={() => setDocType(d.value)}
                       className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
                         docType === d.value
-                          ? "border-indigo-600 bg-indigo-50"
-                          : "border-gray-200 hover:border-indigo-300"
+                          ? "border-primary bg-accent"
+                          : "border-border hover:border-primary/40"
                       }`}
                     >
                       <span className="text-2xl">{d.icon}</span>
@@ -179,10 +179,10 @@ export default function KycPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col items-center py-6 gap-2">
-                  <div className="w-28 h-28 rounded-full border-4 border-dashed border-indigo-200 flex items-center justify-center text-4xl">
+                  <div className="w-28 h-28 rounded-full border-4 border-dashed border-border flex items-center justify-center text-4xl">
                     🤳
                   </div>
-                  <p className="text-sm text-gray-400">Посмотрите в камеру</p>
+                  <p className="text-sm text-muted-foreground">Посмотрите в камеру</p>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <Button onClick={handleLiveness} disabled={busy} className="w-full">

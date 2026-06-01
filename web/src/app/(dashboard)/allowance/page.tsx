@@ -90,7 +90,7 @@ export default function AllowancePage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Карманные деньги</h1>
-        <p className="text-gray-400">Сначала создайте семью.</p>
+        <p className="text-muted-foreground">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function AllowancePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Карманные деньги</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Автоматическое пополнение карты по расписанию
         </p>
       </div>
@@ -113,8 +113,8 @@ export default function AllowancePage() {
               onClick={() => setSelectedChild(c.id)}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                 selectedChild === c.id
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "border-gray-200 hover:border-indigo-300"
+                  ? "bg-primary text-white border-primary"
+                  : "border-border hover:border-primary/40"
               }`}
             >
               {c.fullName}
@@ -122,7 +122,7 @@ export default function AllowancePage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-400 text-sm">Сначала добавьте детей в разделе «Семья».</p>
+        <p className="text-muted-foreground text-sm">Сначала добавьте детей в разделе «Семья».</p>
       )}
 
       {selectedChild && (
@@ -135,7 +135,7 @@ export default function AllowancePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {!childCard ? (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 У ребёнка нет карты. Выдайте карту в разделе «Карты».
               </p>
             ) : (
@@ -158,7 +158,7 @@ export default function AllowancePage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400">Расписание не настроено</p>
+                  <p className="text-sm text-muted-foreground">Расписание не настроено</p>
                 )}
 
                 <Separator />
@@ -177,8 +177,8 @@ export default function AllowancePage() {
                           onClick={() => setAllowanceFreq(f.value)}
                           className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
                             allowanceFreq === f.value
-                              ? "bg-indigo-600 text-white border-indigo-600"
-                              : "border-gray-200 hover:border-indigo-300"
+                              ? "bg-primary text-white border-primary"
+                              : "border-border hover:border-primary/40"
                           }`}
                         >
                           {f.label}
@@ -197,8 +197,8 @@ export default function AllowancePage() {
                             onClick={() => setAllowanceDow(d.value)}
                             className={`w-9 h-9 rounded-md text-sm border transition-colors ${
                               allowanceDow === d.value
-                                ? "bg-indigo-600 text-white border-indigo-600"
-                                : "border-gray-200 hover:border-indigo-300"
+                                ? "bg-primary text-white border-primary"
+                                : "border-border hover:border-primary/40"
                             }`}
                           >
                             {d.label}
@@ -209,7 +209,7 @@ export default function AllowancePage() {
                   )}
 
                   {allowanceFreq === "MONTHLY" && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       Пополнение 1-го числа каждого месяца
                     </p>
                   )}
