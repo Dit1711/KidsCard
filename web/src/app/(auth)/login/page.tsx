@@ -62,7 +62,7 @@ export default function LoginPage() {
   return (
     <Card className="border-0 shadow-soft rounded-2xl">
       <CardHeader className="space-y-1.5">
-        <CardTitle className="text-2xl tracking-tight">С возвращением 👋</CardTitle>
+        <CardTitle className="text-2xl tracking-tight">С возвращением</CardTitle>
         <CardDescription className="text-sm">
           {step === "phone"
             ? "Войдите по номеру телефона"
@@ -100,7 +100,7 @@ export default function LoginPage() {
                 href="/child-login"
                 className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
               >
-                🧒 Вход для детей
+                Вход для детей
               </Link>
             </div>
           </form>

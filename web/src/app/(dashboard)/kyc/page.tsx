@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BookText, IdCard, Car, ScanFace, CheckCircle2 } from "lucide-react";
 
 const DOC_TYPES = [
-  { value: "PASSPORT", label: "Паспорт", icon: "📘" },
-  { value: "ID_CARD", label: "ID-карта", icon: "🪪" },
-  { value: "DRIVING_LICENSE", label: "Водительские права", icon: "🚗" },
+  { value: "PASSPORT", label: "Паспорт", Icon: BookText },
+  { value: "ID_CARD", label: "ID-карта", Icon: IdCard },
+  { value: "DRIVING_LICENSE", label: "Водительские права", Icon: Car },
 ];
 
 type Step = "intro" | "document" | "liveness" | "done";
@@ -95,7 +96,7 @@ export default function KycPage() {
       {alreadyApproved && (
         <Card className="border-green-200 bg-green-50">
           <CardContent className="flex flex-col items-center py-10 gap-3">
-            <span className="text-5xl">✅</span>
+            <CheckCircle2 className="h-12 w-12 text-emerald-500" />
             <p className="font-medium text-green-800">Личность подтверждена</p>
             <p className="text-sm text-green-600">
               Верификация пройдена{" "}
@@ -156,7 +157,7 @@ export default function KycPage() {
                           : "border-border hover:border-primary/40"
                       }`}
                     >
-                      <span className="text-2xl">{d.icon}</span>
+                      <d.Icon className="h-6 w-6 text-muted-foreground" />
                       <span className="text-sm font-medium">{d.label}</span>
                     </button>
                   ))}
@@ -179,8 +180,8 @@ export default function KycPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col items-center py-6 gap-2">
-                  <div className="w-28 h-28 rounded-full border-4 border-dashed border-border flex items-center justify-center text-4xl">
-                    🤳
+                  <div className="w-28 h-28 rounded-full border-4 border-dashed border-border flex items-center justify-center text-muted-foreground">
+                    <ScanFace className="h-12 w-12" />
                   </div>
                   <p className="text-sm text-muted-foreground">Посмотрите в камеру</p>
                 </div>
@@ -195,7 +196,7 @@ export default function KycPage() {
           {step === "done" && (
             <Card className="border-green-200 bg-green-50">
               <CardContent className="flex flex-col items-center py-10 gap-3">
-                <span className="text-5xl">🎉</span>
+                <CheckCircle2 className="h-12 w-12 text-emerald-500" />
                 <p className="font-medium text-green-800">Верификация пройдена!</p>
                 <p className="text-sm text-green-600 text-center">
                   Личность подтверждена. Теперь доступны все возможности платформы.

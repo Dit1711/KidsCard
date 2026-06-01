@@ -119,7 +119,7 @@ export default function ChoresPage() {
     children?.find((c) => c.id === id)?.fullName ?? "Ребёнок";
 
   const recurBadge = (r: string) =>
-    r === "DAILY" ? "🔁 каждый день" : r === "WEEKLY" ? "🔁 каждую неделю" : null;
+    r === "DAILY" ? "каждый день" : r === "WEEKLY" ? "каждую неделю" : null;
 
   if (!family) {
     return (
@@ -219,8 +219,8 @@ export default function ChoresPage() {
               <div className="flex gap-2">
                 {[
                   { v: "NONE", l: "Разовое" },
-                  { v: "DAILY", l: "🔁 Каждый день" },
-                  { v: "WEEKLY", l: "🔁 Каждую неделю" },
+                  { v: "DAILY", l: "Каждый день" },
+                  { v: "WEEKLY", l: "Каждую неделю" },
                 ].map((r) => (
                   <button
                     key={r.v}
@@ -263,7 +263,7 @@ export default function ChoresPage() {
       {/* Awaiting approval */}
       {done.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-amber-700 mb-2">⏳ Ждут подтверждения</h2>
+          <h2 className="text-sm font-semibold text-amber-700 mb-2">Ждут подтверждения</h2>
           <div className="space-y-2">
             {done.map((c) => (
               <Card key={c.id} className="border-amber-200 bg-amber-50">
@@ -289,7 +289,7 @@ export default function ChoresPage() {
 
       {/* Active */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-2">📋 Активные</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-2">Активные</h2>
         {pending.length === 0 && <p className="text-muted-foreground text-sm">Нет активных заданий</p>}
         <div className="space-y-2">
           {pending.map((c) => (
@@ -314,7 +314,7 @@ export default function ChoresPage() {
       {/* Done */}
       {approved.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-green-700 mb-2">✅ Выполнены</h2>
+          <h2 className="text-sm font-semibold text-green-700 mb-2">Выполнены</h2>
           <div className="space-y-2">
             {approved.map((c) => (
               <Card key={c.id} className="opacity-75">
@@ -334,7 +334,7 @@ export default function ChoresPage() {
       {/* Children's savings goals — parent can chip in from the wallet */}
       {goals && goals.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-purple-700 mb-2">🐷 Цели детей</h2>
+          <h2 className="text-sm font-semibold text-purple-700 mb-2">Цели детей</h2>
           <div className="space-y-2">
             {goals.map((g) => {
               const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
@@ -344,7 +344,7 @@ export default function ChoresPage() {
                   <CardContent className="py-3">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="font-medium">{done ? "🎉 " : ""}{g.title}</p>
+                        <p className="font-medium">{done ? "" : ""}{g.title}</p>
                         <p className="text-xs text-muted-foreground">{childName(g.childId)}</p>
                       </div>
                       <p className="text-sm font-semibold text-purple-600">

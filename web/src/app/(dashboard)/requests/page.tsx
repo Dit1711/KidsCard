@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Wallet, ShieldCheck } from "lucide-react";
 import { formatSum } from "@/lib/format";
 import { familyService, moneyRequestService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
@@ -101,7 +102,10 @@ export default function RequestsPage() {
             <div key={r.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/50">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
-                  {r.type === "TOPUP" ? "💰" : "🛡️"} {childName(r.childId)}: {describe(r)}
+                  {r.type === "TOPUP"
+                    ? <Wallet className="inline h-4 w-4 -mt-0.5 mr-1.5 text-muted-foreground" />
+                    : <ShieldCheck className="inline h-4 w-4 -mt-0.5 mr-1.5 text-muted-foreground" />}
+                  {childName(r.childId)}: {describe(r)}
                 </p>
                 {r.note && <p className="text-xs text-muted-foreground mt-0.5">«{r.note}»</p>}
               </div>
@@ -141,7 +145,10 @@ export default function RequestsPage() {
             return (
               <div key={r.id} className="flex items-center justify-between gap-3 p-2 rounded-lg">
                 <p className="text-sm text-foreground min-w-0 truncate">
-                  {r.type === "TOPUP" ? "💰" : "🛡️"} {childName(r.childId)}: {describe(r)}
+                  {r.type === "TOPUP"
+                    ? <Wallet className="inline h-4 w-4 -mt-0.5 mr-1.5 text-muted-foreground" />
+                    : <ShieldCheck className="inline h-4 w-4 -mt-0.5 mr-1.5 text-muted-foreground" />}
+                  {childName(r.childId)}: {describe(r)}
                 </p>
                 <Badge variant={st.variant}>{st.label}</Badge>
               </div>

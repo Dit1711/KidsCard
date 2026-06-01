@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { IdCard } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -60,7 +61,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Привет! 👋</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Обзор</h1>
         <p className="text-muted-foreground mt-1">
           {user?.phone} · {user?.roles.join(", ")}
         </p>
@@ -70,7 +71,9 @@ export default function DashboardPage() {
         <Link href="/kyc" className="block">
           <Card className="border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors">
             <CardContent className="flex items-center gap-4 py-4">
-              <span className="text-3xl">🪪</span>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-600">
+                <IdCard className="h-6 w-6" />
+              </span>
               <div className="flex-1">
                 <p className="font-medium text-amber-900">Подтвердите личность</p>
                 <p className="text-sm text-amber-700">

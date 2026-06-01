@@ -1,3 +1,12 @@
+import { ShieldCheck, ListChecks, PiggyBank, Bell } from "lucide-react";
+
+const VALUE_PROPS = [
+  { Icon: ShieldCheck, text: "Лимиты по дням, неделям и категориям" },
+  { Icon: ListChecks, text: "Поручения с реальной наградой на карту" },
+  { Icon: PiggyBank, text: "Накопления с начислением процентов" },
+  { Icon: Bell, text: "Уведомления в реальном времени" },
+];
+
 export default function AuthLayout({
   children,
 }: {
@@ -26,15 +35,10 @@ export default function AuthLayout({
             Карты для детей, лимиты, накопления и финансовая грамотность — в одном приложении.
           </p>
           <ul className="mt-9 space-y-3.5">
-            {[
-              ["🛡️", "Лимиты по дням, неделям и категориям"],
-              ["🎯", "Поручения с реальной наградой на карту"],
-              ["🐷", "Накопления с начислением процентов"],
-              ["🔔", "Уведомления в реальном времени"],
-            ].map(([icon, text]) => (
+            {VALUE_PROPS.map(({ Icon, text }) => (
               <li key={text} className="flex items-center gap-3 text-white/90">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15 text-lg">
-                  {icon}
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15">
+                  <Icon className="h-[18px] w-[18px]" />
                 </span>
                 <span>{text}</span>
               </li>

@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { enablePush, pushSupported } from "@/lib/push";
+import { Bell } from "lucide-react";
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -90,43 +91,44 @@ export function NotificationBell() {
     <div className="relative" ref={ref}>
       <button
         onClick={handleOpen}
-        className="relative p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        className="relative p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         aria-label="Уведомления"
       >
-        <span className="text-xl">🔔</span>
+        <Bell className="h-5 w-5" />
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
+          <span className="absolute top-0.5 right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-destructive text-white text-[10px] font-semibold flex items-center justify-center">
             {count > 9 ? "9+" : count}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white border rounded-xl shadow-lg z-50">
-          <div className="px-4 py-3 border-b sticky top-0 bg-white">
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-card border border-border rounded-xl shadow-soft z-50">
+          <div className="px-4 py-3 border-b border-border sticky top-0 bg-card">
             <p className="font-semibold text-sm">Уведомления</p>
           </div>
           {pushOn === false && pushSupported() && (
-            <div className="px-4 py-2.5 border-b bg-indigo-50/40">
+            <div className="px-4 py-2.5 border-b border-border bg-accent/50">
               <button
                 onClick={handleEnablePush}
                 disabled={pushBusy}
-                className="text-sm text-indigo-700 font-medium hover:text-indigo-900 disabled:opacity-50"
+                className="flex items-center gap-2 text-sm text-primary font-medium hover:opacity-80 disabled:opacity-50"
               >
-                {pushBusy ? "Включаем…" : "🔔 Включить пуш на телефон"}
+                <Bell className="h-4 w-4" />
+                {pushBusy ? "Включаем…" : "Включить пуш на телефон"}
               </button>
             </div>
           )}
           {pushOn === true && (
-            <div className="px-4 py-2 border-b text-xs text-green-600">
-              ✓ Пуш-уведомления включены
+            <div className="px-4 py-2 border-b border-border text-xs text-emerald-600">
+              Пуш-уведомления включены
             </div>
           )}
           {!items && (
-            <p className="px-4 py-6 text-sm text-gray-400 text-center">Загрузка…</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground text-center">Загрузка…</p>
           )}
           {items && items.length === 0 && (
-            <p className="px-4 py-8 text-sm text-gray-400 text-center">Пока нет уведомлений</p>
+            <p className="px-4 py-8 text-sm text-muted-foreground text-center">Пока нет уведомлений</p>
           )}
           <ul>
             {items?.map((n) => (

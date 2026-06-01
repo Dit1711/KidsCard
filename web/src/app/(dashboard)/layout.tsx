@@ -7,18 +7,30 @@ import { useAuthStore } from "@/store/auth";
 import { useFamilyStore } from "@/store/family";
 import { authService, familyService } from "@/lib/api";
 import { NotificationBell } from "@/components/NotificationBell";
+import {
+  LayoutGrid,
+  Users,
+  CreditCard,
+  ListChecks,
+  ArrowLeftRight,
+  Inbox,
+  BarChart3,
+  Landmark,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Обзор", icon: "🏠" },
-  { href: "/family", label: "Семья", icon: "👨‍👩‍👧" },
-  { href: "/cards", label: "Карты", icon: "💳" },
-  { href: "/chores", label: "Задания", icon: "🎯" },
-  { href: "/transactions", label: "Операции", icon: "💸" },
-  { href: "/requests", label: "Запросы", icon: "🙋" },
-  { href: "/analytics", label: "Аналитика", icon: "📊" },
-  { href: "/banks", label: "Банк", icon: "🏦" },
-  { href: "/limits", label: "Лимиты", icon: "🛡️" },
-  { href: "/allowance", label: "Карманные", icon: "🪙" },
+  { href: "/dashboard", label: "Обзор", icon: LayoutGrid },
+  { href: "/family", label: "Семья", icon: Users },
+  { href: "/cards", label: "Карты", icon: CreditCard },
+  { href: "/chores", label: "Задания", icon: ListChecks },
+  { href: "/transactions", label: "Операции", icon: ArrowLeftRight },
+  { href: "/requests", label: "Запросы", icon: Inbox },
+  { href: "/analytics", label: "Аналитика", icon: BarChart3 },
+  { href: "/banks", label: "Банк", icon: Landmark },
+  { href: "/limits", label: "Лимиты", icon: ShieldCheck },
+  { href: "/allowance", label: "Карманные", icon: Wallet },
 ];
 
 export default function DashboardLayout({
@@ -119,7 +131,7 @@ export default function DashboardLayout({
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <span className="text-base">{item.icon}</span>
+                    <item.icon className="h-[18px] w-[18px] shrink-0" />
                     {item.label}
                   </Link>
                 </li>
@@ -144,8 +156,8 @@ export default function DashboardLayout({
                 isActive ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <span className={`grid place-items-center h-7 w-7 rounded-lg text-base transition-colors ${isActive ? "bg-accent" : ""}`}>
-                {item.icon}
+              <span className={`grid place-items-center h-7 w-7 rounded-lg transition-colors ${isActive ? "bg-accent" : ""}`}>
+                <item.icon className="h-[18px] w-[18px]" />
               </span>
               {item.label}
             </Link>

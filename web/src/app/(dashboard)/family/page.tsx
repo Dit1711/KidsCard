@@ -252,7 +252,7 @@ export default function FamilyPage() {
                       <p className="text-sm text-muted-foreground">{p.phone}</p>
                     </div>
                     <Badge variant={p.role === "OWNER" ? "default" : "secondary"}>
-                      {p.role === "OWNER" ? "👑 Владелец" : "Со-родитель"}
+                      {p.role === "OWNER" ? "Владелец" : "Со-родитель"}
                     </Badge>
                   </CardContent>
                 </Card>

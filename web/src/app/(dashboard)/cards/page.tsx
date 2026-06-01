@@ -128,7 +128,7 @@ export default function CardsPage() {
                         : "border-border hover:border-primary/40"
                     }`}
                   >
-                    {t === "VIRTUAL" ? "💻 Виртуальная" : "💳 Физическая"}
+                    {t === "VIRTUAL" ? "Виртуальная" : "Физическая"}
                   </button>
                 ))}
               </div>
@@ -223,7 +223,7 @@ export default function CardsPage() {
                         onClick={() => unfreezeCard.mutate(card.id)}
                         disabled={unfreezeCard.isPending}
                       >
-                        ❄️ Разморозить
+                        Разморозить
                       </Button>
                     ) : (
                       <Button
@@ -232,7 +232,7 @@ export default function CardsPage() {
                         onClick={() => freezeCard.mutate(card.id)}
                         disabled={freezeCard.isPending}
                       >
-                        🔒 Заморозить
+                        Заморозить
                       </Button>
                     )}
                   </div>

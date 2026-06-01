@@ -247,7 +247,7 @@ export default function AnalyticsPage() {
                     <div key={g.id}>
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="font-medium text-foreground">
-                          {done ? "🎉 " : ""}{g.title}
+                          {done ? "" : ""}{g.title}
                         </span>
                         <span className="text-muted-foreground">
                           {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
@@ -261,7 +261,7 @@ export default function AnalyticsPage() {
                       </div>
                       {g.interestEarned > 0 && (
                         <p className="text-[11px] text-green-600 mt-1">
-                          📈 заработано на процентах: {formatSum(g.interestEarned)}
+                          заработано на процентах: {formatSum(g.interestEarned)}
                         </p>
                       )}
                     </div>

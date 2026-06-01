@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Landmark } from "lucide-react";
 import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -85,12 +86,12 @@ export default function BanksPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["balance"] });
-      setFundMsg("✅ Карта пополнена. Баланс обновится в течение пары секунд.");
+      setFundMsg("Карта пополнена. Баланс обновится в течение пары секунд.");
       setFundAmount("");
       setFundChild("");
       setFundAccount(null);
     },
-    onError: () => setFundMsg("❌ Не удалось пополнить. Проверьте баланс счёта."),
+    onError: () => setFundMsg("Не удалось пополнить. Проверьте баланс счёта."),
   });
 
   const childrenWithCards = children?.filter((c) =>
@@ -112,7 +113,9 @@ export default function BanksPage() {
       {accounts && accounts.length === 0 && (
         <Card className="border-dashed border-2 border-border">
           <CardContent className="flex flex-col items-center py-10 gap-4">
-            <span className="text-4xl">🏦</span>
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+              <Landmark className="h-7 w-7" />
+            </span>
             <p className="text-muted-foreground">Нет привязанных счетов</p>
             <div className="flex gap-2">
               {banks?.map((b) => (
