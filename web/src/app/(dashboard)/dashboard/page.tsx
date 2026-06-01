@@ -4,31 +4,27 @@ import { useQuery } from "@tanstack/react-query";
 import { formatSum } from "@/lib/format";
 import { useAuthStore } from "@/store/auth";
 import { useFamilyStore } from "@/store/family";
-import { familyService, cardService } from "@/lib/api";
+import { familyService, cardService, parentSavingsService } from "@/lib/api";
 import { useCardBalances } from "@/hooks/useCardBalances";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import Link from "next/link";
 import {
-  IdCard,
-  Plus,
-  ShieldCheck,
-  ListChecks,
-  Users,
-  CreditCard,
-  ChevronRight,
+  IdCard, Plus, ShieldCheck, ListChecks, BarChart3, Users, CreditCard,
+  ChevronRight, Sparkles, Target, Home,
 } from "lucide-react";
+
+const GRADS = [
+  "from-violet-500 to-fuchsia-500",
+  "from-sky-500 to-indigo-500",
+  "from-rose-500 to-orange-400",
+  "from-emerald-500 to-teal-500",
+  "from-amber-500 to-pink-500",
+];
 
 function HeroAction({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   return (
-    <Link
-      href={href}
-      className="flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur px-3.5 py-2.5 text-sm font-medium transition-colors"
-    >
-      <Icon className="h-4 w-4" />
-      {label}
+    <Link href={href} className="flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur px-4 py-2.5 text-sm font-medium transition-colors">
+      <Icon className="h-4 w-4" /> {label}
     </Link>
   );
 }
@@ -37,7 +33,7 @@ export default function DashboardPage() {
   const { user } = useAuthStore();
   const { family, setFamily } = useFamilyStore();
 
-  const { data: familyData, isLoading: familyLoading } = useQuery({
+  const { data: familyData } = useQuery({
     queryKey: ["my-family"],
     queryFn: async () => {
       const { data } = await familyService.getMyFamily();
@@ -47,181 +43,180 @@ export default function DashboardPage() {
     retry: false,
   });
 
+  const fam = familyData ?? family;
+
   const { data: cardsData } = useQuery({
-    queryKey: ["family-cards", familyData?.id],
+    queryKey: ["family-cards", fam?.id],
     queryFn: async () => {
-      const { data } = await cardService.getByFamily(familyData!.id);
+      const { data } = await cardService.getByFamily(fam!.id);
       return data.data;
     },
-    enabled: !!familyData?.id,
+    enabled: !!fam?.id,
   });
 
   const { data: childrenData } = useQuery({
-    queryKey: ["family-children", familyData?.id],
+    queryKey: ["family-children", fam?.id],
     queryFn: async () => {
-      const { data } = await familyService.getChildren(familyData!.id);
+      const { data } = await familyService.getChildren(fam!.id);
       return data.data;
     },
-    enabled: !!familyData?.id,
+    enabled: !!fam?.id,
+  });
+
+  const { data: goals } = useQuery({
+    queryKey: ["parent-goals", fam?.id],
+    queryFn: async () => {
+      const { data } = await parentSavingsService.list(fam!.id);
+      return data.data;
+    },
+    enabled: !!fam?.id,
   });
 
   const cardIds = cardsData?.map((c) => c.id) ?? [];
   const { byCard: balances, total: totalBalance } = useCardBalances(cardIds);
   const activeCards = cardsData?.filter((c) => c.status === "ACTIVE").length ?? 0;
 
-  const myParent = familyData?.parents.find((p) => p.userId === user?.id);
+  const myParent = fam?.parents.find((p) => p.userId === user?.id);
   const needsKyc = myParent != null && myParent.kycStatus !== "APPROVED";
+  const childName = (id: string) => childrenData?.find((c) => c.id === id)?.fullName ?? "Ребёнок";
+  const activeGoals = (goals ?? []).filter((g) => g.status !== "CANCELLED").slice(0, 3);
 
-  if (familyLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-40 rounded-lg" />
-        <Skeleton className="h-44 rounded-3xl" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
-        </div>
-        <Skeleton className="h-44 rounded-2xl" />
-      </div>
-    );
-  }
-
-  if (!familyData) {
+  if (!fam) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <span className="grid h-16 w-16 place-items-center rounded-3xl bg-accent text-primary">
+        <span className="grid h-16 w-16 place-items-center rounded-3xl bg-white/10 text-fuchsia-300">
           <Users className="h-8 w-8" />
         </span>
         <div>
           <p className="font-semibold text-lg">У вас ещё нет семьи</p>
-          <p className="text-muted-foreground text-sm mt-1">Создайте семью, чтобы выпускать карты детям</p>
+          <p className="text-white/50 text-sm mt-1">Создайте семью, чтобы выпускать карты детям</p>
         </div>
-        <Link href="/family"><Button size="lg">Создать семью</Button></Link>
+        <Link href="/family" className="rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-medium">Создать семью</Link>
       </div>
     );
   }
 
   return (
     <MotionStagger className="space-y-6">
-      <MotionItem>
-        <h1 className="text-2xl font-bold tracking-tight">Обзор</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {user?.phone} · {user?.roles.join(", ")}
-        </p>
-      </MotionItem>
-
       {needsKyc && (
         <MotionItem>
-          <Link href="/kyc" className="block group">
-            <div className="flex items-center gap-4 rounded-2xl border border-amber-300/70 bg-amber-50 px-5 py-4 transition-colors hover:bg-amber-100/70">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-600">
-                <IdCard className="h-6 w-6" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-amber-900">Подтвердите личность</p>
-                <p className="text-sm text-amber-700">Нужно для полного доступа. Это займёт минуту.</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+          <Link href="/kyc" className="group flex items-center gap-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-5 py-4 transition-colors hover:bg-amber-500/15">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-300">
+              <IdCard className="h-6 w-6" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-amber-100">Подтвердите личность</p>
+              <p className="text-sm text-amber-200/70">Нужно для полного доступа. Это займёт минуту.</p>
             </div>
+            <ChevronRight className="h-5 w-5 text-amber-300/70 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </MotionItem>
       )}
 
-      {/* Hero — total balance + quick actions */}
+      {/* Hero */}
       <MotionItem>
-        <div className="relative overflow-hidden rounded-3xl bg-brand-gradient text-white p-6 sm:p-8 shadow-soft">
-          <div className="absolute -top-20 -right-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-violet-600 via-indigo-600 to-fuchsia-600 p-7 sm:p-8">
+          <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
           <div className="relative">
-            <p className="text-white/70 text-sm">Общий баланс детей</p>
-            <p className="text-4xl sm:text-5xl font-bold tracking-tight mt-1 tabular-nums">
-              {formatSum(totalBalance)}
-            </p>
-            <p className="text-white/70 text-sm mt-3">
-              {familyData.name} · {childrenData?.length ?? 0} детей · {activeCards} активных карт
+            <div className="flex items-center gap-2 text-white/70 text-sm">
+              <Sparkles className="h-4 w-4" /> Общий баланс детей
+            </div>
+            <p className="mt-2 text-5xl sm:text-6xl font-bold tracking-tight tabular-nums">{formatSum(totalBalance)}</p>
+            <p className="text-white/70 mt-1">
+              {fam.name} · {childrenData?.length ?? 0} детей · {activeCards} активных карт
             </p>
             <div className="flex flex-wrap gap-2.5 mt-6">
               <HeroAction href="/banks" icon={Plus} label="Пополнить" />
               <HeroAction href="/limits" icon={ShieldCheck} label="Лимиты" />
               <HeroAction href="/chores" icon={ListChecks} label="Задания" />
+              <HeroAction href="/analytics" icon={BarChart3} label="Аналитика" />
             </div>
           </div>
         </div>
       </MotionItem>
 
-      {/* Stats */}
-      <MotionItem>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-            <p className="text-xs text-muted-foreground">Семья</p>
-            <p className="text-base font-semibold truncate mt-1">{familyData.name}</p>
-            <Badge variant={familyData.status === "ACTIVE" ? "default" : "secondary"} className="mt-2">
-              {familyData.status}
-            </Badge>
-          </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-            <p className="text-xs text-muted-foreground">Детей</p>
-            <p className="text-3xl font-bold text-primary mt-1 tabular-nums">{childrenData?.length ?? "—"}</p>
-            <p className="text-xs text-muted-foreground mt-1">активных в семье</p>
-          </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card col-span-2 sm:col-span-1">
-            <p className="text-xs text-muted-foreground">Карт выдано</p>
-            <p className="text-3xl font-bold text-primary mt-1 tabular-nums">{activeCards}</p>
-            <p className="text-xs text-muted-foreground mt-1">всего активных карт</p>
-          </div>
-        </div>
-      </MotionItem>
-
-      {/* Kids' cards */}
+      {/* Kids cards */}
       {cardsData && cardsData.length > 0 && (
         <MotionItem>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold tracking-tight">Карты детей</h2>
-            <Link href="/cards" className="text-sm text-primary font-medium hover:underline">Все карты</Link>
+            <p className="font-semibold tracking-tight">Карты детей</p>
+            <Link href="/cards" className="text-sm text-fuchsia-300/80 hover:text-fuchsia-300">Все карты</Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
-            {cardsData.map((card) => {
-              const child = childrenData?.find((c) => c.id === card.childId);
-              return (
-                <div
-                  key={card.id}
-                  className="snap-start shrink-0 w-[300px] rounded-2xl bg-brand-gradient text-white p-5 shadow-soft"
-                >
-                  <div className="flex justify-between items-start mb-7">
-                    <div>
-                      <p className="text-white/60 text-xs">{card.cardType} · {card.network}</p>
-                      <p className="font-medium">{child?.fullName ?? "Ребёнок"}</p>
-                    </div>
-                    <span className={`text-[11px] rounded-full px-2 py-0.5 bg-white/15 ${
-                      card.status === "ACTIVE" ? "text-emerald-100"
-                        : card.status === "FROZEN" ? "text-amber-100" : "text-red-100"
-                    }`}>
-                      {card.status}
-                    </span>
-                  </div>
-                  <p className="font-mono tracking-[0.2em] text-white/90">{card.maskedPan}</p>
-                  <div className="flex justify-between items-end mt-4">
-                    <p className="text-white/60 text-xs">
-                      {card.expiryMonth.toString().padStart(2, "0")}/{card.expiryYear}
-                    </p>
-                    <p className="text-2xl font-bold tabular-nums">{formatSum(balances[card.id] ?? 0)}</p>
-                  </div>
+          <div className="flex gap-4 overflow-x-auto pb-1 -mx-1 px-1">
+            {cardsData.map((card, i) => (
+              <div key={card.id} className={`shrink-0 w-56 rounded-3xl bg-gradient-to-br ${GRADS[i % GRADS.length]} p-5`}>
+                <div className="flex items-center justify-between">
+                  <CreditCard className="h-5 w-5 text-white/80" />
+                  <span className="text-xs text-white/70 font-mono">•• {card.maskedPan.slice(-4)}</span>
                 </div>
-              );
-            })}
+                <p className="mt-8 text-white/70 text-xs">{childName(card.childId)}</p>
+                <p className="text-2xl font-bold tabular-nums">{formatSum(balances[card.id] ?? 0)}</p>
+              </div>
+            ))}
           </div>
         </MotionItem>
       )}
 
       {cardsData?.length === 0 && (
         <MotionItem>
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border py-10 gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <CreditCard className="h-6 w-6" />
-            </span>
-            <p className="text-muted-foreground">Карты ещё не выданы</p>
-            <Link href="/cards"><Button variant="outline">Выдать первую карту</Button></Link>
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-white/[0.06] bg-white/[0.03] py-10 gap-3">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-white/50"><CreditCard className="h-6 w-6" /></span>
+            <p className="text-white/50">Карты ещё не выданы</p>
+            <Link href="/cards" className="rounded-2xl bg-white/10 hover:bg-white/15 px-4 py-2 text-sm font-medium">Выдать первую карту</Link>
           </div>
         </MotionItem>
       )}
+
+      {/* Stats + goals */}
+      <MotionItem>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            <div className="rounded-3xl bg-white/[0.04] border border-white/[0.06] p-5">
+              <p className="text-xs text-white/40">Детей</p>
+              <p className="mt-1 text-3xl font-bold tabular-nums">{childrenData?.length ?? "—"}</p>
+            </div>
+            <div className="rounded-3xl bg-white/[0.04] border border-white/[0.06] p-5">
+              <p className="text-xs text-white/40">Активных карт</p>
+              <p className="mt-1 text-3xl font-bold tabular-nums">{activeCards}</p>
+            </div>
+            <div className="col-span-2 rounded-3xl bg-white/[0.04] border border-white/[0.06] p-5 flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-white/10"><Home className="h-5 w-5 text-fuchsia-300" /></span>
+              <div>
+                <p className="text-xs text-white/40">Семья</p>
+                <p className="font-semibold">{fam.name}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-3 rounded-3xl bg-white/[0.04] border border-white/[0.06] p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-4 w-4 text-fuchsia-300" />
+              <p className="font-medium tracking-tight">Цели накопления</p>
+            </div>
+            {activeGoals.length === 0 ? (
+              <p className="text-sm text-white/40">Целей пока нет</p>
+            ) : (
+              <div className="space-y-4">
+                {activeGoals.map((g, i) => {
+                  const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
+                  return (
+                    <div key={g.id}>
+                      <div className="flex justify-between text-sm mb-1.5">
+                        <span className="text-white/80">{g.title} · {childName(g.childId)}</span>
+                        <span className="text-white/50 tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                        <div className={`h-full rounded-full bg-gradient-to-r ${GRADS[i % GRADS.length]}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="text-xs text-white/40 mt-1 tabular-nums">{formatSum(g.currentAmount)} из {formatSum(g.targetAmount)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </MotionItem>
     </MotionStagger>
   );
 }
