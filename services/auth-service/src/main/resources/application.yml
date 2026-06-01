@@ -71,6 +71,10 @@ app:
     secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
     access-token-expiry: 900
     refresh-token-expiry: 2592000
+    # Child cabinet is a low-privilege session on the kid's own device — a
+    # long-lived token (30 days) keeps them logged in. The parent (financial
+    # owner) keeps the short 15-min token + refresh above.
+    child-token-expiry: 2592000
   otp:
     expiry-minutes: 10
     max-attempts: 5

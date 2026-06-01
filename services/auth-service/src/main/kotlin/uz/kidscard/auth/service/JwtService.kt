@@ -24,6 +24,7 @@ data class Claims(
 class JwtService(
     @Value("\${app.jwt.secret}") private val secret: String,
     @Value("\${app.jwt.access-token-expiry:900}") private val accessTokenExpirySeconds: Long,
+    @Value("\${app.jwt.child-token-expiry:2592000}") val childTokenExpirySeconds: Long,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -64,7 +65,7 @@ class JwtService(
      */
     fun generateChildToken(childId: UUID, familyId: UUID): String {
         val now = Instant.now()
-        val expiry = now.plusSeconds(accessTokenExpirySeconds)
+        val expiry = now.plusSeconds(childTokenExpirySeconds)
 
         val claimsSet = JWTClaimsSet.Builder()
             .subject(childId.toString())

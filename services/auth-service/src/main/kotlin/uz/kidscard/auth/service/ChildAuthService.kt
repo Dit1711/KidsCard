@@ -74,6 +74,7 @@ class ChildAuthService(
             childId = credential.childId,
             familyId = credential.familyId,
             displayName = credential.displayName,
+            expiresIn = jwtService.childTokenExpirySeconds,
         )
     }
 
