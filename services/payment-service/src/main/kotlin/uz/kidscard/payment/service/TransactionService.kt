@@ -100,10 +100,33 @@ class TransactionService(
 
         // Check spending limits (best-effort — skipped if family-service is unavailable)
         if (!authToken.isNullOrBlank()) {
-            if (asChild) {
-                limitCheckService.checkLimitsChild(req.cardId, req.amountUzs, req.merchantMcc, authToken)
-            } else {
-                limitCheckService.checkLimits(req.cardId, req.childId, req.familyId, req.amountUzs, req.merchantMcc, authToken)
+            try {
+                if (asChild) {
+                    limitCheckService.checkLimitsChild(req.cardId, req.amountUzs, req.merchantMcc, authToken)
+                } else {
+                    limitCheckService.checkLimits(req.cardId, req.childId, req.familyId, req.amountUzs, req.merchantMcc, authToken)
+                }
+            } catch (ex: BusinessException) {
+                if (ex.code == "LIMIT_EXCEEDED" || ex.code == "CATEGORY_LIMIT_EXCEEDED") {
+                    // Notify the parent even though the purchase rolls back — REQUIRES_NEW.
+                    outboxService.publishInNewTransaction(
+                        aggregateType = "Transaction",
+                        aggregateId = req.cardId.toString(),
+                        eventType = "payment.limit.exceeded",
+                        topic = "payment.events",
+                        payload = mapOf(
+                            "eventType" to "payment.limit.exceeded",
+                            "familyId" to req.familyId,
+                            "childId" to req.childId,
+                            "cardId" to req.cardId,
+                            "amountUzs" to req.amountUzs,
+                            "merchantName" to req.merchantName,
+                            "merchantMcc" to req.merchantMcc,
+                            "limitCode" to ex.code,
+                        ),
+                    )
+                }
+                throw ex
             }
         }
 

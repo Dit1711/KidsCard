@@ -96,6 +96,24 @@ class ChoreService(
         chore.completedAt = Instant.now()
         chore.updatedAt = Instant.now()
         val saved = choreRepository.save(chore)
+
+        // Notify the parent that the child finished a task and it needs review.
+        outboxService.publish(
+            aggregateType = "Chore",
+            aggregateId = saved.id.toString(),
+            eventType = "family.chore.submitted",
+            topic = "family.events",
+            payload = mapOf(
+                "eventType" to "family.chore.submitted",
+                "choreId" to saved.id,
+                "familyId" to saved.familyId,
+                "childId" to saved.childId,
+                "title" to saved.title,
+                "rewardAmount" to saved.rewardAmount,
+                "completedAt" to saved.completedAt,
+            ),
+        )
+
         log.info("Chore completed by child: id={} childId={}", choreId, childId)
         return saved.toDto()
     }

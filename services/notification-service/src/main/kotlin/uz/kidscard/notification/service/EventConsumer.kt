@@ -26,25 +26,39 @@ class EventConsumer(
     @KafkaListener(topics = ["payment.events"], groupId = "notification-service")
     fun onPaymentEvent(payload: String) {
         val node = parse(payload) ?: return
-        if (node.get("eventType")?.asText() != "payment.transaction.completed") return
-
         val familyId = node.uuid("familyId") ?: return
-        val amount = node.get("amountUzs")?.asLong() ?: return
-        val direction = node.get("direction")?.asText()
-        val description = node.get("description")?.asText() ?: ""
-        val merchant = node.get("merchantName")?.takeIf { !it.isNull }?.asText()
-        val balanceAfter = node.get("balanceAfter")?.asLong()
 
-        val (title, message, icon) = when {
-            direction == "CREDIT" && description.contains("Карманные", ignoreCase = true) ->
-                Triple("Карманные деньги", "Начислено ${money(amount)}. Баланс: ${money(balanceAfter)}", "💸")
-            direction == "CREDIT" ->
-                Triple("Пополнение карты", "Зачислено ${money(amount)}. Баланс: ${money(balanceAfter)}", "💰")
-            else ->
-                Triple("Покупка", "${merchant ?: "Списание"} — ${money(amount)}. Баланс: ${money(balanceAfter)}", "🛒")
+        when (node.get("eventType")?.asText()) {
+            "payment.transaction.completed" -> {
+                val amount = node.get("amountUzs")?.asLong() ?: return
+                val direction = node.get("direction")?.asText()
+                val description = node.get("description")?.asText() ?: ""
+                val merchant = node.get("merchantName")?.takeIf { !it.isNull }?.asText()
+                val balanceAfter = node.get("balanceAfter")?.asLong()
+
+                val (title, message, icon) = when {
+                    direction == "CREDIT" && description.contains("Карманные", ignoreCase = true) ->
+                        Triple("Карманные деньги", "Начислено ${money(amount)}. Баланс: ${money(balanceAfter)}", "💸")
+                    direction == "CREDIT" ->
+                        Triple("Пополнение карты", "Зачислено ${money(amount)}. Баланс: ${money(balanceAfter)}", "💰")
+                    else ->
+                        Triple("Покупка", "${merchant ?: "Списание"} — ${money(amount)}. Баланс: ${money(balanceAfter)}", "🛒")
+                }
+                notificationService.create(familyId, NotificationCategory.PAYMENT, title, message, icon)
+            }
+
+            "payment.limit.exceeded" -> {
+                val amount = node.get("amountUzs")?.asLong()
+                val merchant = node.get("merchantName")?.takeIf { !it.isNull }?.asText()
+                val isCategory = node.get("limitCode")?.asText() == "CATEGORY_LIMIT_EXCEEDED"
+                notificationService.create(
+                    familyId, NotificationCategory.LIMIT,
+                    "Лимит достигнут",
+                    "Покупка ${merchant ?: ""} на ${money(amount)} отклонена: превышен ${if (isCategory) "лимит по категории" else "лимит трат"}",
+                    "🚫",
+                )
+            }
         }
-
-        notificationService.create(familyId, NotificationCategory.PAYMENT, title, message, icon)
     }
 
     @KafkaListener(topics = ["family.events"], groupId = "notification-service")
@@ -78,6 +92,26 @@ class EventConsumer(
                     "Добавлен со-родитель",
                     "К семье присоединился новый родитель",
                     "👪",
+                )
+            }
+            "family.chore.submitted" -> {
+                val title = node.get("title")?.takeIf { !it.isNull }?.asText() ?: "задание"
+                val reward = node.get("rewardAmount")?.asLong()
+                notificationService.create(
+                    familyId, NotificationCategory.CHORE,
+                    "Задание выполнено",
+                    "Ребёнок выполнил «$title» (награда ${money(reward)}). Проверьте и подтвердите.",
+                    "🎯",
+                )
+            }
+            "family.chore.completed" -> {
+                val title = node.get("title")?.takeIf { !it.isNull }?.asText() ?: "задание"
+                val reward = node.get("rewardAmount")?.asLong()
+                notificationService.create(
+                    familyId, NotificationCategory.CHORE,
+                    "Награда выдана",
+                    "Задание «$title» подтверждено, ребёнку начислено ${money(reward)}.",
+                    "🏆",
                 )
             }
         }

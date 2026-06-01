@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uz.kidscard.common.outbox.OutboxEvent
 import uz.kidscard.common.outbox.OutboxStatus
@@ -22,6 +23,29 @@ class OutboxService(
 
     @Transactional
     fun publish(
+        aggregateType: String,
+        aggregateId: String,
+        eventType: String,
+        topic: String,
+        payload: Any,
+    ) = doPublish(aggregateType, aggregateId, eventType, topic, payload)
+
+    /**
+     * Publish in an independent transaction that commits even if the caller's
+     * transaction rolls back. Used to record events about REJECTED operations
+     * (e.g. a purchase blocked by a limit) — the purchase tx rolls back, but the
+     * "limit exceeded" notification event must still survive.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun publishInNewTransaction(
+        aggregateType: String,
+        aggregateId: String,
+        eventType: String,
+        topic: String,
+        payload: Any,
+    ) = doPublish(aggregateType, aggregateId, eventType, topic, payload)
+
+    private fun doPublish(
         aggregateType: String,
         aggregateId: String,
         eventType: String,

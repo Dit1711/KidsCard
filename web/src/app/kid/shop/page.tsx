@@ -61,6 +61,8 @@ export default function KidShopPage() {
       const text =
         code === "LIMIT_EXCEEDED"
           ? "Упс! На сегодня лимит исчерпан 🙊"
+          : code === "CATEGORY_LIMIT_EXCEEDED"
+          ? "На эту категорию лимит исчерпан 🙊"
           : code === "INSUFFICIENT_FUNDS"
           ? "Не хватает денег на карте 💸"
           : "Не получилось купить, попробуй ещё";

@@ -9,7 +9,7 @@ import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.UUID
 
-enum class NotificationCategory { PAYMENT, ALLOWANCE, LIMIT, KYC, FAMILY, CARD }
+enum class NotificationCategory { PAYMENT, ALLOWANCE, LIMIT, KYC, FAMILY, CARD, CHORE }
 
 @Entity
 @Table(name = "notifications", schema = "notification")
