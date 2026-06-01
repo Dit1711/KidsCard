@@ -1,11 +1,24 @@
 "use client";
 
+import { useState } from "react";
+import { Inter, Manrope, Golos_Text } from "next/font/google";
 import {
   LayoutGrid, Users, CreditCard, ListChecks, ArrowLeftRight, ShieldCheck,
   BarChart3, Landmark, Wallet, Plus, Send, ArrowDownLeft, Bell, Search,
   UtensilsCrossed, Gamepad2, Gift, Sparkles, Target, ChevronRight,
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
+
+const inter = Inter({ subsets: ["latin", "cyrillic"], display: "swap" });
+const manrope = Manrope({ subsets: ["latin", "cyrillic"], display: "swap" });
+const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
+
+const FONTS = [
+  { name: "Geist", cls: "" },
+  { name: "Inter", cls: inter.className },
+  { name: "Manrope", cls: manrope.className },
+  { name: "Golos", cls: golos.className },
+];
 
 const fmt = (n: number) => new Intl.NumberFormat("ru-RU").format(Math.abs(n));
 
@@ -42,8 +55,26 @@ const GOALS = [
 const SERIES = [12,18,9,22,14,26,19,31,24,17,29,38,21,34].map((v, i) => ({ d: i, v: v * 1000 }));
 
 export default function V2() {
+  const [fontIdx, setFontIdx] = useState(2); // default Manrope
+
   return (
-    <div className="fixed inset-0 overflow-y-auto bg-[#08080f] text-white antialiased">
+    <div className={`fixed inset-0 overflow-y-auto bg-[#08080f] text-white antialiased ${FONTS[fontIdx].cls}`}>
+      {/* Font switcher (mockup only) */}
+      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1 rounded-full border border-white/10 bg-[#15151f]/90 backdrop-blur px-1.5 py-1.5 shadow-2xl">
+        <span className="pl-2 pr-1 text-[11px] text-white/40">Шрифт:</span>
+        {FONTS.map((f, i) => (
+          <button
+            key={f.name}
+            onClick={() => setFontIdx(i)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              i === fontIdx ? "bg-white text-[#15151f]" : "text-white/60 hover:text-white"
+            }`}
+          >
+            {f.name}
+          </button>
+        ))}
+      </div>
+
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/3 h-[34rem] w-[34rem] rounded-full bg-violet-600/20 blur-[130px]" />
         <div className="absolute top-1/3 -right-32 h-[30rem] w-[30rem] rounded-full bg-fuchsia-600/15 blur-[130px]" />
