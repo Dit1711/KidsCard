@@ -14,6 +14,7 @@ const navItems = [
   { href: "/family", label: "Семья", icon: "👨‍👩‍👧" },
   { href: "/cards", label: "Карты", icon: "💳" },
   { href: "/transactions", label: "Операции", icon: "💸" },
+  { href: "/banks", label: "Банк", icon: "🏦" },
   { href: "/limits", label: "Контроль", icon: "🛡️" },
 ];
 

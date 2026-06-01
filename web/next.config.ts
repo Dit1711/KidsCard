@@ -8,6 +8,7 @@ const SERVICES: Record<string, string> = {
   payment: "8084",
   kyc: "8087",
   notification: "8086",
+  openbanking: "8085",
 };
 
 const nextConfig: NextConfig = {

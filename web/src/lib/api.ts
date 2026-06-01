@@ -9,6 +9,8 @@ const PAYMENT_URL =
 const KYC_URL = process.env.NEXT_PUBLIC_KYC_URL || "http://localhost:8087";
 const NOTIFICATION_URL =
   process.env.NEXT_PUBLIC_NOTIFICATION_URL || "http://localhost:8086";
+const OPENBANKING_URL =
+  process.env.NEXT_PUBLIC_OPENBANKING_URL || "http://localhost:8085";
 
 function makeClient(baseURL: string) {
   const client = axios.create({ baseURL });
@@ -58,6 +60,7 @@ export const cardApi = makeClient(CARD_URL);
 export const paymentApi = makeClient(PAYMENT_URL);
 export const kycApi = makeClient(KYC_URL);
 export const notificationApi = makeClient(NOTIFICATION_URL);
+export const openBankingApi = makeClient(OPENBANKING_URL);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -254,6 +257,38 @@ export const notificationService = {
     notificationApi.post(`/api/v1/notifications/read-all?familyId=${familyId}`),
 };
 
+// ── Open Banking ──────────────────────────────────────────────────────────────
+
+export const openBankingService = {
+  banks: () =>
+    openBankingApi.get<ApiResponse<BankDef[]>>("/api/v1/open-banking/banks"),
+
+  link: (bankCode: string) =>
+    openBankingApi.post<ApiResponse<LinkedAccountResponse[]>>(
+      "/api/v1/open-banking/link",
+      { bankCode }
+    ),
+
+  accounts: () =>
+    openBankingApi.get<ApiResponse<LinkedAccountResponse[]>>(
+      "/api/v1/open-banking/accounts"
+    ),
+
+  fundCard: (payload: {
+    accountId: string;
+    cardId: string;
+    childId: string;
+    familyId: string;
+    amountUzs: number;
+    description?: string;
+    idempotencyKey: string;
+  }) =>
+    openBankingApi.post<ApiResponse<FundResultResponse>>(
+      "/api/v1/open-banking/fund-card",
+      payload
+    ),
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
@@ -399,4 +434,27 @@ export interface NotificationResponse {
   icon: string | null;
   isRead: boolean;
   createdAt: string;
+}
+
+export interface BankDef {
+  code: string;
+  name: string;
+}
+
+export interface LinkedAccountResponse {
+  id: string;
+  bankCode: string;
+  accountType: string;
+  maskedNumber: string | null;
+  holderName: string | null;
+  currency: string;
+  balanceUzs: number | null;
+  status: string;
+}
+
+export interface FundResultResponse {
+  paymentRequestId: string;
+  status: string;
+  amountUzs: number;
+  externalRef: string | null;
 }

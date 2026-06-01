@@ -10,7 +10,10 @@ dependencies {
     implementation(project(":libs:common"))
     implementation(libs.kotlin.reflect)
     implementation(libs.jackson.module.kotlin)
-    implementation(libs.spring.boot.starter.webflux)    // reactive for external bank calls
+    // Servlet MVC + JPA to match the rest of the platform; suspend bank-adapter
+    // calls are bridged with runBlocking (coroutines-core, version from the BOM).
+    implementation(libs.spring.boot.starter.web)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.oauth2.resource.server)
@@ -21,7 +24,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.micrometer.registry.prometheus)
-    implementation(libs.springdoc.openapi.starter.webflux.ui)
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
     developmentOnly(libs.spring.boot.devtools)
 
     testImplementation(libs.spring.boot.test)
