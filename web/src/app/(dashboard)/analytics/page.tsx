@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { categoryByMcc } from "@/lib/categories";
+import { SpendChart } from "@/components/SpendChart";
 
 const PERIODS = [
   { days: 7, label: "Неделя" },
@@ -103,7 +104,6 @@ export default function AnalyticsPage() {
   const choresOpen = childChores.filter((c) => c.status === "PENDING").length;
 
   const total = analytics?.totalSpentUzs ?? 0;
-  const maxDay = Math.max(1, ...(analytics?.byDay.map((d) => d.amountUzs) ?? [0]));
 
   return (
     <div className="space-y-6">
@@ -207,25 +207,7 @@ export default function AnalyticsPage() {
                 {total === 0 ? (
                   <p className="text-sm text-muted-foreground">Нет данных</p>
                 ) : (
-                  <div className="flex items-end gap-[2px] h-32">
-                    {analytics?.byDay.map((d) => {
-                      const h = Math.round((d.amountUzs / maxDay) * 100);
-                      return (
-                        <div
-                          key={d.date}
-                          className="flex-1 bg-primary/25 rounded-t hover:bg-primary/60 transition-colors"
-                          style={{ height: `${Math.max(2, h)}%` }}
-                          title={`${d.date}: ${formatSum(d.amountUzs)}`}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-                {analytics && analytics.byDay.length > 0 && (
-                  <div className="flex justify-between text-[11px] text-muted-foreground mt-2">
-                    <span>{analytics.byDay[0].date.slice(5)}</span>
-                    <span>{analytics.byDay[analytics.byDay.length - 1].date.slice(5)}</span>
-                  </div>
+                  <SpendChart data={analytics?.byDay ?? []} />
                 )}
               </CardContent>
             </Card>

@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CATEGORIES, categoryLabel, PERIOD_LABELS } from "@/lib/categories";
+import { toast } from "sonner";
 
 const PERIOD_TYPES = [
   { value: "DAILY", label: PERIOD_LABELS.DAILY },
@@ -73,14 +74,18 @@ export default function LimitsPage() {
       setPeriodAmount("");
       setCatAmount("");
       setCatMcc("");
+      toast.success("Лимит установлен");
     },
+    onError: () => toast.error("Не удалось установить лимит"),
   });
 
   const removeLimit = useMutation({
     mutationFn: (limitId: string) =>
       limitService.remove(family!.id, selectedChild, limitId),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
+      toast.success("Лимит удалён");
+    },
   });
 
   if (!family) {

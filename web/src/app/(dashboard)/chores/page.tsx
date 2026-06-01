@@ -5,6 +5,7 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { choreService, familyService, paymentService, parentSavingsService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -79,12 +80,13 @@ export default function ChoresPage() {
       setRecurrence("NONE");
       setCreateError("");
       setShowCreate(false);
+      toast.success("Задание создано");
     },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: { code?: string; message?: string } } } };
-      setCreateError(
-        e.response?.data?.error?.message ?? "Не удалось создать задание"
-      );
+      const msg = e.response?.data?.error?.message ?? "Не удалось создать задание";
+      setCreateError(msg);
+      toast.error(msg);
     },
   });
 
@@ -93,7 +95,9 @@ export default function ChoresPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
       qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
+      toast.success("Задание подтверждено — награда выдана");
     },
+    onError: () => toast.error("Не удалось подтвердить задание"),
   });
 
   const { data: goals } = useQuery({

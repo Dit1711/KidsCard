@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Wallet, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { formatSum } from "@/lib/format";
 import { familyService, moneyRequestService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
@@ -53,11 +54,18 @@ export default function RequestsPage() {
 
   const approve = useMutation({
     mutationFn: (id: string) => moneyRequestService.approve(family!.id, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["money-requests", family!.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["money-requests", family!.id] });
+      toast.success("Запрос одобрен");
+    },
+    onError: () => toast.error("Не удалось одобрить запрос"),
   });
   const decline = useMutation({
     mutationFn: (id: string) => moneyRequestService.decline(family!.id, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["money-requests", family!.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["money-requests", family!.id] });
+      toast("Запрос отклонён");
+    },
   });
 
   if (!family) {
