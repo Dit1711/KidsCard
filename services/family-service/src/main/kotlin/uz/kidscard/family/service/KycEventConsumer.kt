@@ -23,6 +23,7 @@ import java.util.UUID
 class KycEventConsumer(
     private val parentRepository: ParentRepository,
     private val objectMapper: ObjectMapper,
+    private val outboxService: OutboxService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -60,5 +61,21 @@ class KycEventConsumer(
         parent.updatedAt = Instant.now()
         parentRepository.save(parent)
         log.info("Parent KYC approved: userId={} parentId={}", userId, parent.id)
+
+        // Re-emit a family-scoped event so notification-service can build a
+        // per-family notification (the raw kyc event only carries userId).
+        outboxService.publish(
+            aggregateType = "Parent",
+            aggregateId = parent.id.toString(),
+            eventType = "family.kyc.approved",
+            topic = "family.events",
+            payload = mapOf(
+                "eventType" to "family.kyc.approved",
+                "familyId" to parent.family.id,
+                "userId" to userId,
+                "fullName" to parent.fullName,
+                "approvedAt" to parent.kycVerifiedAt,
+            ),
+        )
     }
 }

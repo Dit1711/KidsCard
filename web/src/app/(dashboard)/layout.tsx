@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { useFamilyStore } from "@/store/family";
 import { authService, familyService } from "@/lib/api";
 import { Separator } from "@/components/ui/separator";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { href: "/dashboard", label: "Обзор", icon: "🏠" },
@@ -79,6 +80,7 @@ export default function DashboardLayout({
             <span className="text-xl font-bold text-indigo-700">💳 KidsCard</span>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             {user && (
               <span className="text-sm text-gray-500 hidden sm:block">{user.phone}</span>
             )}

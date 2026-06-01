@@ -71,6 +71,7 @@ class LimitService(
             eventType = "family.limit.updated",
             topic = "family.events",
             payload = mapOf(
+                "eventType" to "family.limit.updated",
                 "limitId" to saved.id,
                 "childId" to childId,
                 "familyId" to familyId,

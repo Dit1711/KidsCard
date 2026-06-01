@@ -132,6 +132,7 @@ class FamilyService(
             eventType = "family.co_parent.added",
             topic = "family.events",
             payload = mapOf(
+                "eventType" to "family.co_parent.added",
                 "familyId" to familyId,
                 "coParentUserId" to coParentUserId,
                 "addedBy" to requestingUserId,

@@ -7,6 +7,8 @@ const CARD_URL = process.env.NEXT_PUBLIC_CARD_URL || "http://localhost:8083";
 const PAYMENT_URL =
   process.env.NEXT_PUBLIC_PAYMENT_URL || "http://localhost:8084";
 const KYC_URL = process.env.NEXT_PUBLIC_KYC_URL || "http://localhost:8087";
+const NOTIFICATION_URL =
+  process.env.NEXT_PUBLIC_NOTIFICATION_URL || "http://localhost:8086";
 
 function makeClient(baseURL: string) {
   const client = axios.create({ baseURL });
@@ -55,6 +57,7 @@ export const familyApi = makeClient(FAMILY_URL);
 export const cardApi = makeClient(CARD_URL);
 export const paymentApi = makeClient(PAYMENT_URL);
 export const kycApi = makeClient(KYC_URL);
+export const notificationApi = makeClient(NOTIFICATION_URL);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -234,6 +237,23 @@ export const kycService = {
     ),
 };
 
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+export const notificationService = {
+  list: (familyId: string, size = 30) =>
+    notificationApi.get<ApiResponse<NotificationResponse[]>>(
+      `/api/v1/notifications?familyId=${familyId}&size=${size}`
+    ),
+
+  unreadCount: (familyId: string) =>
+    notificationApi.get<ApiResponse<{ unread: number }>>(
+      `/api/v1/notifications/unread-count?familyId=${familyId}`
+    ),
+
+  markAllRead: (familyId: string) =>
+    notificationApi.post(`/api/v1/notifications/read-all?familyId=${familyId}`),
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
@@ -368,5 +388,15 @@ export interface KycSessionResponse {
   rejectionReason: string | null;
   expiresAt: string;
   approvedAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationResponse {
+  id: string;
+  category: string; // PAYMENT, ALLOWANCE, LIMIT, KYC, FAMILY, CARD
+  title: string;
+  message: string;
+  icon: string | null;
+  isRead: boolean;
   createdAt: string;
 }

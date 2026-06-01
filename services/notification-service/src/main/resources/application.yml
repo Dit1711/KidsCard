@@ -28,6 +28,11 @@ spring:
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
@@ -48,6 +53,17 @@ management:
       prometheus:
         enabled: true
 
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 logging:
   level:
     uz.kidscard: DEBUG
+    org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}

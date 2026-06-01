@@ -30,6 +30,7 @@ class TransactionService(
     private val transactionRepository: TransactionRepository,
     private val ledgerEntryRepository: LedgerEntryRepository,
     private val limitCheckService: LimitCheckService,
+    private val outboxService: OutboxService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -84,6 +85,7 @@ class TransactionService(
         tx.updatedAt = Instant.now()
         transactionRepository.save(tx)
 
+        publishTransactionEvent(tx, newBalance)
         log.info("Top-up completed: cardId={} amount={} newBalance={}", req.cardId, req.amountUzs, newBalance)
         return tx.toDto(newBalance)
     }
@@ -159,8 +161,32 @@ class TransactionService(
         tx.updatedAt = Instant.now()
         transactionRepository.save(tx)
 
+        publishTransactionEvent(tx, newBalance)
         log.info("Purchase completed: cardId={} amount={} merchant={} newBalance={}", req.cardId, req.amountUzs, req.merchantName, newBalance)
         return tx.toDto(newBalance)
+    }
+
+    private fun publishTransactionEvent(tx: Transaction, balanceAfter: Long) {
+        outboxService.publish(
+            aggregateType = "Transaction",
+            aggregateId = tx.id.toString(),
+            eventType = "payment.transaction.completed",
+            topic = "payment.events",
+            payload = mapOf(
+                "eventType" to "payment.transaction.completed",
+                "transactionId" to tx.id,
+                "cardId" to tx.cardId,
+                "childId" to tx.childId,
+                "familyId" to tx.familyId,
+                "type" to tx.type.name,
+                "direction" to tx.direction.name,
+                "amountUzs" to tx.amountUzs,
+                "merchantName" to tx.merchantName,
+                "description" to tx.description,
+                "balanceAfter" to balanceAfter,
+                "createdAt" to tx.createdAt,
+            ),
+        )
     }
 
     @Transactional(readOnly = true)
