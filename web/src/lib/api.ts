@@ -406,6 +406,22 @@ export const paymentService = {
     ),
 };
 
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export const analyticsService = {
+  cardSpend: (cardId: string, days = 30) =>
+    paymentApi.get<ApiResponse<SpendAnalyticsResponse>>(
+      `/api/v1/analytics/card/${cardId}?days=${days}`
+    ),
+};
+
+export interface SpendAnalyticsResponse {
+  periodDays: number;
+  totalSpentUzs: number;
+  byCategory: { mcc: string; amountUzs: number }[];
+  byDay: { date: string; amountUzs: number }[];
+}
+
 // ── KYC ───────────────────────────────────────────────────────────────────────
 
 export const kycService = {

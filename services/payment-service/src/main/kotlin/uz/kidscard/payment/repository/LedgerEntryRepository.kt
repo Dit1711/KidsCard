@@ -67,4 +67,18 @@ interface LedgerEntryRepository : JpaRepository<LedgerEntry, UUID> {
         WHERE e.accountType = uz.kidscard.payment.domain.AccountType.SAVINGS
     """)
     fun findSavingsAccountIds(): List<String>
+
+    /** All PURCHASE debits on a card since a date — raw rows for spend analytics. */
+    @Query("""
+        SELECT new uz.kidscard.payment.api.dto.SpendRow(
+            e.transaction.merchantMcc, e.amountUzs, e.createdAt
+        )
+        FROM LedgerEntry e
+        WHERE e.accountId = :accountId
+          AND e.accountType = uz.kidscard.payment.domain.AccountType.CARD
+          AND e.direction = uz.kidscard.payment.domain.Direction.DEBIT
+          AND e.transaction.type = uz.kidscard.payment.domain.TransactionType.PURCHASE
+          AND e.createdAt >= :since
+    """)
+    fun spendRowsSince(accountId: String, since: java.time.Instant): List<uz.kidscard.payment.api.dto.SpendRow>
 }
