@@ -42,12 +42,14 @@ class SavingsInterestConsumer(
         val goalId = node.get("goalId")?.asText()
             ?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return
         val newSaved = node.get("newSaved")?.asLong() ?: return
+        val amount = node.get("amountUzs")?.asLong() ?: 0
 
         val goal = savingsGoalRepository.findById(goalId).orElse(null) ?: return
         goal.currentAmount = newSaved
+        goal.interestEarned += amount
         if (goal.currentAmount >= goal.targetAmount) goal.status = GoalStatus.COMPLETED
         goal.updatedAt = Instant.now()
         savingsGoalRepository.save(goal)
-        log.info("Interest applied to goal {}: now {}", goalId, newSaved)
+        log.info("Interest applied to goal {}: now {} (earned total {})", goalId, newSaved, goal.interestEarned)
     }
 }

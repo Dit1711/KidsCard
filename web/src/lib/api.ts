@@ -659,6 +659,7 @@ export interface SavingsGoalResponse {
   description: string | null;
   targetAmount: number;
   currentAmount: number;
+  interestEarned: number;
   currency: string;
   deadline: string | null;
   status: string; // ACTIVE, COMPLETED, CANCELLED

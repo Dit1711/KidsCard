@@ -313,8 +313,8 @@ export default function KidCabinetPage() {
               </button>
             </div>
             {savingsRate != null && (
-              <p className="px-1 mb-3 text-xs text-green-600 font-medium">
-                📈 На накопления капает {savingsRate}% в год — чем больше копишь, тем больше растёт!
+              <p className="px-1 mb-3 text-xs text-gray-400">
+                На накопления капает процент 🌱
               </p>
             )}
 
@@ -361,12 +361,30 @@ export default function KidCabinetPage() {
                         {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
                       </p>
                     </div>
-                    <div className="h-3 rounded-full bg-purple-100 overflow-hidden mb-3">
+                    <div className="h-3 rounded-full bg-purple-100 overflow-hidden mb-2">
                       <div
                         className={`h-full rounded-full transition-all ${done ? "bg-green-500" : "bg-purple-500"}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
+
+                    {/* Interest on this goal */}
+                    {savingsRate != null && (
+                      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        <span className="rounded-full bg-green-50 text-green-700 px-2 py-0.5 font-medium">
+                          📈 {savingsRate}% годовых
+                        </span>
+                        {g.interestEarned > 0 && (
+                          <span className="text-green-600">
+                            заработано {formatSum(g.interestEarned)}
+                          </span>
+                        )}
+                        <span className="text-gray-400">
+                          ≈ +{formatSum(Math.round((g.currentAmount * savingsRate) / 100 / 12))}/мес
+                        </span>
+                      </div>
+                    )}
+
                     {!done && (
                       <div className="flex gap-2">
                         {[5000, 10000, 25000].map((amt) => (

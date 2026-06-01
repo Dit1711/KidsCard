@@ -33,6 +33,9 @@ class SavingsGoal(
     @Column(name = "current_amount", nullable = false)
     var currentAmount: Long = 0,
 
+    @Column(name = "interest_earned", nullable = false)
+    var interestEarned: Long = 0,
+
     @Column(name = "currency", nullable = false)
     val currency: String = "UZS",
 
