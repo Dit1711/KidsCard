@@ -114,6 +114,23 @@ class EventConsumer(
                     "🏆",
                 )
             }
+            "family.money_request.created" -> {
+                val childName = node.get("childName")?.takeIf { !it.isNull }?.asText() ?: "Ребёнок"
+                val amount = node.get("amountUzs")?.asLong()
+                val isTopup = node.get("type")?.asText() == "TOPUP"
+                val note = node.get("note")?.takeIf { !it.isNull }?.asText()?.takeIf { it.isNotBlank() }
+                val what = if (isTopup) "пополнить карту на ${money(amount)}" else "поднять лимит до ${money(amount)}"
+                val message = buildString {
+                    append("$childName просит $what")
+                    if (note != null) append(". «$note»")
+                }
+                notificationService.create(
+                    familyId, NotificationCategory.REQUEST,
+                    "Запрос от ребёнка",
+                    message,
+                    "🙋",
+                )
+            }
         }
     }
 

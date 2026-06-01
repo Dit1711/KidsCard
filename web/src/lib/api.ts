@@ -214,7 +214,40 @@ export const childAuthService = {
       `/api/v1/child/lessons/${lessonId}/complete`,
       { stars, quizCorrect }
     ),
+
+  myRequests: () =>
+    childFamilyApi.get<ApiResponse<MoneyRequestResponse[]>>(
+      "/api/v1/child/money-requests"
+    ),
+
+  createRequest: (payload: {
+    type: "TOPUP" | "LIMIT";
+    amountUzs: number;
+    cardId?: string;
+    limitType?: string;
+    category?: string;
+    note?: string;
+  }) =>
+    childFamilyApi.post<ApiResponse<MoneyRequestResponse>>(
+      "/api/v1/child/money-requests",
+      payload
+    ),
 };
+
+export interface MoneyRequestResponse {
+  id: string;
+  familyId: string;
+  childId: string;
+  type: string; // TOPUP, LIMIT
+  amountUzs: number;
+  cardId: string | null;
+  limitType: string | null;
+  category: string | null;
+  note: string | null;
+  status: string; // PENDING, APPROVED, DECLINED
+  createdAt: string;
+  resolvedAt: string | null;
+}
 
 export interface LimitUsageResponse {
   limitType: string; // DAILY, WEEKLY, MONTHLY, CATEGORY
@@ -289,6 +322,25 @@ export const parentSavingsService = {
     familyApi.post<ApiResponse<SavingsGoalResponse>>(
       `/api/v1/families/${familyId}/savings-goals/${goalId}/contribute`,
       { amountUzs }
+    ),
+};
+
+// ── Money requests (child → parent) ────────────────────────────────────────────
+
+export const moneyRequestService = {
+  list: (familyId: string) =>
+    familyApi.get<ApiResponse<MoneyRequestResponse[]>>(
+      `/api/v1/families/${familyId}/money-requests`
+    ),
+
+  approve: (familyId: string, requestId: string) =>
+    familyApi.post<ApiResponse<MoneyRequestResponse>>(
+      `/api/v1/families/${familyId}/money-requests/${requestId}/approve`
+    ),
+
+  decline: (familyId: string, requestId: string) =>
+    familyApi.post<ApiResponse<MoneyRequestResponse>>(
+      `/api/v1/families/${familyId}/money-requests/${requestId}/decline`
     ),
 };
 

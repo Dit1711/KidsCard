@@ -4,6 +4,7 @@ import uz.kidscard.family.domain.Child
 import uz.kidscard.family.domain.Chore
 import uz.kidscard.family.domain.Family
 import uz.kidscard.family.domain.LimitRule
+import uz.kidscard.family.domain.MoneyRequest
 import uz.kidscard.family.domain.Parent
 import uz.kidscard.family.domain.SavingsGoal
 import java.time.Instant
@@ -79,6 +80,21 @@ data class LessonProgressDto(
     val completedLessonIds: List<String>,
 )
 
+data class MoneyRequestDto(
+    val id: UUID,
+    val familyId: UUID,
+    val childId: UUID,
+    val type: String,
+    val amountUzs: Long,
+    val cardId: UUID?,
+    val limitType: String?,
+    val category: String?,
+    val note: String?,
+    val status: String,
+    val createdAt: Instant,
+    val resolvedAt: Instant?,
+)
+
 // Extension mapping functions
 fun Family.toDto() = FamilyDto(
     id = id,
@@ -141,4 +157,19 @@ fun SavingsGoal.toDto() = SavingsGoalDto(
     deadline = deadline,
     status = status.name,
     imageUrl = imageUrl,
+)
+
+fun MoneyRequest.toDto() = MoneyRequestDto(
+    id = id,
+    familyId = familyId,
+    childId = childId,
+    type = type.name,
+    amountUzs = amountUzs,
+    cardId = cardId,
+    limitType = limitType,
+    category = category,
+    note = note,
+    status = status.name,
+    createdAt = createdAt,
+    resolvedAt = resolvedAt,
 )

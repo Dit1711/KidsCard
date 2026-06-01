@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 
@@ -64,6 +65,46 @@ export default function KidHomePage() {
     refetchInterval: 15_000,
   });
 
+  const qc = useQueryClient();
+  const { data: requests } = useQuery({
+    queryKey: ["child-requests"],
+    queryFn: async () => {
+      const { data } = await childAuthService.myRequests();
+      return data.data;
+    },
+    enabled: isChildAuthed,
+    refetchInterval: 20_000,
+  });
+
+  const [showReq, setShowReq] = useState(false);
+  const [reqType, setReqType] = useState<"TOPUP" | "LIMIT">("TOPUP");
+  const [reqAmount, setReqAmount] = useState("");
+  const [reqPeriod, setReqPeriod] = useState("DAILY");
+  const [reqNote, setReqNote] = useState("");
+
+  const createRequest = useMutation({
+    mutationFn: () =>
+      childAuthService.createRequest({
+        type: reqType,
+        amountUzs: Math.round(parseFloat(reqAmount)),
+        cardId: reqType === "TOPUP" ? card?.id : undefined,
+        limitType: reqType === "LIMIT" ? reqPeriod : undefined,
+        note: reqNote || undefined,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["child-requests"] });
+      setReqAmount("");
+      setReqNote("");
+      setShowReq(false);
+    },
+  });
+
+  const reqStatus: Record<string, { label: string; cls: string }> = {
+    PENDING: { label: "⏳ Ждём ответа", cls: "text-amber-600" },
+    APPROVED: { label: "✅ Одобрено", cls: "text-green-600" },
+    DECLINED: { label: "🙅 Отклонено", cls: "text-gray-400" },
+  };
+
   return (
     <>
       {/* Card / balance */}
@@ -85,6 +126,104 @@ export default function KidHomePage() {
             <p className="mt-3 text-xs bg-white/20 rounded-full px-3 py-1 inline-block">
               {card.status === "FROZEN" ? "❄️ Карта заморожена" : "Карта недоступна"}
             </p>
+          )}
+        </div>
+      )}
+
+      {/* Ask a parent for money or a higher limit */}
+      {card && (
+        <div>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <h2 className="text-base font-bold text-purple-800">💌 Попросить у родителей</h2>
+            <button
+              onClick={() => setShowReq(!showReq)}
+              className="text-sm text-purple-600 font-medium"
+            >
+              {showReq ? "Отмена" : "Попросить"}
+            </button>
+          </div>
+
+          {showReq && (
+            <div className="bg-white rounded-2xl p-4 shadow-sm mb-3 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setReqType("TOPUP")}
+                  className={`rounded-xl border py-2 text-sm font-medium transition-colors ${
+                    reqType === "TOPUP" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600"
+                  }`}
+                >
+                  💰 Пополнить
+                </button>
+                <button
+                  onClick={() => setReqType("LIMIT")}
+                  className={`rounded-xl border py-2 text-sm font-medium transition-colors ${
+                    reqType === "LIMIT" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600"
+                  }`}
+                >
+                  🛡️ Поднять лимит
+                </button>
+              </div>
+
+              {reqType === "LIMIT" && (
+                <div className="flex gap-2">
+                  {[
+                    { v: "DAILY", l: "День" },
+                    { v: "WEEKLY", l: "Неделя" },
+                    { v: "MONTHLY", l: "Месяц" },
+                  ].map((p) => (
+                    <button
+                      key={p.v}
+                      onClick={() => setReqPeriod(p.v)}
+                      className={`flex-1 rounded-lg border py-1.5 text-xs font-medium transition-colors ${
+                        reqPeriod === p.v ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {p.l}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <input
+                type="number"
+                placeholder={reqType === "TOPUP" ? "Сколько денег?" : "Новый лимит (сум)"}
+                value={reqAmount}
+                onChange={(e) => setReqAmount(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              />
+              <input
+                placeholder="Зачем? (по желанию)"
+                value={reqNote}
+                onChange={(e) => setReqNote(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => createRequest.mutate()}
+                disabled={!reqAmount || createRequest.isPending}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+              >
+                {createRequest.isPending ? "Отправляем…" : "Отправить запрос 📨"}
+              </button>
+            </div>
+          )}
+
+          {requests && requests.length > 0 && (
+            <div className="space-y-2">
+              {requests.slice(0, 5).map((r) => {
+                const st = reqStatus[r.status] ?? { label: r.status, cls: "" };
+                return (
+                  <div key={r.id} className="bg-white rounded-2xl p-3 shadow-sm flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800">
+                        {r.type === "TOPUP" ? "💰 Пополнение" : "🛡️ Лимит"} · {formatSum(r.amountUzs)}
+                      </p>
+                      {r.note && <p className="text-xs text-gray-400 truncate">«{r.note}»</p>}
+                    </div>
+                    <span className={`shrink-0 text-xs font-semibold ${st.cls}`}>{st.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}

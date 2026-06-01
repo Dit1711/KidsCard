@@ -15,6 +15,7 @@ const navItems = [
   { href: "/cards", label: "Карты", icon: "💳" },
   { href: "/chores", label: "Задания", icon: "🎯" },
   { href: "/transactions", label: "Операции", icon: "💸" },
+  { href: "/requests", label: "Запросы", icon: "🙋" },
   { href: "/analytics", label: "Аналитика", icon: "📊" },
   { href: "/banks", label: "Банк", icon: "🏦" },
   { href: "/limits", label: "Лимиты", icon: "🛡️" },
