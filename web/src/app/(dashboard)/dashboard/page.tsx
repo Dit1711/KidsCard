@@ -57,6 +57,9 @@ export default function DashboardPage() {
   const { byCard: balances, total: totalBalance } = useCardBalances(cardIds);
   const activeCards = cardsData?.filter((c) => c.status === "ACTIVE").length ?? 0;
 
+  const myParent = familyData?.parents.find((p) => p.userId === user?.id);
+  const needsKyc = myParent != null && myParent.kycStatus !== "APPROVED";
+
   return (
     <div className="space-y-6">
       <div>
@@ -67,6 +70,25 @@ export default function DashboardPage() {
           {user?.phone} · {user?.roles.join(", ")}
         </p>
       </div>
+
+      {needsKyc && (
+        <Link href="/kyc" className="block">
+          <Card className="border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors">
+            <CardContent className="flex items-center gap-4 py-4">
+              <span className="text-3xl">🪪</span>
+              <div className="flex-1">
+                <p className="font-medium text-amber-900">Подтвердите личность</p>
+                <p className="text-sm text-amber-700">
+                  Верификация нужна для полного доступа к платформе. Это займёт минуту.
+                </p>
+              </div>
+              <Badge variant="outline" className="border-amber-400 text-amber-700">
+                {myParent?.kycStatus === "REJECTED" ? "Отклонено" : "Ожидает"}
+              </Badge>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {familyLoading && (
         <div className="space-y-4">

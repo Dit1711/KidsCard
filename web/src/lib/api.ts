@@ -6,6 +6,7 @@ const FAMILY_URL =
 const CARD_URL = process.env.NEXT_PUBLIC_CARD_URL || "http://localhost:8083";
 const PAYMENT_URL =
   process.env.NEXT_PUBLIC_PAYMENT_URL || "http://localhost:8084";
+const KYC_URL = process.env.NEXT_PUBLIC_KYC_URL || "http://localhost:8087";
 
 function makeClient(baseURL: string) {
   const client = axios.create({ baseURL });
@@ -53,6 +54,7 @@ export const authApi = makeClient(AUTH_URL);
 export const familyApi = makeClient(FAMILY_URL);
 export const cardApi = makeClient(CARD_URL);
 export const paymentApi = makeClient(PAYMENT_URL);
+export const kycApi = makeClient(KYC_URL);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -210,6 +212,28 @@ export const paymentService = {
     ),
 };
 
+// ── KYC ───────────────────────────────────────────────────────────────────────
+
+export const kycService = {
+  getStatus: () =>
+    kycApi.get<ApiResponse<KycSessionResponse | null>>("/api/v1/kyc/status"),
+
+  start: (type = "PARENT") =>
+    kycApi.post<ApiResponse<KycSessionResponse>>("/api/v1/kyc/sessions", { type }),
+
+  uploadDocument: (sessionId: string, docType: string) =>
+    kycApi.post<ApiResponse<KycSessionResponse>>(
+      `/api/v1/kyc/sessions/${sessionId}/documents`,
+      { docType }
+    ),
+
+  liveness: (sessionId: string) =>
+    kycApi.post<ApiResponse<KycSessionResponse>>(
+      `/api/v1/kyc/sessions/${sessionId}/liveness`,
+      {}
+    ),
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
@@ -333,4 +357,16 @@ export interface AllowanceResponse {
   dayOfMonth: number | null;
   active: boolean;
   nextRunAt: string | null;
+}
+
+export interface KycSessionResponse {
+  id: string;
+  userId: string;
+  type: string;
+  status: string; // INITIATED, DOCUMENTS_UPLOADED, LIVENESS_DONE, APPROVED, REJECTED, EXPIRED
+  provider: string;
+  rejectionReason: string | null;
+  expiresAt: string;
+  approvedAt: string | null;
+  createdAt: string;
 }
