@@ -203,6 +203,17 @@ export const childAuthService = {
     childPaymentApi.get<ApiResponse<LimitUsageResponse[]>>(
       `/api/v1/child/limit-usage?cardId=${cardId}`
     ),
+
+  lessonsProgress: () =>
+    childFamilyApi.get<ApiResponse<LessonProgressResponse>>(
+      "/api/v1/child/lessons/progress"
+    ),
+
+  completeLesson: (lessonId: string, stars: number, quizCorrect: boolean) =>
+    childFamilyApi.post<ApiResponse<LessonProgressResponse>>(
+      `/api/v1/child/lessons/${lessonId}/complete`,
+      { stars, quizCorrect }
+    ),
 };
 
 export interface LimitUsageResponse {
@@ -211,6 +222,12 @@ export interface LimitUsageResponse {
   limitUzs: number;
   spentUzs: number;
   remainingUzs: number;
+}
+
+export interface LessonProgressResponse {
+  totalStars: number;
+  completedCount: number;
+  completedLessonIds: string[];
 }
 
 // ── Family ────────────────────────────────────────────────────────────────────

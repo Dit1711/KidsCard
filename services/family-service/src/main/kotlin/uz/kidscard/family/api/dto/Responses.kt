@@ -73,6 +73,12 @@ data class SavingsGoalDto(
     val imageUrl: String?,
 )
 
+data class LessonProgressDto(
+    val totalStars: Int,
+    val completedCount: Int,
+    val completedLessonIds: List<String>,
+)
+
 // Extension mapping functions
 fun Family.toDto() = FamilyDto(
     id = id,

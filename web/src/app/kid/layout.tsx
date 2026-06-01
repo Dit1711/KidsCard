@@ -10,6 +10,7 @@ const navItems = [
   { href: "/kid/shop", label: "Магазин", icon: "🛍️" },
   { href: "/kid/chores", label: "Задания", icon: "🎯" },
   { href: "/kid/goals", label: "Цели", icon: "🐷" },
+  { href: "/kid/learn", label: "Учёба", icon: "🎓" },
 ];
 
 export default function KidLayout({ children }: { children: React.ReactNode }) {
