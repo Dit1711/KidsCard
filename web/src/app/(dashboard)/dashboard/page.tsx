@@ -60,10 +60,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Привет! 👋
-        </h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold tracking-tight">Привет! 👋</h1>
+        <p className="text-muted-foreground mt-1">
           {user?.phone} · {user?.roles.join(", ")}
         </p>
       </div>
@@ -102,9 +100,9 @@ export default function DashboardPage() {
       )}
 
       {!familyLoading && !familyData && (
-        <Card className="border-dashed border-2 border-indigo-200">
+        <Card className="border-dashed border-2 border-border">
           <CardContent className="flex flex-col items-center justify-center py-10 gap-4">
-            <p className="text-gray-500">У вас ещё нет семьи</p>
+            <p className="text-muted-foreground">У вас ещё нет семьи</p>
             <Link href="/family">
               <Button>Создать семью</Button>
             </Link>
@@ -114,12 +112,23 @@ export default function DashboardPage() {
 
       {familyData && (
         <>
+          {/* Hero — total balance */}
+          <div className="rounded-3xl bg-brand-gradient text-white p-6 sm:p-7 shadow-soft">
+            <p className="text-white/70 text-sm">Общий баланс детей</p>
+            <p className="text-4xl sm:text-5xl font-bold tracking-tight mt-1">
+              {formatSum(totalBalance)}
+            </p>
+            <p className="text-white/70 text-sm mt-4">
+              {familyData.name} · {childrenData?.length ?? 0} детей · {activeCards} активных карт
+            </p>
+          </div>
+
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <Card className="shadow-card border-border/60">
               <CardHeader className="pb-2">
                 <CardDescription>Семья</CardDescription>
-                <CardTitle className="text-lg">{familyData.name}</CardTitle>
+                <CardTitle className="text-base truncate">{familyData.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Badge variant={familyData.status === "ACTIVE" ? "default" : "secondary"}>
@@ -128,25 +137,23 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-card border-border/60">
               <CardHeader className="pb-2">
                 <CardDescription>Детей</CardDescription>
-                <CardTitle className="text-2xl">{childrenData?.length ?? "—"}</CardTitle>
+                <CardTitle className="text-3xl text-primary">{childrenData?.length ?? "—"}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-400">активных в семье</p>
+                <p className="text-sm text-muted-foreground">активных в семье</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-card border-border/60 col-span-2 sm:col-span-1">
               <CardHeader className="pb-2">
                 <CardDescription>Карт выдано</CardDescription>
-                <CardTitle className="text-2xl">{activeCards}</CardTitle>
+                <CardTitle className="text-3xl text-primary">{activeCards}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-400">
-                  Баланс: {formatSum(totalBalance)}
-                </p>
+                <p className="text-sm text-muted-foreground">всего активных карт</p>
               </CardContent>
             </Card>
           </div>
@@ -161,12 +168,12 @@ export default function DashboardPage() {
                   return (
                     <Card
                       key={card.id}
-                      className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+                      className="bg-brand-gradient text-white border-0 shadow-soft rounded-2xl"
                     >
-                      <CardContent className="pt-4 pb-4">
-                        <div className="flex justify-between items-start mb-4">
+                      <CardContent className="pt-5 pb-5">
+                        <div className="flex justify-between items-start mb-6">
                           <div>
-                            <p className="text-indigo-200 text-xs">{card.cardType} · {card.network}</p>
+                            <p className="text-white/60 text-xs">{card.cardType} · {card.network}</p>
                             <p className="font-medium">{child?.fullName ?? "Ребёнок"}</p>
                           </div>
                           <Badge
@@ -183,8 +190,8 @@ export default function DashboardPage() {
                           </Badge>
                         </div>
                         <p className="font-mono text-lg tracking-wider">{card.maskedPan}</p>
-                        <div className="flex justify-between items-end mt-3">
-                          <p className="text-indigo-200 text-sm">
+                        <div className="flex justify-between items-end mt-4">
+                          <p className="text-white/60 text-sm">
                             {card.expiryMonth.toString().padStart(2, "0")}/{card.expiryYear}
                           </p>
                           <p className="text-xl font-bold">{formatSum(balances[card.id] ?? 0)}</p>
@@ -200,7 +207,7 @@ export default function DashboardPage() {
           {cardsData?.length === 0 && (
             <Card className="border-dashed border-2">
               <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
-                <p className="text-gray-400">Карты ещё не выданы</p>
+                <p className="text-muted-foreground">Карты ещё не выданы</p>
                 <Link href="/cards">
                   <Button variant="outline">Выдать первую карту</Button>
                 </Link>
