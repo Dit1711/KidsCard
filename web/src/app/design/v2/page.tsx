@@ -55,7 +55,7 @@ const GOALS = [
 const SERIES = [12,18,9,22,14,26,19,31,24,17,29,38,21,34].map((v, i) => ({ d: i, v: v * 1000 }));
 
 export default function V2() {
-  const [fontIdx, setFontIdx] = useState(2); // default Manrope
+  const [fontIdx, setFontIdx] = useState(3); // default Golos Text
 
   return (
     <div className={`fixed inset-0 overflow-y-auto bg-[#08080f] text-white antialiased ${FONTS[fontIdx].cls}`}>
