@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { FamilyResponse } from "@/lib/api";
 
 interface FamilyState {
@@ -8,15 +7,11 @@ interface FamilyState {
   clearFamily: () => void;
 }
 
-export const useFamilyStore = create<FamilyState>()(
-  persist(
-    (set) => ({
-      family: null,
-      setFamily: (family) => set({ family }),
-      clearFamily: () => set({ family: null }),
-    }),
-    {
-      name: "kidscard-family",
-    }
-  )
-);
+// NOT persisted on purpose: the dashboard layout loads the current user's
+// family on every mount. Persisting it would leak a previous account's family
+// into a freshly logged-in user before the fetch resolves.
+export const useFamilyStore = create<FamilyState>()((set) => ({
+  family: null,
+  setFamily: (family) => set({ family }),
+  clearFamily: () => set({ family: null }),
+}));

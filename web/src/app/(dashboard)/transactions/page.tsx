@@ -177,14 +177,12 @@ export default function TransactionsPage() {
                   </p>
                 </div>
                 {card.status === "ACTIVE" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-white/40 text-white hover:bg-white/10"
+                  <button
                     onClick={() => setShowTopUp(!showTopUp)}
+                    className="rounded-md border border-white/50 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/20"
                   >
                     {showTopUp ? "Отмена" : "Пополнить"}
-                  </Button>
+                  </button>
                 )}
               </div>
             </CardContent>

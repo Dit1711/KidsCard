@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, cardService } from "@/lib/api";
+import { useCardBalances } from "@/hooks/useCardBalances";
 import { useFamilyStore } from "@/store/family";
 import {
   Card,
@@ -49,6 +50,8 @@ export default function CardsPage() {
     },
     enabled: !!family?.id,
   });
+
+  const { byCard: balances } = useCardBalances(cards?.map((c) => c.id) ?? []);
 
   const issueCard = useMutation({
     mutationFn: () =>
@@ -209,7 +212,7 @@ export default function CardsPage() {
                     <span className="text-indigo-200 text-sm">
                       {String(card.expiryMonth).padStart(2, "0")}/{card.expiryYear}
                     </span>
-                    <span className="font-bold">{formatSum(card.balanceUzs)}</span>
+                    <span className="font-bold">{formatSum(balances[card.id] ?? 0)}</span>
                   </div>
                 </div>
 

@@ -97,7 +97,9 @@ export default function LimitsPage() {
     queryKey: ["allowance", family?.id, childCard?.id],
     queryFn: async () => {
       const { data } = await allowanceService.getActive(family!.id, childCard!.id);
-      return data.data;
+      // ApiResponse omits `data` (JsonInclude.NON_NULL) when there's no active
+      // schedule; react-query forbids returning undefined, so coalesce to null.
+      return data.data ?? null;
     },
     enabled: !!family?.id && !!childCard?.id,
   });

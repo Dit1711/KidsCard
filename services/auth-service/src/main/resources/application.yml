@@ -74,7 +74,9 @@ app:
   otp:
     expiry-minutes: 10
     max-attempts: 5
-    rate-limit-per-hour: 3
+    # Dev: high so manual/QA testing isn't blocked. Lower to ~3 in production
+    # via OTP_RATE_LIMIT_PER_HOUR to throttle abuse.
+    rate-limit-per-hour: ${OTP_RATE_LIMIT_PER_HOUR:100}
     # Dev only: set to non-empty string to use a fixed OTP code instead of random.
     # Remove or leave blank in production.
     dev-fixed-code: "123456"

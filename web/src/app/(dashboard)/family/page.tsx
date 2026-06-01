@@ -23,6 +23,16 @@ function calcAge(dob: string) {
   return now.getFullYear() - birth.getFullYear();
 }
 
+const AGE_GROUP_LABELS: Record<string, string> = {
+  CHILD_6_10: "6–10 лет",
+  CHILD_11_14: "11–14 лет",
+  TEEN_15_17: "15–17 лет",
+};
+
+function ageGroupLabel(group: string) {
+  return AGE_GROUP_LABELS[group] ?? group.replace(/_/g, " ");
+}
+
 export default function FamilyPage() {
   const qc = useQueryClient();
   const { family, setFamily } = useFamilyStore();
@@ -212,7 +222,7 @@ export default function FamilyPage() {
                     <div>
                       <p className="font-medium">{child.fullName}</p>
                       <p className="text-sm text-gray-400">
-                        {calcAge(child.dateOfBirth)} лет · {child.ageGroup.replace(/_/g, " ")}
+                        {calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}
                       </p>
                     </div>
                     <Badge

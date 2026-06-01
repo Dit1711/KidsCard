@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth";
 import { useFamilyStore } from "@/store/family";
 import { familyService, cardService } from "@/lib/api";
+import { useCardBalances } from "@/hooks/useCardBalances";
 import {
   Card,
   CardContent,
@@ -12,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -51,7 +53,8 @@ export default function DashboardPage() {
     enabled: !!familyData?.id,
   });
 
-  const totalBalance = cardsData?.reduce((sum, c) => sum + c.balanceUzs, 0) ?? 0;
+  const cardIds = cardsData?.map((c) => c.id) ?? [];
+  const { byCard: balances, total: totalBalance } = useCardBalances(cardIds);
   const activeCards = cardsData?.filter((c) => c.status === "ACTIVE").length ?? 0;
 
   return (
@@ -66,7 +69,17 @@ export default function DashboardPage() {
       </div>
 
       {familyLoading && (
-        <p className="text-gray-400">Загрузка данных семьи...</p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-28 rounded-xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Skeleton className="h-36 rounded-xl" />
+            <Skeleton className="h-36 rounded-xl" />
+          </div>
+        </div>
       )}
 
       {!familyLoading && !familyData && (
@@ -155,7 +168,7 @@ export default function DashboardPage() {
                           <p className="text-indigo-200 text-sm">
                             {card.expiryMonth.toString().padStart(2, "0")}/{card.expiryYear}
                           </p>
-                          <p className="text-xl font-bold">{formatSum(card.balanceUzs)}</p>
+                          <p className="text-xl font-bold">{formatSum(balances[card.id] ?? 0)}</p>
                         </div>
                       </CardContent>
                     </Card>

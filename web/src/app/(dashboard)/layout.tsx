@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
-import { authService } from "@/lib/api";
+import { useFamilyStore } from "@/store/family";
+import { authService, familyService } from "@/lib/api";
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
@@ -22,9 +23,13 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, setUser, logout, user } = useAuthStore();
+  const { isAuthenticated, hasHydrated, setUser, logout, user } = useAuthStore();
+  const { setFamily, clearFamily } = useFamilyStore();
 
   useEffect(() => {
+    // Wait until the persisted auth state is restored — otherwise the initial
+    // (empty) render is misread as "logged out" and bounces to /login on reload.
+    if (!hasHydrated) return;
     if (!isAuthenticated) {
       router.replace("/login");
       return;
@@ -32,9 +37,16 @@ export default function DashboardLayout({
     // Load user info
     authService.me().then(({ data }) => setUser(data.data)).catch(() => {
       logout();
+      clearFamily();
       router.replace("/login");
     });
-  }, [isAuthenticated, router, setUser, logout]);
+    // Centrally load the current user's family so every page reads fresh
+    // data from the store (and stale data from a previous account is cleared).
+    familyService
+      .getMyFamily()
+      .then(({ data }) => setFamily(data.data))
+      .catch(() => clearFamily());
+  }, [hasHydrated, isAuthenticated, router, setUser, logout, setFamily, clearFamily]);
 
   const handleLogout = async () => {
     const refreshToken = localStorage.getItem("refreshToken");
@@ -42,8 +54,19 @@ export default function DashboardLayout({
       try { await authService.logout(refreshToken); } catch { /* ignore */ }
     }
     logout();
+    clearFamily();
     router.replace("/login");
   };
+
+  // While the persisted session is being restored, show a neutral splash
+  // instead of flashing the login redirect.
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-300 text-sm animate-pulse">Загрузка…</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return null;
 
