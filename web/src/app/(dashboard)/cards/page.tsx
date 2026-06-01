@@ -6,16 +6,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, cardService } from "@/lib/api";
 import { useCardBalances } from "@/hooks/useCardBalances";
 import { useFamilyStore } from "@/store/family";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Panel, DLabel, DButton, Pill } from "@/components/dark";
+import { CardSurface } from "@/components/CardSurface";
+import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
+import { MotionStagger, MotionItem } from "@/components/motion";
+import { toast } from "sonner";
+import { Plus, Snowflake, Palette, CreditCard } from "lucide-react";
 import Link from "next/link";
 
 const CARD_TYPES = ["VIRTUAL", "PHYSICAL"];
@@ -29,44 +25,44 @@ export default function CardsPage() {
   const [selectedChild, setSelectedChild] = useState("");
   const [cardType, setCardType] = useState("VIRTUAL");
   const [network, setNetwork] = useState("UZCARD");
+  const [designCard, setDesignCard] = useState<string | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
-    queryFn: async () => {
-      const { data } = await familyService.getChildren(family!.id);
-      return data.data;
-    },
+    queryFn: async () => (await familyService.getChildren(family!.id)).data.data,
     enabled: !!family?.id,
   });
 
   const { data: cards, isLoading } = useQuery({
     queryKey: ["family-cards", family?.id],
-    queryFn: async () => {
-      const { data } = await cardService.getByFamily(family!.id);
-      return data.data;
-    },
+    queryFn: async () => (await cardService.getByFamily(family!.id)).data.data,
     enabled: !!family?.id,
   });
 
   const { byCard: balances } = useCardBalances(cards?.map((c) => c.id) ?? []);
 
   const issueCard = useMutation({
-    mutationFn: () =>
-      cardService.issue(family!.id, selectedChild, cardType, network),
+    mutationFn: () => cardService.issue(family!.id, selectedChild, cardType, network),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["family-cards", family!.id] });
       setShowIssue(false);
       setSelectedChild("");
+      toast.success("Карта выдана");
     },
+    onError: () => toast.error("Ошибка выдачи карты"),
   });
 
   const freezeCard = useMutation({
     mutationFn: (cardId: string) => cardService.freeze(family!.id, cardId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }); toast("Карта заморожена"); },
   });
-
   const unfreezeCard = useMutation({
     mutationFn: (cardId: string) => cardService.unfreeze(family!.id, cardId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }); toast.success("Карта разморожена"); },
+  });
+  const setDesign = useMutation({
+    mutationFn: ({ cardId, theme, pattern }: { cardId: string; theme: string; pattern: string }) =>
+      cardService.setDesign(family!.id, cardId, theme, pattern),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }),
   });
 
@@ -74,109 +70,74 @@ export default function CardsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Карты</h1>
-        <Card className="border-dashed border-2">
-          <CardContent className="flex flex-col items-center py-10 gap-3">
-            <p className="text-muted-foreground">Сначала создайте семью</p>
-            <Link href="/family"><Button>Перейти к семье</Button></Link>
-          </CardContent>
-        </Card>
+        <Panel className="p-10 flex flex-col items-center gap-3">
+          <p className="text-white/50">Сначала создайте семью</p>
+          <Link href="/family"><DButton>Перейти к семье</DButton></Link>
+        </Panel>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Карты</h1>
-        <Button onClick={() => setShowIssue(!showIssue)} variant={showIssue ? "outline" : "default"}>
-          {showIssue ? "Отмена" : "+ Выдать карту"}
-        </Button>
-      </div>
+    <MotionStagger className="space-y-6">
+      <MotionItem>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Карты</h1>
+          <DButton variant={showIssue ? "outline" : "primary"} onClick={() => setShowIssue(!showIssue)}>
+            {showIssue ? "Отмена" : <><Plus className="h-4 w-4" /> Выдать карту</>}
+          </DButton>
+        </div>
+      </MotionItem>
 
-      {/* Issue card form */}
       {showIssue && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Новая карта</CardTitle>
-            <CardDescription>Выдайте виртуальную или физическую карту ребёнку</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Ребёнок</Label>
+        <MotionItem>
+          <Panel className="p-5 space-y-4">
+            <p className="font-medium tracking-tight">Новая карта</p>
+            <div>
+              <DLabel>Ребёнок</DLabel>
               <select
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white outline-none focus:border-fuchsia-400/60 [color-scheme:dark]"
                 value={selectedChild}
                 onChange={(e) => setSelectedChild(e.target.value)}
               >
                 <option value="">Выберите ребёнка</option>
-                {children?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.fullName}</option>
-                ))}
+                {children?.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
               </select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Тип карты</Label>
+            <div>
+              <DLabel>Тип карты</DLabel>
               <div className="flex gap-2">
                 {CARD_TYPES.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setCardType(t)}
-                    className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
-                      cardType === t
-                        ? "bg-primary text-white border-primary"
-                        : "border-border hover:border-primary/40"
-                    }`}
-                  >
+                  <Pill key={t} active={cardType === t} onClick={() => setCardType(t)}>
                     {t === "VIRTUAL" ? "Виртуальная" : "Физическая"}
-                  </button>
+                  </Pill>
                 ))}
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Платёжная система</Label>
+            <div>
+              <DLabel>Платёжная система</DLabel>
               <div className="flex gap-2">
                 {NETWORKS.map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setNetwork(n)}
-                    className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
-                      network === n
-                        ? "bg-primary text-white border-primary"
-                        : "border-border hover:border-primary/40"
-                    }`}
-                  >
-                    {n}
-                  </button>
+                  <Pill key={n} active={network === n} onClick={() => setNetwork(n)}>{n}</Pill>
                 ))}
               </div>
             </div>
-
-            {issueCard.isError && (
-              <p className="text-sm text-red-500">Ошибка выдачи карты</p>
-            )}
-
-            <Button
-              onClick={() => issueCard.mutate()}
-              disabled={!selectedChild || issueCard.isPending}
-              className="w-full"
-            >
-              {issueCard.isPending ? "Выдача..." : "Выдать карту"}
-            </Button>
-          </CardContent>
-        </Card>
+            <DButton onClick={() => issueCard.mutate()} disabled={!selectedChild || issueCard.isPending} className="w-full">
+              {issueCard.isPending ? "Выдача…" : "Выдать карту"}
+            </DButton>
+          </Panel>
+        </MotionItem>
       )}
 
-      {/* Cards list */}
-      {isLoading && <p className="text-muted-foreground">Загрузка...</p>}
+      {isLoading && <p className="text-white/50">Загрузка…</p>}
 
       {cards?.length === 0 && !showIssue && (
-        <Card className="border-dashed border-2">
-          <CardContent className="flex flex-col items-center py-10 gap-3">
-            <p className="text-muted-foreground">Карты ещё не выданы</p>
-          </CardContent>
-        </Card>
+        <MotionItem>
+          <Panel className="p-10 flex flex-col items-center gap-3 border-dashed">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-white/50"><CreditCard className="h-6 w-6" /></span>
+            <p className="text-white/50">Карты ещё не выданы</p>
+          </Panel>
+        </MotionItem>
       )}
 
       <div className="space-y-4">
@@ -184,64 +145,73 @@ export default function CardsPage() {
           const child = children?.find((c) => c.id === card.childId);
           const isFrozen = card.status === "FROZEN";
           const isBlocked = card.status === "BLOCKED";
+          const designOpen = designCard === card.id;
 
           return (
-            <Card key={card.id} className={isBlocked ? "opacity-60" : ""}>
-              <CardContent className="pt-5 pb-5">
-                {/* Card visual */}
-                <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-4 mb-4">
-                  <div className="flex justify-between items-start mb-6">
+            <MotionItem key={card.id}>
+              <div className={isBlocked ? "opacity-60" : ""}>
+                <CardSurface theme={card.theme} pattern={card.pattern} className="rounded-2xl text-white p-5">
+                  <div className="flex justify-between items-start mb-7">
                     <div>
-                      <p className="text-xs text-white/70">{card.cardType} · {card.network}</p>
+                      <p className="text-xs text-white/60">{card.cardType} · {card.network}</p>
                       <p className="font-semibold">{child?.fullName ?? "Ребёнок"}</p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`border-white/30 text-xs ${
-                        isFrozen ? "text-yellow-300" : isBlocked ? "text-red-300" : "text-green-300"
-                      }`}
-                    >
+                    <span className={`text-[11px] rounded-full px-2.5 py-0.5 bg-white/15 ${
+                      isFrozen ? "text-amber-100" : isBlocked ? "text-red-100" : "text-emerald-100"
+                    }`}>
                       {card.status}
-                    </Badge>
+                    </span>
                   </div>
-                  <p className="font-mono text-lg tracking-widest mb-3">{card.maskedPan}</p>
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">
+                  <p className="font-mono tracking-[0.2em] mb-4">{card.maskedPan}</p>
+                  <div className="flex justify-between items-end">
+                    <span className="text-white/60 text-sm tabular-nums">
                       {String(card.expiryMonth).padStart(2, "0")}/{card.expiryYear}
                     </span>
-                    <span className="font-bold">{formatSum(balances[card.id] ?? 0)}</span>
+                    <span className="text-xl font-bold tabular-nums">{formatSum(balances[card.id] ?? 0)}</span>
                   </div>
-                </div>
+                </CardSurface>
 
-                {/* Actions */}
                 {!isBlocked && (
-                  <div className="flex gap-2">
-                    {isFrozen ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => unfreezeCard.mutate(card.id)}
-                        disabled={unfreezeCard.isPending}
-                      >
-                        Разморозить
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => freezeCard.mutate(card.id)}
-                        disabled={freezeCard.isPending}
-                      >
-                        Заморозить
-                      </Button>
-                    )}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <DButton variant="outline" className="py-2"
+                      onClick={() => (isFrozen ? unfreezeCard : freezeCard).mutate(card.id)}
+                      disabled={freezeCard.isPending || unfreezeCard.isPending}>
+                      <Snowflake className="h-4 w-4" /> {isFrozen ? "Разморозить" : "Заморозить"}
+                    </DButton>
+                    <DButton variant="outline" className="py-2"
+                      onClick={() => setDesignCard(designOpen ? null : card.id)}>
+                      <Palette className="h-4 w-4" /> Оформление
+                    </DButton>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+
+                {designOpen && (
+                  <Panel className="p-4 mt-3 space-y-3">
+                    <p className="text-sm font-medium">Цвет карты</p>
+                    <div className="grid grid-cols-8 gap-2">
+                      {CARD_THEMES.map((t) => (
+                        <button key={t.key}
+                          onClick={() => setDesign.mutate({ cardId: card.id, theme: t.key, pattern: card.pattern })}
+                          className={`h-9 rounded-lg bg-gradient-to-br ${t.grad} ${card.theme === t.key ? "ring-2 ring-offset-2 ring-offset-[#0f0f17] ring-white" : ""}`}
+                          title={t.label} />
+                      ))}
+                    </div>
+                    <p className="text-sm font-medium pt-1">Узор</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {CARD_PATTERNS.map((p) => (
+                        <Pill key={p.key} active={card.pattern === p.key}
+                          onClick={() => setDesign.mutate({ cardId: card.id, theme: card.theme, pattern: p.key })}>
+                          {p.label}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Panel>
+                )}
+              </div>
+            </MotionItem>
           );
         })}
       </div>
-    </div>
+    </MotionStagger>
   );
 }
