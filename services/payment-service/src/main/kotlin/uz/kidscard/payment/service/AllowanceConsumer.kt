@@ -52,15 +52,23 @@ class AllowanceConsumer(
         }
 
         val eventType = node.get("eventType")?.asText() ?: return
-        if (eventType != "card.allowance.due") return
+        if (eventType != "card.allowance.due" && eventType != "card.chore.reward") return
 
         val cardId = node.get("cardId")?.asText()?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return
         val childId = node.get("childId")?.asText()?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return
         val familyId = node.get("familyId")?.asText()?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return
         val amountUzs = node.get("amountUzs")?.asLong() ?: return
-        val scheduleId = node.get("scheduleId")?.asText() ?: UUID.randomUUID().toString()
 
-        log.info("Allowance due: cardId={} childId={} amount={}", cardId, childId, amountUzs)
+        val (description, idempotencyKey) = if (eventType == "card.chore.reward") {
+            val choreId = node.get("choreId")?.asText() ?: UUID.randomUUID().toString()
+            val title = node.get("title")?.takeIf { !it.isNull }?.asText() ?: "Задание"
+            "Награда за задание: $title" to "chore-$choreId"
+        } else {
+            val scheduleId = node.get("scheduleId")?.asText() ?: UUID.randomUUID().toString()
+            "Карманные деньги (автоматически)" to "allowance-$scheduleId"
+        }
+
+        log.info("Credit event {}: cardId={} amount={}", eventType, cardId, amountUzs)
 
         try {
             val result = transactionService.topUp(
@@ -69,13 +77,13 @@ class AllowanceConsumer(
                     childId = childId,
                     familyId = familyId,
                     amountUzs = amountUzs,
-                    description = "Карманные деньги (автоматически)",
-                    idempotencyKey = "allowance-$scheduleId",
+                    description = description,
+                    idempotencyKey = idempotencyKey,
                 )
             )
-            log.info("Allowance top-up OK: cardId={} amount={} newBalance={}", cardId, amountUzs, result.balanceAfter)
+            log.info("Credit OK: cardId={} amount={} newBalance={}", cardId, amountUzs, result.balanceAfter)
         } catch (ex: Exception) {
-            log.error("Allowance top-up failed: cardId={} error={}", cardId, ex.message)
+            log.error("Credit failed: cardId={} error={}", cardId, ex.message)
         }
     }
 }

@@ -13,6 +13,7 @@ const navItems = [
   { href: "/dashboard", label: "Обзор", icon: "🏠" },
   { href: "/family", label: "Семья", icon: "👨‍👩‍👧" },
   { href: "/cards", label: "Карты", icon: "💳" },
+  { href: "/chores", label: "Задания", icon: "🎯" },
   { href: "/transactions", label: "Операции", icon: "💸" },
   { href: "/banks", label: "Банк", icon: "🏦" },
   { href: "/limits", label: "Контроль", icon: "🛡️" },

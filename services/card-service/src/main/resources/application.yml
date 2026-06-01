@@ -34,6 +34,11 @@ spring:
     consumer:
       group-id: card-service
       auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
 
 server:
   port: ${SERVER_PORT:8083}

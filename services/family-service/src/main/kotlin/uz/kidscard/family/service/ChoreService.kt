@@ -67,6 +67,30 @@ class ChoreService(
         return chores.map { it.toDto() }
     }
 
+    /** Child cabinet: list this child's own chores (scoped by JWT childId). */
+    @Transactional(readOnly = true)
+    fun getChildChores(childId: UUID): List<ChoreDto> =
+        choreRepository.findByChildIdOrderByCreatedAtDesc(childId).map { it.toDto() }
+
+    /** Child marks their own chore done (PENDING → DONE). */
+    fun childCompleteChore(choreId: UUID, childId: UUID): ChoreDto {
+        val chore = choreRepository.findById(choreId).orElseThrow {
+            ResourceNotFoundException("Chore", choreId)
+        }
+        if (chore.childId != childId) {
+            throw ResourceNotFoundException("Chore", choreId)
+        }
+        if (chore.status != ChoreStatus.PENDING) {
+            throw BusinessException("INVALID_CHORE_STATUS", "Задание уже отправлено или подтверждено")
+        }
+        chore.status = ChoreStatus.DONE
+        chore.completedAt = Instant.now()
+        chore.updatedAt = Instant.now()
+        val saved = choreRepository.save(chore)
+        log.info("Chore completed by child: id={} childId={}", choreId, childId)
+        return saved.toDto()
+    }
+
     fun completeChore(choreId: UUID, familyId: UUID, requestingUserId: UUID): ChoreDto {
         familyService.requireMember(familyId, requestingUserId)
 
@@ -125,9 +149,11 @@ class ChoreService(
             eventType = "family.chore.completed",
             topic = "family.events",
             payload = mapOf(
+                "eventType" to "family.chore.completed",
                 "choreId" to saved.id,
                 "familyId" to familyId,
                 "childId" to saved.childId,
+                "title" to saved.title,
                 "rewardAmount" to saved.rewardAmount,
                 "approvedBy" to requestingUserId,
                 "approvedAt" to saved.approvedAt,

@@ -44,11 +44,13 @@ export default function ChildLoginPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
             <div className="space-y-2">
               <Label htmlFor="code">Твой код</Label>
               <Input
                 id="code"
+                name="kid-code"
+                autoComplete="off"
                 placeholder="ABC123"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -61,6 +63,8 @@ export default function ChildLoginPage() {
               <Label htmlFor="pin">PIN</Label>
               <Input
                 id="pin"
+                name="kid-pin"
+                autoComplete="off"
                 type="password"
                 inputMode="numeric"
                 placeholder="••••"

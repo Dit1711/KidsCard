@@ -14,4 +14,6 @@ interface ChoreRepository : JpaRepository<Chore, UUID> {
     fun findByFamilyIdAndStatus(familyId: UUID, status: ChoreStatus): List<Chore>
 
     fun findByFamilyIdAndChildIdAndStatus(familyId: UUID, childId: UUID, status: ChoreStatus): List<Chore>
+
+    fun findByChildIdOrderByCreatedAtDesc(childId: UUID): List<Chore>
 }

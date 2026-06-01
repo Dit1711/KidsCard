@@ -86,6 +86,10 @@ export const notificationApi = makeClient(NOTIFICATION_URL);
 export const openBankingApi = makeClient(OPENBANKING_URL);
 export const childCardApi = makeChildClient(CARD_URL);
 export const childPaymentApi = makeChildClient(PAYMENT_URL);
+export const childFamilyApi = makeChildClient(FAMILY_URL);
+// Bare client for the public child login — no parent token, no refresh
+// interceptor (which would otherwise loop on a 401 using the parent's token).
+export const childAuthApi = axios.create({ baseURL: AUTH_URL });
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -131,9 +135,9 @@ export const authService = {
 // ── Child auth + cabinet ────────────────────────────────────────────────────────
 
 export const childAuthService = {
-  // Public: child logs in with code + PIN (no parent token)
+  // Public: child logs in with code + PIN (no parent token / no refresh loop)
   login: (loginCode: string, pin: string) =>
-    authApi.post<ApiResponse<ChildTokenResponse>>("/api/v1/auth/child/login", {
+    childAuthApi.post<ApiResponse<ChildTokenResponse>>("/api/v1/auth/child/login", {
       loginCode,
       pin,
     }),
@@ -149,6 +153,14 @@ export const childAuthService = {
   transactions: (cardId: string, size = 20) =>
     childPaymentApi.get<ApiResponse<PageResponse<TransactionResponse>>>(
       `/api/v1/child/transactions?cardId=${cardId}&size=${size}`
+    ),
+
+  myChores: () =>
+    childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
+
+  completeChore: (choreId: string) =>
+    childFamilyApi.post<ApiResponse<ChoreResponse>>(
+      `/api/v1/child/chores/${choreId}/complete`
     ),
 };
 
@@ -173,6 +185,29 @@ export const familyService = {
   getChildren: (familyId: string) =>
     familyApi.get<ApiResponse<ChildResponse[]>>(
       `/api/v1/families/${familyId}/children`
+    ),
+};
+
+// ── Chores (gamification) ──────────────────────────────────────────────────────
+
+export const choreService = {
+  create: (
+    familyId: string,
+    payload: { title: string; description?: string; childId: string; rewardAmount: number; dueDate?: string }
+  ) =>
+    familyApi.post<ApiResponse<ChoreResponse>>(
+      `/api/v1/families/${familyId}/chores`,
+      payload
+    ),
+
+  list: (familyId: string) =>
+    familyApi.get<ApiResponse<ChoreResponse[]>>(
+      `/api/v1/families/${familyId}/chores`
+    ),
+
+  approve: (familyId: string, choreId: string) =>
+    familyApi.post<ApiResponse<ChoreResponse>>(
+      `/api/v1/families/${familyId}/chores/${choreId}/approve`
     ),
 };
 
@@ -535,4 +570,16 @@ export interface ChildTokenResponse {
   displayName: string | null;
   expiresIn: number;
   tokenType: string;
+}
+
+export interface ChoreResponse {
+  id: string;
+  familyId: string;
+  childId: string;
+  title: string;
+  rewardAmount: number;
+  status: string; // PENDING, DONE, APPROVED, REJECTED
+  dueDate: string | null;
+  completedAt: string | null;
+  approvedAt: string | null;
 }

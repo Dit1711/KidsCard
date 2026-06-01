@@ -48,6 +48,7 @@ class SecurityConfig(
                 auth.requestMatchers("/api-docs/**").permitAll()
                 auth.requestMatchers("/swagger-ui/**").permitAll()
                 auth.requestMatchers("/swagger-ui.html").permitAll()
+                auth.requestMatchers("/api/v1/child/**").hasRole("CHILD")
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
