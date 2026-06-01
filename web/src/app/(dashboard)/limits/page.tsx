@@ -5,19 +5,9 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, limitService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { CATEGORIES, categoryLabel, PERIOD_LABELS } from "@/lib/categories";
+import { Panel, DInput, DLabel, DButton, DBadge, Pill } from "@/components/dark";
+import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
 
 const PERIOD_TYPES = [
@@ -25,44 +15,33 @@ const PERIOD_TYPES = [
   { value: "WEEKLY", label: PERIOD_LABELS.WEEKLY },
   { value: "MONTHLY", label: PERIOD_LABELS.MONTHLY },
 ];
+const periodLabel = (type: string) => PERIOD_TYPES.find((t) => t.value === type)?.label ?? type;
 
-function periodLabel(type: string) {
-  return PERIOD_TYPES.find((t) => t.value === type)?.label ?? type;
-}
+const Hr = () => <div className="h-px bg-white/[0.06]" />;
 
 export default function LimitsPage() {
   const qc = useQueryClient();
   const { family } = useFamilyStore();
 
   const [selectedChild, setSelectedChild] = useState<string>("");
-  // Period-limit form
   const [periodType, setPeriodType] = useState("DAILY");
   const [periodAmount, setPeriodAmount] = useState("");
-  // Category-limit form
   const [catMcc, setCatMcc] = useState("");
   const [catAmount, setCatAmount] = useState("");
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
-    queryFn: async () => {
-      const { data } = await familyService.getChildren(family!.id);
-      return data.data;
-    },
+    queryFn: async () => (await familyService.getChildren(family!.id)).data.data,
     enabled: !!family?.id,
   });
 
   useEffect(() => {
-    if (children && children.length > 0 && !selectedChild) {
-      setSelectedChild(children[0].id);
-    }
+    if (children && children.length > 0 && !selectedChild) setSelectedChild(children[0].id);
   }, [children, selectedChild]);
 
   const { data: limits } = useQuery({
     queryKey: ["limits", family?.id, selectedChild],
-    queryFn: async () => {
-      const { data } = await limitService.list(family!.id, selectedChild);
-      return data.data;
-    },
+    queryFn: async () => (await limitService.list(family!.id, selectedChild)).data.data,
     enabled: !!family?.id && !!selectedChild,
   });
 
@@ -71,28 +50,22 @@ export default function LimitsPage() {
       limitService.set(family!.id, selectedChild, p),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
-      setPeriodAmount("");
-      setCatAmount("");
-      setCatMcc("");
+      setPeriodAmount(""); setCatAmount(""); setCatMcc("");
       toast.success("Лимит установлен");
     },
     onError: () => toast.error("Не удалось установить лимит"),
   });
 
   const removeLimit = useMutation({
-    mutationFn: (limitId: string) =>
-      limitService.remove(family!.id, selectedChild, limitId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
-      toast.success("Лимит удалён");
-    },
+    mutationFn: (limitId: string) => limitService.remove(family!.id, selectedChild, limitId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] }); toast("Лимит удалён"); },
   });
 
   if (!family) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h1 className="text-2xl font-bold">Лимиты</h1>
-        <p className="text-muted-foreground">Сначала создайте семью.</p>
+        <p className="text-white/50">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -101,161 +74,113 @@ export default function LimitsPage() {
   const categoryLimits = limits?.filter((l) => l.limitType === "CATEGORY") ?? [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Лимиты трат</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Ограничьте расходы ребёнка по периодам и категориям
-        </p>
-      </div>
+    <MotionStagger className="space-y-6">
+      <MotionItem>
+        <h1 className="text-2xl font-bold tracking-tight">Лимиты трат</h1>
+        <p className="text-white/50 mt-1 text-sm">Ограничьте расходы ребёнка по периодам и категориям</p>
+      </MotionItem>
 
-      {/* Child selector */}
       {children && children.length > 0 ? (
-        <div className="flex gap-2 flex-wrap">
-          {children.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedChild(c.id)}
-              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                selectedChild === c.id
-                  ? "bg-primary text-white border-primary"
-                  : "border-border hover:border-primary/40"
-              }`}
-            >
-              {c.fullName}
-            </button>
-          ))}
-        </div>
+        <MotionItem>
+          <div className="flex gap-2 flex-wrap">
+            {children.map((c) => (
+              <Pill key={c.id} active={selectedChild === c.id} onClick={() => setSelectedChild(c.id)}>{c.fullName}</Pill>
+            ))}
+          </div>
+        </MotionItem>
       ) : (
-        <p className="text-muted-foreground text-sm">Сначала добавьте детей в разделе «Семья».</p>
+        <p className="text-white/50 text-sm">Сначала добавьте детей в разделе «Семья».</p>
       )}
 
       {selectedChild && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* ── Period limits ── */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Лимиты по периодам</CardTitle>
-              <CardDescription>Сколько можно тратить за день/неделю/месяц</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <MotionItem>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Period limits */}
+            <Panel className="p-6 space-y-4">
+              <div>
+                <p className="font-medium tracking-tight">Лимиты по периодам</p>
+                <p className="text-xs text-white/40">Сколько можно тратить за день/неделю/месяц</p>
+              </div>
               <div className="space-y-2">
-                {periodLimits.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Лимиты не установлены</p>
-                )}
+                {periodLimits.length === 0 && <p className="text-sm text-white/40">Лимиты не установлены</p>}
                 {periodLimits.map((limit) => (
-                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                  <div key={limit.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.05]">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{periodLabel(limit.limitType)}</Badge>
-                      <span className="text-sm font-medium">{formatSum(limit.amountUzs)}</span>
+                      <DBadge tone="muted">{periodLabel(limit.limitType)}</DBadge>
+                      <span className="text-sm font-medium tabular-nums">{formatSum(limit.amountUzs)}</span>
                     </div>
-                    <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-red-400 hover:text-red-600">
-                      удалить
-                    </button>
+                    <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-rose-300/80 hover:text-rose-300">удалить</button>
                   </div>
                 ))}
               </div>
-
-              <Separator />
-
+              <Hr />
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label>Период</Label>
+                <div>
+                  <DLabel>Период</DLabel>
                   <div className="flex gap-2 flex-wrap">
                     {PERIOD_TYPES.map((t) => (
-                      <button
-                        key={t.value}
-                        onClick={() => setPeriodType(t.value)}
-                        className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
-                          periodType === t.value
-                            ? "bg-primary text-white border-primary"
-                            : "border-border hover:border-primary/40"
-                        }`}
-                      >
-                        {t.label}
-                      </button>
+                      <Pill key={t.value} active={periodType === t.value} onClick={() => setPeriodType(t.value)}>{t.label}</Pill>
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Сумма лимита (сум)</Label>
-                  <Input type="number" placeholder="100000" value={periodAmount} onChange={(e) => setPeriodAmount(e.target.value)} />
+                <div>
+                  <DLabel>Сумма лимита (сум)</DLabel>
+                  <DInput type="number" placeholder="100000" value={periodAmount} onChange={(e) => setPeriodAmount(e.target.value)} />
                 </div>
-                <Button
-                  onClick={() => setLimit.mutate({ limitType: periodType, amountUzs: Math.round(parseFloat(periodAmount)) })}
-                  disabled={!periodAmount || setLimit.isPending}
-                  className="w-full"
-                >
-                  {setLimit.isPending ? "Сохранение..." : "Установить лимит"}
-                </Button>
+                <DButton onClick={() => setLimit.mutate({ limitType: periodType, amountUzs: Math.round(parseFloat(periodAmount)) })}
+                  disabled={!periodAmount || setLimit.isPending} className="w-full">
+                  {setLimit.isPending ? "Сохранение…" : "Установить лимит"}
+                </DButton>
               </div>
-            </CardContent>
-          </Card>
+            </Panel>
 
-          {/* ── Category limits ── */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Лимиты по категориям</CardTitle>
-              <CardDescription>Месячный потолок на категорию покупок</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            {/* Category limits */}
+            <Panel className="p-6 space-y-4">
+              <div>
+                <p className="font-medium tracking-tight">Лимиты по категориям</p>
+                <p className="text-xs text-white/40">Месячный потолок на категорию покупок</p>
+              </div>
               <div className="space-y-2">
-                {categoryLimits.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Категорийные лимиты не установлены</p>
-                )}
+                {categoryLimits.length === 0 && <p className="text-sm text-white/40">Категорийные лимиты не установлены</p>}
                 {categoryLimits.map((limit) => (
-                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                  <div key={limit.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.05]">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{categoryLabel(limit.category)}</Badge>
-                      <span className="text-sm font-medium">
-                        {formatSum(limit.amountUzs)} <span className="text-xs text-muted-foreground">/ мес</span>
-                      </span>
+                      <DBadge tone="muted">{categoryLabel(limit.category)}</DBadge>
+                      <span className="text-sm font-medium tabular-nums">{formatSum(limit.amountUzs)} <span className="text-xs text-white/40">/ мес</span></span>
                     </div>
-                    <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-red-400 hover:text-red-600">
-                      удалить
-                    </button>
+                    <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-rose-300/80 hover:text-rose-300">удалить</button>
                   </div>
                 ))}
               </div>
-
-              <Separator />
-
+              <Hr />
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label>Категория</Label>
+                <div>
+                  <DLabel>Категория</DLabel>
                   <div className="grid grid-cols-4 gap-2">
                     {CATEGORIES.map((c) => (
-                      <button
-                        key={c.mcc}
-                        onClick={() => setCatMcc(c.mcc)}
-                        className={`flex flex-col items-center gap-1 rounded-lg border py-2 transition-colors ${
-                          catMcc === c.mcc
-                            ? "border-primary bg-accent"
-                            : "border-border hover:border-primary/40"
-                        }`}
-                      >
+                      <button key={c.mcc} onClick={() => setCatMcc(c.mcc)}
+                        className={`flex flex-col items-center gap-1 rounded-xl py-2.5 transition-colors ${
+                          catMcc === c.mcc ? "bg-white/15 ring-1 ring-fuchsia-400/50" : "bg-white/[0.04] hover:bg-white/[0.08]"
+                        }`}>
                         <span className="text-xl">{c.icon}</span>
-                        <span className="text-[11px] text-muted-foreground">{c.label}</span>
+                        <span className="text-[11px] text-white/50">{c.label}</span>
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Лимит в месяц (сум)</Label>
-                  <Input type="number" placeholder="50000" value={catAmount} onChange={(e) => setCatAmount(e.target.value)} />
+                <div>
+                  <DLabel>Лимит в месяц (сум)</DLabel>
+                  <DInput type="number" placeholder="50000" value={catAmount} onChange={(e) => setCatAmount(e.target.value)} />
                 </div>
-                <Button
-                  onClick={() => setLimit.mutate({ limitType: "CATEGORY", category: catMcc, amountUzs: Math.round(parseFloat(catAmount)) })}
-                  disabled={!catAmount || !catMcc || setLimit.isPending}
-                  className="w-full"
-                >
-                  {setLimit.isPending ? "Сохранение..." : "Установить лимит"}
-                </Button>
+                <DButton onClick={() => setLimit.mutate({ limitType: "CATEGORY", category: catMcc, amountUzs: Math.round(parseFloat(catAmount)) })}
+                  disabled={!catAmount || !catMcc || setLimit.isPending} className="w-full">
+                  {setLimit.isPending ? "Сохранение…" : "Установить лимит"}
+                </DButton>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </Panel>
+          </div>
+        </MotionItem>
       )}
-    </div>
+    </MotionStagger>
   );
 }
