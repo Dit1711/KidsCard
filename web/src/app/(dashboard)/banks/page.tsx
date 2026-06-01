@@ -6,7 +6,7 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { openBankingService, familyService, cardService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import { Panel, DInput, DLabel, DButton } from "@/components/dark";
+import { Panel, DInput, DLabel, DButton, DSelect } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
 
@@ -120,12 +120,10 @@ export default function BanksPage() {
                     <div className="h-px bg-white/[0.06]" />
                     <div>
                       <DLabel>Ребёнок (карта)</DLabel>
-                      <select
-                        className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white outline-none focus:border-fuchsia-400/60 [color-scheme:dark]"
-                        value={fundChild} onChange={(e) => setFundChild(e.target.value)}>
+                      <DSelect value={fundChild} onChange={(e) => setFundChild(e.target.value)}>
                         <option value="">Выберите ребёнка</option>
                         {childrenWithCards?.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
-                      </select>
+                      </DSelect>
                       {childrenWithCards?.length === 0 && (
                         <p className="text-xs text-amber-300 mt-1">Ни у кого нет карты — выпустите карту в разделе «Карты».</p>
                       )}

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, cardService } from "@/lib/api";
 import { useCardBalances } from "@/hooks/useCardBalances";
 import { useFamilyStore } from "@/store/family";
-import { Panel, DLabel, DButton, Pill } from "@/components/dark";
+import { Panel, DLabel, DButton, Pill, DSelect } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
 import { MotionStagger, MotionItem } from "@/components/motion";
@@ -95,14 +95,10 @@ export default function CardsPage() {
             <p className="font-medium tracking-tight">Новая карта</p>
             <div>
               <DLabel>Ребёнок</DLabel>
-              <select
-                className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white outline-none focus:border-fuchsia-400/60 [color-scheme:dark]"
-                value={selectedChild}
-                onChange={(e) => setSelectedChild(e.target.value)}
-              >
+              <DSelect value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)}>
                 <option value="">Выберите ребёнка</option>
                 {children?.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
-              </select>
+              </DSelect>
             </div>
             <div>
               <DLabel>Тип карты</DLabel>

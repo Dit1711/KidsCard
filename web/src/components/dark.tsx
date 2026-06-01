@@ -22,13 +22,22 @@ export function DInput({ className, ...props }: React.InputHTMLAttributes<HTMLIn
   );
 }
 
+export function DSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      {...props}
+      className={`w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-fuchsia-400/60 focus:bg-white/[0.07] [color-scheme:dark] ${className ?? ""}`}
+    />
+  );
+}
+
 export function DButton({
   variant = "primary",
   className,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "outline" | "ghost" }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080f] disabled:opacity-50 disabled:pointer-events-none";
   const v =
     variant === "primary"
       ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white hover:opacity-90"
@@ -51,7 +60,7 @@ export function Pill({
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+      className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/50 ${
         active ? "bg-white/15 text-white" : "bg-white/[0.04] text-white/50 hover:text-white"
       }`}
     >

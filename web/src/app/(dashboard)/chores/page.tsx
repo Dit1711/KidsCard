@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { choreService, familyService, paymentService, parentSavingsService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { toast } from "sonner";
-import { Panel, DInput, DLabel, DButton, DBadge } from "@/components/dark";
+import { Panel, DInput, DLabel, DButton, DBadge, DSelect } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { Plus, Wallet, Check, Repeat } from "lucide-react";
 
@@ -151,14 +151,10 @@ export default function ChoresPage() {
             <p className="font-medium tracking-tight">Новое задание</p>
             <div>
               <DLabel>Кому</DLabel>
-              <select
-                className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white outline-none focus:border-fuchsia-400/60 [color-scheme:dark]"
-                value={childId}
-                onChange={(e) => setChildId(e.target.value)}
-              >
+              <DSelect value={childId} onChange={(e) => setChildId(e.target.value)}>
                 <option value="">Выберите ребёнка</option>
                 {children?.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
-              </select>
+              </DSelect>
             </div>
             <div>
               <DLabel>Задание</DLabel>
