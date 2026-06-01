@@ -16,7 +16,8 @@ const navItems = [
   { href: "/chores", label: "Задания", icon: "🎯" },
   { href: "/transactions", label: "Операции", icon: "💸" },
   { href: "/banks", label: "Банк", icon: "🏦" },
-  { href: "/limits", label: "Контроль", icon: "🛡️" },
+  { href: "/limits", label: "Лимиты", icon: "🛡️" },
+  { href: "/allowance", label: "Карманные", icon: "🪙" },
 ];
 
 export default function DashboardLayout({
