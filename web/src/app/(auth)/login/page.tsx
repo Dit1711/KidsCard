@@ -60,13 +60,13 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle>Вход</CardTitle>
-        <CardDescription>
+    <Card className="border-0 shadow-soft rounded-2xl">
+      <CardHeader className="space-y-1.5">
+        <CardTitle className="text-2xl tracking-tight">С возвращением 👋</CardTitle>
+        <CardDescription className="text-sm">
           {step === "phone"
-            ? "Введите номер телефона"
-            : `Введите код из SMS на ${phone}`}
+            ? "Войдите по номеру телефона"
+            : `Код отправлен на ${phone}`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -83,22 +83,26 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
+            {error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
+            )}
+            <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading ? "Отправка..." : "Получить код"}
             </Button>
-            <p className="text-sm text-center text-gray-500">
+            <p className="text-sm text-center text-muted-foreground">
               Нет аккаунта?{" "}
-              <Link href="/register" className="text-indigo-600 hover:underline">
+              <Link href="/register" className="text-primary font-medium hover:underline">
                 Зарегистрироваться
               </Link>
             </p>
-            <p className="text-sm text-center text-gray-400">
-              Ты ребёнок?{" "}
-              <Link href="/child-login" className="text-purple-600 hover:underline">
-                Вход для детей 🧒
+            <div className="pt-2 mt-2 border-t border-border/70">
+              <Link
+                href="/child-login"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+              >
+                🧒 Вход для детей
               </Link>
-            </p>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleVerify} className="space-y-4">
@@ -116,8 +120,10 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
+            {error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
+            )}
+            <Button type="submit" className="w-full h-11" disabled={loading || otp.length !== 6}>
               {loading ? "Проверка..." : "Войти"}
             </Button>
             <Button
