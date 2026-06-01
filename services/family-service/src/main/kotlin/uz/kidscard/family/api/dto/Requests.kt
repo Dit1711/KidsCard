@@ -19,6 +19,11 @@ data class AddCoParentRequest(
     @field:NotBlank val fullName: String,
 )
 
+data class InviteCoParentRequest(
+    @field:NotBlank val phone: String,
+    @field:NotBlank val fullName: String,
+)
+
 data class AddChildRequest(
     @field:NotBlank val fullName: String,
     @field:NotNull val dateOfBirth: LocalDate,

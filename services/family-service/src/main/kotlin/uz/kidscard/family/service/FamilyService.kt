@@ -24,6 +24,7 @@ class FamilyService(
     private val familyRepository: FamilyRepository,
     private val parentRepository: ParentRepository,
     private val outboxService: OutboxService,
+    private val authClient: AuthClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -142,6 +143,29 @@ class FamilyService(
 
         log.info("Co-parent added: familyId={} coParentUserId={}", familyId, coParentUserId)
         return saved.toDto()
+    }
+
+    /**
+     * Invite a co-parent by phone: resolves the phone to a registered user via
+     * auth-service, then adds them as CO_PARENT. The owner supplies the display
+     * name (the user account itself stores no name).
+     */
+    fun inviteCoParent(
+        familyId: UUID,
+        requestingUserId: UUID,
+        phone: String,
+        fullName: String,
+        token: String,
+    ): ParentDto {
+        requireOwner(familyId, requestingUserId)
+
+        val coParentUserId = authClient.findUserIdByPhone(phone, token)
+            ?: throw BusinessException(
+                "USER_NOT_REGISTERED",
+                "Этот номер ещё не зарегистрирован в KidsCard. Пусть сначала войдёт в приложение по своему номеру.",
+            )
+
+        return addCoParent(familyId, requestingUserId, coParentUserId, phone, fullName)
     }
 
     fun requireMember(familyId: UUID, userId: UUID) {

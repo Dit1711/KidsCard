@@ -15,6 +15,7 @@ import uz.kidscard.common.api.ApiResponse
 import uz.kidscard.family.api.dto.AddCoParentRequest
 import uz.kidscard.family.api.dto.CreateFamilyRequest
 import uz.kidscard.family.api.dto.FamilyDto
+import uz.kidscard.family.api.dto.InviteCoParentRequest
 import uz.kidscard.family.api.dto.ParentDto
 import uz.kidscard.family.service.FamilyService
 import java.util.UUID
@@ -74,6 +75,24 @@ class FamilyController(
             coParentUserId = coParentUserId,
             phone = request.phone,
             fullName = request.fullName,
+        )
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
+    }
+
+    /** Invite a co-parent by phone (resolves the user, then adds as CO_PARENT). */
+    @PostMapping("/{familyId}/co-parents/invite")
+    fun inviteCoParent(
+        @PathVariable familyId: UUID,
+        @Valid @RequestBody request: InviteCoParentRequest,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<ParentDto>> {
+        val userId = UUID.fromString(jwt.subject)
+        val result = familyService.inviteCoParent(
+            familyId = familyId,
+            requestingUserId = userId,
+            phone = request.phone,
+            fullName = request.fullName,
+            token = jwt.tokenValue,
         )
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
     }

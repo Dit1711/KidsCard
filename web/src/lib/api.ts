@@ -285,6 +285,12 @@ export const familyService = {
     familyApi.get<ApiResponse<ChildResponse[]>>(
       `/api/v1/families/${familyId}/children`
     ),
+
+  inviteCoParent: (familyId: string, phone: string, fullName: string) =>
+    familyApi.post<ApiResponse<ParentResponse>>(
+      `/api/v1/families/${familyId}/co-parents/invite`,
+      { phone, fullName }
+    ),
 };
 
 // ── Chores (gamification) ──────────────────────────────────────────────────────

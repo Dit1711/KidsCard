@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uz.kidscard.common.exception.ResourceNotFoundException
 import uz.kidscard.auth.api.dto.LoginRequest
 import uz.kidscard.auth.api.dto.LogoutRequest
 import uz.kidscard.auth.api.dto.RefreshRequest
@@ -85,5 +87,16 @@ class AuthController(private val authService: AuthService) {
     ): ResponseEntity<ApiResponse<UserResponse>> {
         val userId = UUID.fromString(jwt.subject)
         return ResponseEntity.ok(ApiResponse.ok(authService.getCurrentUser(userId)))
+    }
+
+    /** Resolve a registered user by phone (e.g. to invite them as co-parent). */
+    @GetMapping("/users/by-phone")
+    fun lookupByPhone(
+        @RequestParam phone: String,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<Map<String, String>>> {
+        val (userId, normalizedPhone) = authService.findByPhone(phone)
+            ?: throw ResourceNotFoundException("User", phone)
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("userId" to userId.toString(), "phone" to normalizedPhone)))
     }
 }

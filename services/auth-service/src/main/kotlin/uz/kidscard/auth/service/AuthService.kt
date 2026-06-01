@@ -118,6 +118,10 @@ class AuthService(
         return user.toResponse()  // roles loaded inside transaction
     }
 
+    /** Resolve a registered user by phone — used to invite a co-parent. */
+    fun findByPhone(phone: String): Pair<UUID, String>? =
+        userRepository.findByPhone(phone.trim()).orElse(null)?.let { it.id to it.phone }
+
     private fun issueTokens(user: User, deviceId: String? = null): TokenResponse {
         val accessToken = jwtService.generateAccessToken(user)
         val rawRefreshToken = jwtService.generateRefreshTokenValue()

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
+import { useAuthStore } from "@/store/auth";
 import {
   Card,
   CardContent,
@@ -37,6 +38,13 @@ function ageGroupLabel(group: string) {
 export default function FamilyPage() {
   const qc = useQueryClient();
   const { family, setFamily } = useFamilyStore();
+  const { user } = useAuthStore();
+
+  // Invite co-parent form
+  const [showInvite, setShowInvite] = useState(false);
+  const [coPhone, setCoPhone] = useState("");
+  const [coName, setCoName] = useState("");
+  const [inviteError, setInviteError] = useState("");
 
   // Create family form
   const [familyName, setFamilyName] = useState("");
@@ -91,6 +99,26 @@ export default function FamilyPage() {
       setShowAddChild(false);
     },
   });
+
+  const inviteCoParent = useMutation({
+    mutationFn: () => familyService.inviteCoParent(family!.id, coPhone.trim(), coName.trim()),
+    onSuccess: async () => {
+      const { data } = await familyService.getMyFamily();
+      setFamily(data.data);
+      qc.invalidateQueries({ queryKey: ["my-family"] });
+      setCoPhone("");
+      setCoName("");
+      setInviteError("");
+      setShowInvite(false);
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { error?: { message?: string } } } };
+      setInviteError(e.response?.data?.error?.message ?? "Не удалось пригласить со-родителя");
+    },
+  });
+
+  const myRole = family?.parents.find((p) => p.userId === user?.id)?.role;
+  const isOwner = myRole === "OWNER";
 
   const noFamily = !isLoading && !family && error;
 
@@ -158,6 +186,79 @@ export default function FamilyPage() {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          <Separator />
+
+          {/* Parents */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Родители</h2>
+              {isOwner && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setShowInvite(!showInvite); setInviteError(""); }}
+                >
+                  {showInvite ? "Отмена" : "+ Пригласить со-родителя"}
+                </Button>
+              )}
+            </div>
+
+            {showInvite && isOwner && (
+              <Card className="mb-4">
+                <CardContent className="pt-4 space-y-3">
+                  <CardDescription>
+                    Со-родитель должен быть уже зарегистрирован в KidsCard по своему номеру телефона.
+                  </CardDescription>
+                  <div className="space-y-2">
+                    <Label>Телефон</Label>
+                    <Input
+                      placeholder="+998901112233"
+                      value={coPhone}
+                      onChange={(e) => setCoPhone(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Имя</Label>
+                    <Input
+                      placeholder="Мама / Папа / Имя"
+                      value={coName}
+                      onChange={(e) => setCoName(e.target.value)}
+                    />
+                  </div>
+                  {inviteError && <p className="text-sm text-red-500">{inviteError}</p>}
+                  <Button
+                    onClick={() => inviteCoParent.mutate()}
+                    disabled={!coPhone || !coName || inviteCoParent.isPending}
+                    className="w-full"
+                  >
+                    {inviteCoParent.isPending ? "Приглашаем…" : "Пригласить"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="space-y-3">
+              {family.parents.map((p) => (
+                <Card key={p.id}>
+                  <CardContent className="pt-4 pb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {p.fullName}
+                        {p.userId === user?.id && (
+                          <span className="ml-2 text-xs text-gray-400">(вы)</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-400">{p.phone}</p>
+                    </div>
+                    <Badge variant={p.role === "OWNER" ? "default" : "secondary"}>
+                      {p.role === "OWNER" ? "👑 Владелец" : "Со-родитель"}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
 
           <Separator />
 
