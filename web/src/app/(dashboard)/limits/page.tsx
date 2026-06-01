@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, limitService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
@@ -16,31 +17,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-function formatSum(uzs: number) {
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
+import { CATEGORIES, categoryLabel, PERIOD_LABELS } from "@/lib/categories";
 
 const PERIOD_TYPES = [
-  { value: "DAILY", label: "Дневной" },
-  { value: "WEEKLY", label: "Недельный" },
-  { value: "MONTHLY", label: "Месячный" },
-];
-
-// Shared with the child shop — category = MCC.
-const CATEGORIES = [
-  { mcc: "5814", label: "Еда", icon: "🍔" },
-  { mcc: "5816", label: "Игры", icon: "🎮" },
-  { mcc: "5945", label: "Игрушки", icon: "🧸" },
-  { mcc: "5999", label: "Другое", icon: "🛒" },
+  { value: "DAILY", label: PERIOD_LABELS.DAILY },
+  { value: "WEEKLY", label: PERIOD_LABELS.WEEKLY },
+  { value: "MONTHLY", label: PERIOD_LABELS.MONTHLY },
 ];
 
 function periodLabel(type: string) {
   return PERIOD_TYPES.find((t) => t.value === type)?.label ?? type;
-}
-function categoryLabel(mcc: string | null) {
-  const c = CATEGORIES.find((x) => x.mcc === mcc);
-  return c ? `${c.icon} ${c.label}` : "Категория";
 }
 
 export default function LimitsPage() {

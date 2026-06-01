@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { formatSum } from "@/lib/format";
 import { useAuthStore } from "@/store/auth";
 import { useFamilyStore } from "@/store/family";
 import { familyService, cardService } from "@/lib/api";
@@ -16,10 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-
-function formatSum(uzs: number) {
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
 
 export default function DashboardPage() {
   const { user } = useAuthStore();

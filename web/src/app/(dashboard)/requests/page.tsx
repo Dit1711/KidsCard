@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatSum } from "@/lib/format";
 import { familyService, moneyRequestService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import {
@@ -12,10 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-function formatSum(uzs: number) {
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
 
 const PERIOD: Record<string, string> = {
   DAILY: "дневной",

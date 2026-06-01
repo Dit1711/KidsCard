@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { formatSum } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import {
   familyService,
@@ -17,21 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-function formatSum(uzs: number) {
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
-
-const CATEGORIES: Record<string, { label: string; icon: string; color: string }> = {
-  "5814": { label: "Еда", icon: "🍔", color: "#f97316" },
-  "5816": { label: "Игры", icon: "🎮", color: "#8b5cf6" },
-  "5945": { label: "Игрушки", icon: "🧸", color: "#ec4899" },
-  "5999": { label: "Другое", icon: "🛒", color: "#3b82f6" },
-  "0000": { label: "Прочее", icon: "•", color: "#94a3b8" },
-};
-function cat(mcc: string) {
-  return CATEGORIES[mcc] ?? { label: `MCC ${mcc}`, icon: "•", color: "#94a3b8" };
-}
+import { categoryByMcc } from "@/lib/categories";
 
 const PERIODS = [
   { days: 7, label: "Неделя" },
@@ -184,7 +171,7 @@ export default function AnalyticsPage() {
                 ) : (
                   <div className="space-y-3">
                     {analytics?.byCategory.map((c) => {
-                      const meta = cat(c.mcc);
+                      const meta = categoryByMcc(c.mcc);
                       const pct = Math.round((c.amountUzs / total) * 100);
                       return (
                         <div key={c.mcc}>

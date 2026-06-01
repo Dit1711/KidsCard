@@ -1,13 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatSum } from "@/lib/format";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-
-function formatSum(uzs: number | null | undefined) {
-  if (uzs == null) return "—";
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
 
 export default function KidChoresPage() {
   const { isChildAuthed } = useChildStore();

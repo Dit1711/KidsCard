@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-
-function formatSum(uzs: number | null | undefined) {
-  if (uzs == null) return "—";
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
+import { categoryLabel, PERIOD_REMAINING_LABELS } from "@/lib/categories";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
@@ -235,16 +232,10 @@ export default function KidHomePage() {
           <p className="text-xs text-gray-400 mb-3 px-1">Сколько можно ещё потратить</p>
           <div className="space-y-2">
             {limitUsage.map((u, i) => {
-              const cats: Record<string, string> = {
-                "5814": "🍔 Еда", "5816": "🎮 Игры", "5945": "🧸 Игрушки", "5999": "🛒 Другое",
-              };
-              const periods: Record<string, string> = {
-                DAILY: "На сегодня", WEEKLY: "На неделю", MONTHLY: "На месяц",
-              };
               const label =
                 u.limitType === "CATEGORY"
-                  ? `${u.category ? cats[u.category] ?? "Категория" : "Категория"} (в месяц)`
-                  : periods[u.limitType] ?? u.limitType;
+                  ? `${categoryLabel(u.category)} (в месяц)`
+                  : PERIOD_REMAINING_LABELS[u.limitType] ?? u.limitType;
               const pct = u.limitUzs > 0 ? Math.min(100, Math.round((u.spentUzs / u.limitUzs) * 100)) : 0;
               const low = u.remainingUzs <= u.limitUzs * 0.15;
               return (

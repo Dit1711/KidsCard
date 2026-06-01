@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, cardService, paymentService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
@@ -16,10 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-function formatSum(uzs: number) {
-  return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("ru-RU", {
