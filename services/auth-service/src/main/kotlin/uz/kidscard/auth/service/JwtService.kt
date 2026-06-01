@@ -57,6 +57,30 @@ class JwtService(
         return signedJwt.serialize()
     }
 
+    /**
+     * Token for a child cabinet session. Subject is the childId; role is CHILD;
+     * childId and familyId travel as claims so downstream services can scope
+     * reads to exactly this child without a membership lookup.
+     */
+    fun generateChildToken(childId: UUID, familyId: UUID): String {
+        val now = Instant.now()
+        val expiry = now.plusSeconds(accessTokenExpirySeconds)
+
+        val claimsSet = JWTClaimsSet.Builder()
+            .subject(childId.toString())
+            .claim("roles", listOf("CHILD"))
+            .claim("childId", childId.toString())
+            .claim("familyId", familyId.toString())
+            .issueTime(Date.from(now))
+            .expirationTime(Date.from(expiry))
+            .jwtID(UUID.randomUUID().toString())
+            .build()
+
+        val signedJwt = SignedJWT(JWSHeader(JWSAlgorithm.HS256), claimsSet)
+        signedJwt.sign(MACSigner(secretBytes))
+        return signedJwt.serialize()
+    }
+
     fun generateRefreshTokenValue(): String = UUID.randomUUID().toString()
 
     fun validateToken(token: String): Claims? {

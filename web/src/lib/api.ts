@@ -54,6 +54,29 @@ function makeClient(baseURL: string) {
   return client;
 }
 
+// Client for child-cabinet calls — injects the separate childToken so a child
+// session never collides with a parent session in the same browser.
+function makeChildClient(baseURL: string) {
+  const client = axios.create({ baseURL });
+  client.interceptors.request.use((config) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("childToken") : null;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+  client.interceptors.response.use(
+    (res) => res,
+    (error) => {
+      if (error.response?.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("childToken");
+        window.location.href = "/child-login";
+      }
+      return Promise.reject(error);
+    }
+  );
+  return client;
+}
+
 export const authApi = makeClient(AUTH_URL);
 export const familyApi = makeClient(FAMILY_URL);
 export const cardApi = makeClient(CARD_URL);
@@ -61,6 +84,8 @@ export const paymentApi = makeClient(PAYMENT_URL);
 export const kycApi = makeClient(KYC_URL);
 export const notificationApi = makeClient(NOTIFICATION_URL);
 export const openBankingApi = makeClient(OPENBANKING_URL);
+export const childCardApi = makeChildClient(CARD_URL);
+export const childPaymentApi = makeChildClient(PAYMENT_URL);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -87,6 +112,44 @@ export const authService = {
 
   logout: (refreshToken: string) =>
     authApi.post("/api/v1/auth/logout", { refreshToken }),
+
+  // Parent issues/resets a child's login (code + PIN)
+  createChildAccess: (childId: string, familyId: string, pin: string, displayName?: string) =>
+    authApi.post<ApiResponse<ChildAccessResponse>>("/api/v1/auth/child/access", {
+      childId,
+      familyId,
+      pin,
+      displayName,
+    }),
+
+  getChildAccess: (childId: string) =>
+    authApi.get<ApiResponse<ChildAccessResponse | null>>(
+      `/api/v1/auth/child/access/${childId}`
+    ),
+};
+
+// ── Child auth + cabinet ────────────────────────────────────────────────────────
+
+export const childAuthService = {
+  // Public: child logs in with code + PIN (no parent token)
+  login: (loginCode: string, pin: string) =>
+    authApi.post<ApiResponse<ChildTokenResponse>>("/api/v1/auth/child/login", {
+      loginCode,
+      pin,
+    }),
+
+  myCards: () =>
+    childCardApi.get<ApiResponse<CardResponse[]>>("/api/v1/child/cards"),
+
+  balance: (cardId: string) =>
+    childPaymentApi.get<ApiResponse<BalanceResponse>>(
+      `/api/v1/child/balance?cardId=${cardId}`
+    ),
+
+  transactions: (cardId: string, size = 20) =>
+    childPaymentApi.get<ApiResponse<PageResponse<TransactionResponse>>>(
+      `/api/v1/child/transactions?cardId=${cardId}&size=${size}`
+    ),
 };
 
 // ── Family ────────────────────────────────────────────────────────────────────
@@ -457,4 +520,19 @@ export interface FundResultResponse {
   status: string;
   amountUzs: number;
   externalRef: string | null;
+}
+
+export interface ChildAccessResponse {
+  childId: string;
+  loginCode: string;
+  displayName: string | null;
+}
+
+export interface ChildTokenResponse {
+  accessToken: string;
+  childId: string;
+  familyId: string;
+  displayName: string | null;
+  expiresIn: number;
+  tokenType: string;
 }

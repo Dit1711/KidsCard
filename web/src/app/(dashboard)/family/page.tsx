@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ChildAccessPanel } from "@/components/ChildAccessPanel";
 
 function calcAge(dob: string) {
   const birth = new Date(dob);
@@ -218,18 +219,27 @@ export default function FamilyPage() {
             <div className="space-y-3">
               {children?.map((child) => (
                 <Card key={child.id}>
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="font-medium">{child.fullName}</p>
-                      <p className="text-sm text-gray-400">
-                        {calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}
-                      </p>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{child.fullName}</p>
+                        <p className="text-sm text-gray-400">
+                          {calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={child.status === "ACTIVE" ? "default" : "secondary"}
+                      >
+                        {child.status}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant={child.status === "ACTIVE" ? "default" : "secondary"}
-                    >
-                      {child.status}
-                    </Badge>
+                    {family && (
+                      <ChildAccessPanel
+                        childId={child.id}
+                        familyId={family.id}
+                        childName={child.fullName}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               ))}

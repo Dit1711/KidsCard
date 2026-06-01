@@ -93,6 +93,12 @@ export default function LoginPage() {
                 Зарегистрироваться
               </Link>
             </p>
+            <p className="text-sm text-center text-gray-400">
+              Ты ребёнок?{" "}
+              <Link href="/child-login" className="text-purple-600 hover:underline">
+                Вход для детей 🧒
+              </Link>
+            </p>
           </form>
         ) : (
           <form onSubmit={handleVerify} className="space-y-4">

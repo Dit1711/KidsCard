@@ -97,6 +97,11 @@ class CardService(
     fun getCardsByChild(familyId: UUID, childId: UUID, requestingUserId: UUID): List<KidsCardDto> =
         kidsCardRepository.findByFamilyIdAndChildId(familyId, childId).map { it.toDto() }
 
+    /** Child cabinet: the child reads their own cards (scoped by JWT childId claim). */
+    @Transactional(readOnly = true)
+    fun getCardsForChildSelf(childId: UUID): List<KidsCardDto> =
+        kidsCardRepository.findByChildId(childId).map { it.toDto() }
+
     @Transactional
     fun freezeCard(cardId: UUID, parentId: UUID, familyId: UUID): KidsCardDto {
         val card = kidsCardRepository.findByIdAndFamilyId(cardId, familyId)

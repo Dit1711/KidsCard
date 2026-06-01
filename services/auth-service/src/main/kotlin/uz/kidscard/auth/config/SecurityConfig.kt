@@ -48,6 +48,7 @@ class SecurityConfig(
                 authorize("/api/v1/auth/login", permitAll)
                 authorize("/api/v1/auth/login/verify", permitAll)
                 authorize("/api/v1/auth/refresh", permitAll)
+                authorize("/api/v1/auth/child/login", permitAll)
                 authorize("/actuator/health", permitAll)
                 authorize("/api-docs/**", permitAll)
                 authorize("/swagger-ui/**", permitAll)

@@ -47,6 +47,7 @@ class SecurityConfig(
                 auth.requestMatchers("/actuator/info").permitAll()
                 auth.requestMatchers("/api-docs/**").permitAll()
                 auth.requestMatchers("/swagger-ui/**").permitAll()
+                auth.requestMatchers("/api/v1/child/**").hasRole("CHILD")
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
