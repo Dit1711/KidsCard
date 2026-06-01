@@ -75,3 +75,6 @@ app:
     secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
   family-service:
     url: ${FAMILY_SERVICE_URL:http://localhost:8082}
+  savings:
+    # Annual interest rate (%) paid on savings-goal balances. Accrued monthly.
+    annual-rate-percent: ${SAVINGS_RATE:12}

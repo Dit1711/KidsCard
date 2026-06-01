@@ -61,4 +61,10 @@ interface LedgerEntryRepository : JpaRepository<LedgerEntry, UUID> {
           AND e.createdAt >= :since
     """)
     fun computeCategorySpentSince(accountId: String, mcc: String, since: java.time.Instant): Long
+
+    @Query("""
+        SELECT DISTINCT e.accountId FROM LedgerEntry e
+        WHERE e.accountType = uz.kidscard.payment.domain.AccountType.SAVINGS
+    """)
+    fun findSavingsAccountIds(): List<String>
 }

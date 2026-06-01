@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uz.kidscard.common.api.ApiResponse
+import uz.kidscard.payment.service.SavingsInterestService
 import uz.kidscard.payment.service.SavingsService
 import java.util.UUID
 
@@ -36,7 +37,18 @@ data class GiftRequest(
 @RequestMapping("/api/v1/savings")
 class SavingsController(
     private val savingsService: SavingsService,
+    private val savingsInterestService: SavingsInterestService,
 ) {
+
+    /** Current annual interest rate paid on savings goals. */
+    @GetMapping("/rate")
+    fun rate(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<ApiResponse<Map<String, Double>>> =
+        ResponseEntity.ok(ApiResponse.ok(mapOf("annualRatePercent" to savingsInterestService.ratePercent())))
+
+    /** Dev: run one interest accrual cycle now (production runs it monthly). */
+    @PostMapping("/accrue")
+    fun accrue(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<ApiResponse<Map<String, Long>>> =
+        ResponseEntity.ok(ApiResponse.ok(savingsInterestService.accrueAll()))
 
     @PostMapping("/deposit")
     fun deposit(

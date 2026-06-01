@@ -76,6 +76,16 @@ export default function KidCabinetPage() {
       return data.data;
     },
     enabled: isChildAuthed,
+    refetchInterval: 20_000,
+  });
+
+  const { data: savingsRate } = useQuery({
+    queryKey: ["savings-rate"],
+    queryFn: async () => {
+      const { data } = await childAuthService.savingsRate();
+      return data.data.annualRatePercent;
+    },
+    enabled: isChildAuthed,
   });
 
   const [showGoal, setShowGoal] = useState(false);
@@ -293,7 +303,7 @@ export default function KidCabinetPage() {
         {/* Savings goals */}
         {card && (
           <div>
-            <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center justify-between mb-1 px-1">
               <h2 className="text-base font-bold text-purple-800">🐷 Мои цели</h2>
               <button
                 onClick={() => setShowGoal(!showGoal)}
@@ -302,6 +312,11 @@ export default function KidCabinetPage() {
                 {showGoal ? "Отмена" : "+ Новая цель"}
               </button>
             </div>
+            {savingsRate != null && (
+              <p className="px-1 mb-3 text-xs text-green-600 font-medium">
+                📈 На накопления капает {savingsRate}% в год — чем больше копишь, тем больше растёт!
+              </p>
+            )}
 
             {showGoal && (
               <div className="bg-white rounded-2xl p-4 shadow-sm mb-3 space-y-3">

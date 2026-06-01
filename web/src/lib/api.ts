@@ -193,6 +193,11 @@ export const childAuthService = {
       `/api/v1/child/savings-goals/${goalId}/withdraw`,
       { cardId, amountUzs }
     ),
+
+  savingsRate: () =>
+    childPaymentApi.get<ApiResponse<{ annualRatePercent: number }>>(
+      "/api/v1/savings/rate"
+    ),
 };
 
 // ── Family ────────────────────────────────────────────────────────────────────
