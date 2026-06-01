@@ -4,15 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { kycService } from "@/lib/api";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Panel, DButton } from "@/components/dark";
+import { MotionStagger, MotionItem } from "@/components/motion";
 import { BookText, IdCard, Car, ScanFace, CheckCircle2 } from "lucide-react";
 
 const DOC_TYPES = [
@@ -23,16 +16,24 @@ const DOC_TYPES = [
 
 type Step = "intro" | "document" | "liveness" | "done";
 
+function SuccessCard({ title, sub, onHome }: { title: string; sub: string; onHome: () => void }) {
+  return (
+    <Panel className="p-10 flex flex-col items-center gap-3 border-emerald-500/20 bg-emerald-500/[0.06]">
+      <CheckCircle2 className="h-12 w-12 text-emerald-400" />
+      <p className="font-medium text-emerald-100">{title}</p>
+      <p className="text-sm text-emerald-200/70 text-center">{sub}</p>
+      <DButton variant="outline" onClick={onHome} className="mt-1">На главную</DButton>
+    </Panel>
+  );
+}
+
 export default function KycPage() {
   const router = useRouter();
   const qc = useQueryClient();
 
   const { data: status, isLoading } = useQuery({
     queryKey: ["kyc-status"],
-    queryFn: async () => {
-      const { data } = await kycService.getStatus();
-      return data.data ?? null;
-    },
+    queryFn: async () => (await kycService.getStatus()).data.data ?? null,
   });
 
   const [step, setStep] = useState<Step>("intro");
@@ -44,8 +45,7 @@ export default function KycPage() {
   const alreadyApproved = status?.status === "APPROVED";
 
   const handleStartAndUpload = async () => {
-    setBusy(true);
-    setError("");
+    setBusy(true); setError("");
     try {
       const { data: started } = await kycService.start("PARENT");
       const sid = started.data.id;
@@ -54,15 +54,12 @@ export default function KycPage() {
       setStep("liveness");
     } catch {
       setError("Не удалось начать верификацию. Попробуйте ещё раз.");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
   const handleLiveness = async () => {
     if (!sessionId) return;
-    setBusy(true);
-    setError("");
+    setBusy(true); setError("");
     try {
       const { data } = await kycService.liveness(sessionId);
       if (data.data.status === "APPROVED") {
@@ -74,145 +71,110 @@ export default function KycPage() {
       }
     } catch {
       setError("Ошибка проверки. Попробуйте ещё раз.");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
-  if (isLoading) {
-    return <p className="text-muted-foreground">Загрузка…</p>;
-  }
+  if (isLoading) return <p className="text-white/50">Загрузка…</p>;
 
   return (
-    <div className="max-w-xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Верификация личности</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Требуется для выпуска карт и соответствия требованиям ЦБ РУз
-        </p>
-      </div>
+    <MotionStagger className="max-w-xl space-y-6">
+      <MotionItem>
+        <h1 className="text-2xl font-bold tracking-tight">Верификация личности</h1>
+        <p className="text-white/50 mt-1 text-sm">Требуется для выпуска карт и соответствия требованиям ЦБ РУз</p>
+      </MotionItem>
 
-      {/* Already approved */}
       {alreadyApproved && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="flex flex-col items-center py-10 gap-3">
-            <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-            <p className="font-medium text-green-800">Личность подтверждена</p>
-            <p className="text-sm text-green-600">
-              Верификация пройдена{" "}
-              {status?.approvedAt &&
-                new Date(status.approvedAt).toLocaleDateString("ru-RU")}
-            </p>
-            <Button variant="outline" onClick={() => router.push("/dashboard")}>
-              На главную
-            </Button>
-          </CardContent>
-        </Card>
+        <MotionItem>
+          <SuccessCard
+            title="Личность подтверждена"
+            sub={`Верификация пройдена ${status?.approvedAt ? new Date(status.approvedAt).toLocaleDateString("ru-RU") : ""}`}
+            onHome={() => router.push("/dashboard")}
+          />
+        </MotionItem>
       )}
 
-      {/* Flow */}
       {!alreadyApproved && (
         <>
-          {/* Progress */}
-          <div className="flex items-center gap-2 text-xs">
-            {["Документ", "Селфи", "Готово"].map((label, i) => {
-              const active =
-                (step === "intro" || step === "document") ? i === 0 :
-                step === "liveness" ? i === 1 : i <= 2;
-              const stepIndex = step === "done" ? 2 : step === "liveness" ? 1 : 0;
-              const reached = i <= stepIndex;
-              return (
-                <div key={label} className="flex items-center gap-2 flex-1">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                      reached ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {i + 1}
+          <MotionItem>
+            <div className="flex items-center gap-2 text-xs">
+              {["Документ", "Селфи", "Готово"].map((label, i) => {
+                const stepIndex = step === "done" ? 2 : step === "liveness" ? 1 : 0;
+                const reached = i <= stepIndex;
+                return (
+                  <div key={label} className="flex items-center gap-2 flex-1">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                      reached ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white" : "bg-white/10 text-white/40"
+                    }`}>{i + 1}</div>
+                    <span className={reached ? "text-white" : "text-white/40"}>{label}</span>
+                    {i < 2 && <div className="flex-1 h-px bg-white/10" />}
                   </div>
-                  <span className={reached ? "text-foreground" : "text-muted-foreground"}>{label}</span>
-                  {i < 2 && <div className="flex-1 h-px bg-muted" />}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </MotionItem>
 
           {(step === "intro" || step === "document") && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Шаг 1. Документ</CardTitle>
-                <CardDescription>
-                  Выберите тип документа. В демо-режиме загрузка имитируется.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <MotionItem>
+              <Panel className="p-6 space-y-4">
+                <div>
+                  <p className="font-medium tracking-tight">Шаг 1. Документ</p>
+                  <p className="text-xs text-white/40">Выберите тип документа. В демо-режиме загрузка имитируется.</p>
+                </div>
                 <div className="grid grid-cols-1 gap-2">
                   {DOC_TYPES.map((d) => (
-                    <button
-                      key={d.value}
-                      onClick={() => setDocType(d.value)}
-                      className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
-                        docType === d.value
-                          ? "border-primary bg-accent"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <d.Icon className="h-6 w-6 text-muted-foreground" />
+                    <button key={d.value} onClick={() => setDocType(d.value)}
+                      className={`flex items-center gap-3 p-3.5 rounded-xl text-left transition-colors ${
+                        docType === d.value ? "bg-white/15 ring-1 ring-fuchsia-400/50" : "bg-white/[0.04] hover:bg-white/[0.08]"
+                      }`}>
+                      <d.Icon className="h-6 w-6 text-white/60" />
                       <span className="text-sm font-medium">{d.label}</span>
                     </button>
                   ))}
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button onClick={handleStartAndUpload} disabled={busy} className="w-full">
+                {error && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
+                <DButton onClick={handleStartAndUpload} disabled={busy} className="w-full">
                   {busy ? "Загрузка…" : "Загрузить и продолжить"}
-                </Button>
-              </CardContent>
-            </Card>
+                </DButton>
+              </Panel>
+            </MotionItem>
           )}
 
           {step === "liveness" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Шаг 2. Селфи (liveness)</CardTitle>
-                <CardDescription>
-                  Сверка лица с документом. В демо-режиме проверка проходит автоматически.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <MotionItem>
+              <Panel className="p-6 space-y-4">
+                <div>
+                  <p className="font-medium tracking-tight">Шаг 2. Селфи (liveness)</p>
+                  <p className="text-xs text-white/40">Сверка лица с документом. В демо-режиме проверка проходит автоматически.</p>
+                </div>
                 <div className="flex flex-col items-center py-6 gap-2">
-                  <div className="w-28 h-28 rounded-full border-4 border-dashed border-border flex items-center justify-center text-muted-foreground">
+                  <div className="w-28 h-28 rounded-full border-4 border-dashed border-white/15 flex items-center justify-center text-white/40">
                     <ScanFace className="h-12 w-12" />
                   </div>
-                  <p className="text-sm text-muted-foreground">Посмотрите в камеру</p>
+                  <p className="text-sm text-white/40">Посмотрите в камеру</p>
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button onClick={handleLiveness} disabled={busy} className="w-full">
+                {error && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
+                <DButton onClick={handleLiveness} disabled={busy} className="w-full">
                   {busy ? "Проверка…" : "Сделать селфи"}
-                </Button>
-              </CardContent>
-            </Card>
+                </DButton>
+              </Panel>
+            </MotionItem>
           )}
 
           {step === "done" && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="flex flex-col items-center py-10 gap-3">
-                <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-                <p className="font-medium text-green-800">Верификация пройдена!</p>
-                <p className="text-sm text-green-600 text-center">
-                  Личность подтверждена. Теперь доступны все возможности платформы.
-                </p>
-                <Button onClick={() => router.push("/dashboard")}>На главную</Button>
-              </CardContent>
-            </Card>
+            <MotionItem>
+              <SuccessCard
+                title="Верификация пройдена!"
+                sub="Личность подтверждена. Теперь доступны все возможности платформы."
+                onHome={() => router.push("/dashboard")}
+              />
+            </MotionItem>
           )}
 
           {status?.status === "REJECTED" && step === "intro" && (
-            <p className="text-sm text-red-500">
-              Предыдущая попытка отклонена: {status.rejectionReason}. Начните заново.
-            </p>
+            <p className="text-sm text-rose-300">Предыдущая попытка отклонена: {status.rejectionReason}. Начните заново.</p>
           )}
         </>
       )}
-    </div>
+    </MotionStagger>
   );
 }

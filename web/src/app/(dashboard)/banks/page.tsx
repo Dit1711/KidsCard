@@ -4,24 +4,11 @@ import { useState } from "react";
 import { Landmark } from "lucide-react";
 import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  openBankingService,
-  familyService,
-  cardService,
-} from "@/lib/api";
+import { openBankingService, familyService, cardService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Panel, DInput, DLabel, DButton } from "@/components/dark";
+import { MotionStagger, MotionItem } from "@/components/motion";
+import { toast } from "sonner";
 
 export default function BanksPage() {
   const qc = useQueryClient();
@@ -30,207 +17,141 @@ export default function BanksPage() {
   const [fundAccount, setFundAccount] = useState<string | null>(null);
   const [fundChild, setFundChild] = useState("");
   const [fundAmount, setFundAmount] = useState("");
-  const [fundMsg, setFundMsg] = useState("");
 
   const { data: accounts, isLoading } = useQuery({
     queryKey: ["bank-accounts"],
-    queryFn: async () => {
-      const { data } = await openBankingService.accounts();
-      return data.data;
-    },
+    queryFn: async () => (await openBankingService.accounts()).data.data,
   });
 
   const { data: banks } = useQuery({
     queryKey: ["banks"],
-    queryFn: async () => {
-      const { data } = await openBankingService.banks();
-      return data.data;
-    },
+    queryFn: async () => (await openBankingService.banks()).data.data,
   });
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
-    queryFn: async () => {
-      const { data } = await familyService.getChildren(family!.id);
-      return data.data;
-    },
+    queryFn: async () => (await familyService.getChildren(family!.id)).data.data,
     enabled: !!family?.id,
   });
 
   const { data: cards } = useQuery({
     queryKey: ["family-cards", family?.id],
-    queryFn: async () => {
-      const { data } = await cardService.getByFamily(family!.id);
-      return data.data;
-    },
+    queryFn: async () => (await cardService.getByFamily(family!.id)).data.data,
     enabled: !!family?.id,
   });
 
   const link = useMutation({
     mutationFn: (bankCode: string) => openBankingService.link(bankCode),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bank-accounts"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["bank-accounts"] }); toast.success("Счёт привязан"); },
   });
 
   const fund = useMutation({
     mutationFn: () => {
       const card = cards?.find((c) => c.childId === fundChild);
       return openBankingService.fundCard({
-        accountId: fundAccount!,
-        cardId: card!.id,
-        childId: fundChild,
-        familyId: family!.id,
-        amountUzs: Math.round(parseFloat(fundAmount)),
-        idempotencyKey: `ob-${fundAccount}-${Date.now()}`,
+        accountId: fundAccount!, cardId: card!.id, childId: fundChild, familyId: family!.id,
+        amountUzs: Math.round(parseFloat(fundAmount)), idempotencyKey: `ob-${fundAccount}-${Date.now()}`,
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bank-accounts"] });
       qc.invalidateQueries({ queryKey: ["balance"] });
-      setFundMsg("Карта пополнена. Баланс обновится в течение пары секунд.");
-      setFundAmount("");
-      setFundChild("");
-      setFundAccount(null);
+      setFundAmount(""); setFundChild(""); setFundAccount(null);
+      toast.success("Карта пополнена. Баланс обновится через пару секунд.");
     },
-    onError: () => setFundMsg("Не удалось пополнить. Проверьте баланс счёта."),
+    onError: () => toast.error("Не удалось пополнить. Проверьте баланс счёта."),
   });
 
-  const childrenWithCards = children?.filter((c) =>
-    cards?.some((card) => card.childId === c.id)
-  );
+  const childrenWithCards = children?.filter((c) => cards?.some((card) => card.childId === c.id));
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Банковские счета</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Open Banking: привяжите счёт и пополняйте карты детей напрямую
-        </p>
-      </div>
+    <MotionStagger className="space-y-6">
+      <MotionItem>
+        <h1 className="text-2xl font-bold tracking-tight">Банковские счета</h1>
+        <p className="text-white/50 mt-1 text-sm">Open Banking: привяжите счёт и пополняйте карты детей напрямую</p>
+      </MotionItem>
 
-      {isLoading && <p className="text-muted-foreground">Загрузка…</p>}
+      {isLoading && <p className="text-white/50">Загрузка…</p>}
 
-      {/* No accounts → link */}
       {accounts && accounts.length === 0 && (
-        <Card className="border-dashed border-2 border-border">
-          <CardContent className="flex flex-col items-center py-10 gap-4">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <Landmark className="h-7 w-7" />
-            </span>
-            <p className="text-muted-foreground">Нет привязанных счетов</p>
-            <div className="flex gap-2">
+        <MotionItem>
+          <Panel className="p-10 flex flex-col items-center gap-4 border-dashed">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-white/60"><Landmark className="h-7 w-7" /></span>
+            <p className="text-white/50">Нет привязанных счетов</p>
+            <div className="flex gap-2 flex-wrap justify-center">
               {banks?.map((b) => (
-                <Button
-                  key={b.code}
-                  onClick={() => link.mutate(b.code)}
-                  disabled={link.isPending}
-                >
+                <DButton key={b.code} onClick={() => link.mutate(b.code)} disabled={link.isPending}>
                   {link.isPending ? "Привязка…" : `Привязать ${b.name}`}
-                </Button>
+                </DButton>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              В демо-режиме банк авторизует доступ автоматически
-            </p>
-          </CardContent>
-        </Card>
+            <p className="text-xs text-white/40">В демо-режиме банк авторизует доступ автоматически</p>
+          </Panel>
+        </MotionItem>
       )}
 
-      {/* Accounts */}
       {accounts && accounts.length > 0 && (
         <div className="space-y-4">
           {accounts.map((acc) => (
-            <Card key={acc.id}>
-              <CardContent className="pt-5 pb-5">
-                <div className="rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 text-white p-4 mb-4">
+            <MotionItem key={acc.id}>
+              <Panel className="p-5">
+                <div className="rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white p-5 mb-4">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <p className="text-xs text-white/60">{acc.bankCode} · {acc.accountType}</p>
+                      <p className="text-xs text-white/50">{acc.bankCode} · {acc.accountType}</p>
                       <p className="font-semibold">{acc.holderName ?? "Счёт"}</p>
                     </div>
-                    <Badge variant="outline" className="border-white/30 text-green-300 text-xs">
-                      {acc.status}
-                    </Badge>
+                    <span className="text-[11px] rounded-full px-2.5 py-0.5 bg-white/15 text-emerald-200">{acc.status}</span>
                   </div>
-                  <p className="font-mono text-lg tracking-widest mb-3">{acc.maskedNumber}</p>
+                  <p className="font-mono tracking-[0.2em] mb-3">{acc.maskedNumber}</p>
                   <div className="flex justify-between items-end">
-                    <span className="text-white/60 text-sm">Доступно</span>
-                    <span className="font-bold text-xl">{formatSum(acc.balanceUzs)}</span>
+                    <span className="text-white/50 text-sm">Доступно</span>
+                    <span className="font-bold text-xl tabular-nums">{formatSum(acc.balanceUzs)}</span>
                   </div>
                 </div>
 
-                <Button
-                  variant={fundAccount === acc.id ? "outline" : "default"}
-                  onClick={() => {
-                    setFundAccount(fundAccount === acc.id ? null : acc.id);
-                    setFundMsg("");
-                  }}
-                  className="w-full"
-                >
+                <DButton variant={fundAccount === acc.id ? "outline" : "primary"}
+                  onClick={() => setFundAccount(fundAccount === acc.id ? null : acc.id)} className="w-full">
                   {fundAccount === acc.id ? "Отмена" : "Пополнить карту ребёнка"}
-                </Button>
+                </DButton>
 
                 {fundAccount === acc.id && (
                   <div className="mt-4 space-y-3">
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label>Ребёнок (карта)</Label>
+                    <div className="h-px bg-white/[0.06]" />
+                    <div>
+                      <DLabel>Ребёнок (карта)</DLabel>
                       <select
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        value={fundChild}
-                        onChange={(e) => setFundChild(e.target.value)}
-                      >
+                        className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white outline-none focus:border-fuchsia-400/60 [color-scheme:dark]"
+                        value={fundChild} onChange={(e) => setFundChild(e.target.value)}>
                         <option value="">Выберите ребёнка</option>
-                        {childrenWithCards?.map((c) => (
-                          <option key={c.id} value={c.id}>{c.fullName}</option>
-                        ))}
+                        {childrenWithCards?.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
                       </select>
                       {childrenWithCards?.length === 0 && (
-                        <p className="text-xs text-amber-600">
-                          Ни у кого нет карты — выпустите карту в разделе «Карты».
-                        </p>
+                        <p className="text-xs text-amber-300 mt-1">Ни у кого нет карты — выпустите карту в разделе «Карты».</p>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <Label>Сумма (сум)</Label>
-                      <Input
-                        type="number"
-                        placeholder="100000"
-                        value={fundAmount}
-                        onChange={(e) => setFundAmount(e.target.value)}
-                      />
-                      <div className="flex gap-2 flex-wrap">
+                    <div>
+                      <DLabel>Сумма (сум)</DLabel>
+                      <DInput type="number" placeholder="100000" value={fundAmount} onChange={(e) => setFundAmount(e.target.value)} />
+                      <div className="flex gap-2 flex-wrap mt-2">
                         {[50000, 100000, 200000, 500000].map((amt) => (
-                          <button
-                            key={amt}
-                            onClick={() => setFundAmount(String(amt))}
-                            className="px-2 py-1 text-xs border rounded hover:border-primary/50 transition-colors"
-                          >
+                          <button key={amt} onClick={() => setFundAmount(String(amt))}
+                            className="px-2.5 py-1 text-xs rounded-lg bg-white/[0.05] text-white/60 hover:text-white transition-colors">
                             {formatSum(amt)}
                           </button>
                         ))}
                       </div>
                     </div>
-                    {fundMsg && <p className="text-sm">{fundMsg}</p>}
-                    <Button
-                      onClick={() => fund.mutate()}
-                      disabled={!fundChild || !fundAmount || fund.isPending}
-                      className="w-full"
-                    >
-                      {fund.isPending
-                        ? "Перевод…"
-                        : `Перевести ${fundAmount ? formatSum(parseFloat(fundAmount)) : ""}`}
-                    </Button>
+                    <DButton onClick={() => fund.mutate()} disabled={!fundChild || !fundAmount || fund.isPending} className="w-full">
+                      {fund.isPending ? "Перевод…" : `Перевести ${fundAmount ? formatSum(parseFloat(fundAmount)) : ""}`}
+                    </DButton>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </Panel>
+            </MotionItem>
           ))}
-
-          {fundMsg && !fundAccount && (
-            <p className="text-sm text-green-600">{fundMsg}</p>
-          )}
         </div>
       )}
-    </div>
+    </MotionStagger>
   );
 }
