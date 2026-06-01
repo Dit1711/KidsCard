@@ -11,21 +11,30 @@ import {
   parentSavingsService,
 } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { categoryByMcc } from "@/lib/categories";
 import { SpendChart } from "@/components/SpendChart";
+import { MotionStagger, MotionItem } from "@/components/motion";
 
 const PERIODS = [
   { days: 7, label: "Неделя" },
   { days: 30, label: "Месяц" },
   { days: 90, label: "3 месяца" },
 ];
+
+function Pill({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+        active ? "bg-white/15 text-white" : "bg-white/[0.04] text-white/50 hover:text-white"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+const panel = "rounded-3xl bg-white/[0.04] border border-white/[0.06] p-6";
 
 export default function AnalyticsPage() {
   const { family } = useFamilyStore();
@@ -56,10 +65,7 @@ export default function AnalyticsPage() {
     enabled: !!family?.id,
   });
 
-  const card = useMemo(
-    () => cards?.find((c) => c.childId === selectedChild),
-    [cards, selectedChild]
-  );
+  const card = useMemo(() => cards?.find((c) => c.childId === selectedChild), [cards, selectedChild]);
 
   const { data: analytics } = useQuery({
     queryKey: ["analytics", card?.id, days],
@@ -90,9 +96,9 @@ export default function AnalyticsPage() {
 
   if (!family) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h1 className="text-2xl font-bold">Аналитика</h1>
-        <p className="text-muted-foreground">Сначала создайте семью.</p>
+        <p className="text-white/50">Сначала создайте семью.</p>
       </div>
     );
   }
@@ -102,192 +108,141 @@ export default function AnalyticsPage() {
   const choresDone = childChores.filter((c) => c.status === "APPROVED").length;
   const choresPending = childChores.filter((c) => c.status === "DONE").length;
   const choresOpen = childChores.filter((c) => c.status === "PENDING").length;
-
   const total = analytics?.totalSpentUzs ?? 0;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Аналитика</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Траты, накопления и задания ребёнка
-        </p>
-      </div>
+    <MotionStagger className="space-y-6">
+      <MotionItem>
+        <h1 className="text-2xl font-bold tracking-tight">Аналитика</h1>
+        <p className="text-white/50 mt-1 text-sm">Траты, накопления и задания ребёнка</p>
+      </MotionItem>
 
       {/* Child selector */}
       {children && children.length > 0 ? (
-        <div className="flex gap-2 flex-wrap">
-          {children.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedChild(c.id)}
-              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                selectedChild === c.id
-                  ? "bg-primary text-white border-primary"
-                  : "border-border hover:border-primary/40"
-              }`}
-            >
-              {c.fullName}
-            </button>
-          ))}
-        </div>
+        <MotionItem>
+          <div className="flex gap-2 flex-wrap">
+            {children.map((c) => (
+              <Pill key={c.id} active={selectedChild === c.id} onClick={() => setSelectedChild(c.id)}>
+                {c.fullName}
+              </Pill>
+            ))}
+          </div>
+        </MotionItem>
       ) : (
-        <p className="text-muted-foreground text-sm">Сначала добавьте детей в разделе «Семья».</p>
+        <p className="text-white/50 text-sm">Сначала добавьте детей в разделе «Семья».</p>
       )}
 
-      {!card && selectedChild && (
-        <p className="text-muted-foreground text-sm">У ребёнка пока нет карты.</p>
-      )}
+      {!card && selectedChild && <p className="text-white/50 text-sm">У ребёнка пока нет карты.</p>}
 
       {card && (
         <>
-          {/* Period toggle */}
-          <div className="flex gap-2">
-            {PERIODS.map((p) => (
-              <button
-                key={p.days}
-                onClick={() => setDays(p.days)}
-                className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                  days === p.days
-                    ? "bg-primary text-white border-primary"
-                    : "border-border hover:border-primary/40"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          <MotionItem>
+            <div className="flex gap-2">
+              {PERIODS.map((p) => (
+                <Pill key={p.days} active={days === p.days} onClick={() => setDays(p.days)}>
+                  {p.label}
+                </Pill>
+              ))}
+            </div>
+          </MotionItem>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Spend by category */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Траты по категориям</CardTitle>
-                <CardDescription>Всего за период: {formatSum(total)}</CardDescription>
-              </CardHeader>
-              <CardContent>
+          <MotionItem>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Spend by category */}
+              <div className={panel}>
+                <p className="font-medium tracking-tight">Траты по категориям</p>
+                <p className="text-xs text-white/40 mb-4">Всего за период: {formatSum(total)}</p>
                 {total === 0 ? (
-                  <p className="text-sm text-muted-foreground">Покупок за период не было</p>
+                  <p className="text-sm text-white/40">Покупок за период не было</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     {analytics?.byCategory.map((c) => {
                       const meta = categoryByMcc(c.mcc);
                       const pct = Math.round((c.amountUzs / total) * 100);
                       return (
                         <div key={c.mcc}>
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="font-medium text-foreground">
-                              {meta.icon} {meta.label}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {formatSum(c.amountUzs)} · {pct}%
-                            </span>
+                          <div className="flex items-center justify-between text-sm mb-1.5">
+                            <span className="font-medium">{meta.icon} {meta.label}</span>
+                            <span className="text-white/50 tabular-nums">{formatSum(c.amountUzs)} · {pct}%</span>
                           </div>
-                          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${pct}%`, backgroundColor: meta.color }}
-                            />
+                          <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Daily spend chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Динамика трат</CardTitle>
-                <CardDescription>По дням за выбранный период</CardDescription>
-              </CardHeader>
-              <CardContent>
+              {/* Daily chart */}
+              <div className={panel}>
+                <p className="font-medium tracking-tight">Динамика трат</p>
+                <p className="text-xs text-white/40 mb-3">По дням за выбранный период</p>
                 {total === 0 ? (
-                  <p className="text-sm text-muted-foreground">Нет данных</p>
+                  <p className="text-sm text-white/40">Нет данных</p>
                 ) : (
                   <SpendChart data={analytics?.byDay ?? []} />
                 )}
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Savings goals */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Накопления</CardTitle>
-                <CardDescription>Прогресс по целям</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {childGoals.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Целей пока нет</p>
+              {/* Goals */}
+              <div className={panel}>
+                <p className="font-medium tracking-tight mb-4">Накопления</p>
+                {childGoals.length === 0 ? (
+                  <p className="text-sm text-white/40">Целей пока нет</p>
+                ) : (
+                  <div className="space-y-4">
+                    {childGoals.map((g) => {
+                      const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
+                      const done = g.status === "COMPLETED";
+                      return (
+                        <div key={g.id}>
+                          <div className="flex items-center justify-between text-sm mb-1.5">
+                            <span className="text-white/80">{g.title}</span>
+                            <span className="text-white/50 tabular-nums">{formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}</span>
+                          </div>
+                          <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
+                            <div className={`h-full rounded-full bg-gradient-to-r ${done ? "from-emerald-400 to-teal-400" : "from-violet-500 to-fuchsia-500"}`} style={{ width: `${pct}%` }} />
+                          </div>
+                          {g.interestEarned > 0 && (
+                            <p className="text-[11px] text-emerald-400 mt-1">заработано на процентах: {formatSum(g.interestEarned)}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-                {childGoals.map((g) => {
-                  const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
-                  const done = g.status === "COMPLETED";
-                  return (
-                    <div key={g.id}>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="font-medium text-foreground">
-                          {done ? "" : ""}{g.title}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
-                        </span>
-                      </div>
-                      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${done ? "bg-green-500" : "bg-purple-500"}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      {g.interestEarned > 0 && (
-                        <p className="text-[11px] text-green-600 mt-1">
-                          заработано на процентах: {formatSum(g.interestEarned)}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Chores summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Задания</CardTitle>
-                <CardDescription>Активность ребёнка</CardDescription>
-              </CardHeader>
-              <CardContent>
+              {/* Chores summary */}
+              <div className={panel}>
+                <p className="font-medium tracking-tight mb-4">Задания</p>
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-xl bg-muted/50 py-4">
-                    <p className="text-2xl font-bold text-foreground">{choresOpen}</p>
-                    <p className="text-xs text-muted-foreground mt-1">К выполнению</p>
+                  <div className="rounded-2xl bg-white/[0.05] py-4">
+                    <p className="text-2xl font-bold tabular-nums">{choresOpen}</p>
+                    <p className="text-xs text-white/40 mt-1">К выполнению</p>
                   </div>
-                  <div className="rounded-xl bg-amber-50 py-4">
-                    <p className="text-2xl font-bold text-amber-600">{choresPending}</p>
-                    <p className="text-xs text-muted-foreground mt-1">На проверке</p>
+                  <div className="rounded-2xl bg-amber-500/15 py-4">
+                    <p className="text-2xl font-bold text-amber-300 tabular-nums">{choresPending}</p>
+                    <p className="text-xs text-white/40 mt-1">На проверке</p>
                   </div>
-                  <div className="rounded-xl bg-green-50 py-4">
-                    <p className="text-2xl font-bold text-green-600">{choresDone}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Выполнено</p>
+                  <div className="rounded-2xl bg-emerald-500/15 py-4">
+                    <p className="text-2xl font-bold text-emerald-300 tabular-nums">{choresDone}</p>
+                    <p className="text-xs text-white/40 mt-1">Выполнено</p>
                   </div>
                 </div>
                 {childChores.length > 0 && (
-                  <p className="text-xs text-muted-foreground mt-3 text-center">
+                  <p className="text-xs text-white/40 mt-4 text-center">
                     Заработано на заданиях:{" "}
-                    {formatSum(
-                      childChores
-                        .filter((c) => c.status === "APPROVED")
-                        .reduce((s, c) => s + c.rewardAmount, 0)
-                    )}
+                    {formatSum(childChores.filter((c) => c.status === "APPROVED").reduce((s, c) => s + c.rewardAmount, 0))}
                   </p>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
+          </MotionItem>
         </>
       )}
-    </div>
+    </MotionStagger>
   );
 }
