@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { choreService, familyService, paymentService } from "@/lib/api";
+import { choreService, familyService, paymentService, parentSavingsService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import {
   Card,
@@ -92,6 +92,25 @@ export default function ChoresPage() {
     mutationFn: (choreId: string) => choreService.approve(family!.id, choreId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
+      qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
+    },
+  });
+
+  const { data: goals } = useQuery({
+    queryKey: ["family-goals", family?.id],
+    queryFn: async () => {
+      const { data } = await parentSavingsService.list(family!.id);
+      return data.data;
+    },
+    enabled: !!family?.id,
+    refetchInterval: 15_000,
+  });
+
+  const gift = useMutation({
+    mutationFn: ({ goalId, amount }: { goalId: string; amount: number }) =>
+      parentSavingsService.contribute(family!.id, goalId, amount),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["family-goals", family!.id] });
       qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
     },
   });
@@ -268,6 +287,55 @@ export default function ChoresPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Children's savings goals — parent can chip in from the wallet */}
+      {goals && goals.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-purple-700 mb-2">🐷 Цели детей</h2>
+          <div className="space-y-2">
+            {goals.map((g) => {
+              const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
+              const done = g.status === "COMPLETED";
+              return (
+                <Card key={g.id}>
+                  <CardContent className="py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium">{done ? "🎉 " : ""}{g.title}</p>
+                        <p className="text-xs text-gray-400">{childName(g.childId)}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-purple-600">
+                        {formatSum(g.currentAmount)} / {formatSum(g.targetAmount)}
+                      </p>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-purple-100 overflow-hidden mb-2">
+                      <div
+                        className={`h-full rounded-full ${done ? "bg-green-500" : "bg-purple-500"}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    {!done && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 mr-auto">Подкинуть из кошелька:</span>
+                        {[10000, 25000, 50000].map((amt) => (
+                          <button
+                            key={amt}
+                            onClick={() => gift.mutate({ goalId: g.id, amount: amt })}
+                            disabled={gift.isPending || (wallet?.availableUzs ?? 0) < amt}
+                            className="rounded-full border border-purple-200 text-purple-700 text-xs px-3 py-1 font-medium hover:bg-purple-50 disabled:opacity-40"
+                          >
+                            +{new Intl.NumberFormat("ru-UZ").format(amt)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

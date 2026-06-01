@@ -20,8 +20,37 @@ import java.util.UUID
 class SavingsGoalService(
     private val savingsGoalRepository: SavingsGoalRepository,
     private val savingsClient: SavingsClient,
+    private val childRepository: uz.kidscard.family.repository.ChildRepository,
+    private val familyService: FamilyService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
+
+    /** Parent view: all goals across the family's children. */
+    @Transactional(readOnly = true)
+    fun getFamilyGoals(familyId: UUID, requestingUserId: UUID): List<SavingsGoalDto> {
+        familyService.requireMember(familyId, requestingUserId)
+        return childRepository.findByFamilyId(familyId)
+            .flatMap { savingsGoalRepository.findByChildIdOrderByCreatedAtDesc(it.id) }
+            .map { it.toDto() }
+    }
+
+    /** Parent gift from the family wallet to a child's goal. */
+    fun contribute(goalId: UUID, familyId: UUID, requestingUserId: UUID, amountUzs: Long, token: String): SavingsGoalDto {
+        familyService.requireOwner(familyId, requestingUserId)
+        val goal = savingsGoalRepository.findById(goalId).orElseThrow {
+            ResourceNotFoundException("SavingsGoal", goalId)
+        }
+        // Confirm the goal's child belongs to this family.
+        childRepository.findByFamilyIdAndId(familyId, goal.childId)
+            ?: throw ResourceNotFoundException("SavingsGoal", goalId)
+
+        savingsClient.contribute(familyId, goal.childId, goalId, amountUzs, token)
+        goal.currentAmount += amountUzs
+        if (goal.currentAmount >= goal.targetAmount) goal.status = GoalStatus.COMPLETED
+        goal.updatedAt = Instant.now()
+        log.info("Parent contributed: goal={} +{} → {}/{}", goalId, amountUzs, goal.currentAmount, goal.targetAmount)
+        return savingsGoalRepository.save(goal).toDto()
+    }
 
     fun createGoal(
         childId: UUID,

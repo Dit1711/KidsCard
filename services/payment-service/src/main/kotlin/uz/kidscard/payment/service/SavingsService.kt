@@ -26,11 +26,56 @@ import java.util.UUID
 class SavingsService(
     private val ledgerEntryRepository: LedgerEntryRepository,
     private val transactionRepository: TransactionRepository,
+    private val walletService: WalletService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun saved(goalId: UUID): Long = ledgerEntryRepository.computeSavingsBalance(goalId.toString())
+
+    /** Parent gift: moves money from the family wallet into a child's goal pot. */
+    fun contributeFromWallet(familyId: UUID, goalId: UUID, childId: UUID, amountUzs: Long): Long {
+        require(amountUzs > 0)
+        val wallet = walletService.getWallet(familyId)
+        if (wallet.availableUzs < amountUzs) {
+            throw BusinessException(
+                "INSUFFICIENT_WALLET_FUNDS",
+                "В кошельке недостаточно средств: доступно ${wallet.availableUzs} сум",
+                HttpStatus.UNPROCESSABLE_ENTITY,
+            )
+        }
+
+        val tx = Transaction(
+            idempotencyKey = "gift-${UUID.randomUUID()}",
+            cardId = goalId, // no card on a wallet→goal gift; never shown as a card tx
+            childId = childId,
+            familyId = familyId,
+            type = TransactionType.TRANSFER,
+            status = TransactionStatus.COMPLETED,
+            amountUzs = amountUzs,
+            direction = Direction.CREDIT,
+            description = "Подарок на цель от родителя",
+            capturedAt = Instant.now(),
+        )
+        transactionRepository.save(tx)
+
+        val walletBalance = ledgerEntryRepository.computeWalletBalance(familyId.toString()) - amountUzs
+        ledgerEntryRepository.save(
+            LedgerEntry(
+                transaction = tx, accountId = familyId.toString(), accountType = AccountType.WALLET,
+                direction = Direction.DEBIT, amountUzs = amountUzs, runningBalance = walletBalance,
+            ),
+        )
+        val savingsBalance = ledgerEntryRepository.computeSavingsBalance(goalId.toString()) + amountUzs
+        ledgerEntryRepository.save(
+            LedgerEntry(
+                transaction = tx, accountId = goalId.toString(), accountType = AccountType.SAVINGS,
+                direction = Direction.CREDIT, amountUzs = amountUzs, runningBalance = savingsBalance,
+            ),
+        )
+        log.info("Parent gift to goal: family={} goal={} amount={} saved={}", familyId, goalId, amountUzs, savingsBalance)
+        return savingsBalance
+    }
 
     fun deposit(cardId: UUID, childId: UUID, familyId: UUID, goalId: UUID, amountUzs: Long): Long {
         require(amountUzs > 0)

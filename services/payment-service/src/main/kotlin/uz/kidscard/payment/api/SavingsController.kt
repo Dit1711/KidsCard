@@ -21,6 +21,13 @@ data class SavingsMoveRequest(
     val amountUzs: Long,
 )
 
+data class GiftRequest(
+    val familyId: UUID,
+    val childId: UUID,
+    val goalId: UUID,
+    val amountUzs: Long,
+)
+
 /**
  * Savings-pot money moves, called by family-service (which orchestrates goals
  * and forwards the caller's token).
@@ -46,6 +53,15 @@ class SavingsController(
         @AuthenticationPrincipal jwt: Jwt,
     ): ResponseEntity<ApiResponse<Map<String, Long>>> {
         val saved = savingsService.withdraw(req.cardId, req.childId, req.familyId, req.goalId, req.amountUzs)
+        return ResponseEntity.ok(ApiResponse.ok(mapOf("saved" to saved)))
+    }
+
+    @PostMapping("/contribute")
+    fun contribute(
+        @RequestBody req: GiftRequest,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<Map<String, Long>>> {
+        val saved = savingsService.contributeFromWallet(req.familyId, req.goalId, req.childId, req.amountUzs)
         return ResponseEntity.ok(ApiResponse.ok(mapOf("saved" to saved)))
     }
 

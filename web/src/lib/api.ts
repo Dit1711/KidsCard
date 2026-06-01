@@ -234,6 +234,21 @@ export const choreService = {
     ),
 };
 
+// ── Savings goals (parent view + gifting) ──────────────────────────────────────
+
+export const parentSavingsService = {
+  list: (familyId: string) =>
+    familyApi.get<ApiResponse<SavingsGoalResponse[]>>(
+      `/api/v1/families/${familyId}/savings-goals`
+    ),
+
+  contribute: (familyId: string, goalId: string, amountUzs: number) =>
+    familyApi.post<ApiResponse<SavingsGoalResponse>>(
+      `/api/v1/families/${familyId}/savings-goals/${goalId}/contribute`,
+      { amountUzs }
+    ),
+};
+
 // ── Limits ────────────────────────────────────────────────────────────────────
 
 export const limitService = {

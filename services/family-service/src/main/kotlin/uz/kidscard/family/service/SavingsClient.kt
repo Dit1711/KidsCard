@@ -25,6 +25,26 @@ class SavingsClient(
     fun withdraw(cardId: UUID, childId: UUID, familyId: UUID, goalId: UUID, amountUzs: Long, token: String) =
         call("withdraw", cardId, childId, familyId, goalId, amountUzs, token)
 
+    /** Parent gift from the family wallet into a child's goal. */
+    fun contribute(familyId: UUID, childId: UUID, goalId: UUID, amountUzs: Long, token: String) {
+        val headers = HttpHeaders().apply {
+            set("Authorization", "Bearer $token")
+            set("Content-Type", "application/json")
+        }
+        val body = mapOf(
+            "familyId" to familyId.toString(), "childId" to childId.toString(),
+            "goalId" to goalId.toString(), "amountUzs" to amountUzs,
+        )
+        try {
+            restTemplate.postForEntity("$paymentUrl/api/v1/savings/contribute", HttpEntity(body, headers), String::class.java)
+        } catch (ex: HttpClientErrorException.UnprocessableEntity) {
+            throw BusinessException("INSUFFICIENT_WALLET_FUNDS", "В кошельке недостаточно средств", HttpStatus.UNPROCESSABLE_ENTITY)
+        } catch (ex: Exception) {
+            log.error("Gift failed: goal={} error={}", goalId, ex.message)
+            throw BusinessException("SAVINGS_UNAVAILABLE", "Операция недоступна, попробуйте позже", HttpStatus.SERVICE_UNAVAILABLE)
+        }
+    }
+
     private fun call(
         op: String, cardId: UUID, childId: UUID, familyId: UUID, goalId: UUID, amountUzs: Long, token: String,
     ) {
