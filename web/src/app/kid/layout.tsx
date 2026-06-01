@@ -9,6 +9,7 @@ import { Home, ShoppingBag, Target, PiggyBank, GraduationCap, LogOut } from "luc
 import { useChildStore } from "@/store/child";
 import { childAuthService } from "@/lib/api";
 import { XpRing, StreakChip } from "@/components/kidkit";
+import { GamificationCelebration } from "@/components/GamificationCelebration";
 
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
@@ -51,6 +52,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`fixed inset-0 overflow-y-auto bg-[#08080f] text-white ${golos.className}`}>
+      <GamificationCelebration />
       {/* glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-600/15 blur-3xl" />

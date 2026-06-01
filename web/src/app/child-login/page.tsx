@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Golos_Text } from "next/font/google";
+import { Wallet, ArrowRight } from "lucide-react";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
+const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 export default function ChildLoginPage() {
   const router = useRouter();
@@ -35,33 +36,41 @@ export default function ChildLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-100 via-pink-100 to-purple-100 p-4">
-      <div className="w-full max-w-sm">
+    <div className={`fixed inset-0 overflow-y-auto bg-[#08080f] text-white flex items-center justify-center p-4 ${golos.className}`}>
+      {/* glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-600/20 blur-3xl" />
+        <div className="absolute -bottom-28 -right-20 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-2">🧒💳</div>
-          <h1 className="text-2xl font-bold text-purple-700">Привет!</h1>
-          <p className="text-gray-500 text-sm mt-1">Вход в твой кошелёк</p>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/20">
+            <Wallet className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Привет!</h1>
+          <p className="text-white/50 text-sm mt-1">Вход в твой кошелёк</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="rounded-3xl bg-white/[0.04] border border-white/[0.07] p-6">
           <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
-            <div className="space-y-2">
-              <Label htmlFor="code">Твой код</Label>
-              <Input
+            <div className="space-y-1.5">
+              <label htmlFor="code" className="block text-sm text-white/60">Твой код</label>
+              <input
                 id="code"
                 name="kid-code"
                 autoComplete="off"
                 placeholder="ABC123"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className="text-center text-xl tracking-[0.3em] font-mono uppercase"
+                className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-3 text-center text-xl tracking-[0.3em] font-mono uppercase text-white placeholder:text-white/25 outline-none transition-colors focus:border-fuchsia-400/60 focus:bg-white/[0.07]"
                 maxLength={8}
                 autoFocus
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="pin">PIN</Label>
-              <Input
+            <div className="space-y-1.5">
+              <label htmlFor="pin" className="block text-sm text-white/60">PIN</label>
+              <input
                 id="pin"
                 name="kid-pin"
                 autoComplete="off"
@@ -70,24 +79,24 @@ export default function ChildLoginPage() {
                 placeholder="••••"
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                className="text-center text-2xl tracking-[0.5em] font-mono"
+                className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-3 text-center text-2xl tracking-[0.5em] font-mono text-white placeholder:text-white/25 outline-none transition-colors focus:border-fuchsia-400/60 focus:bg-white/[0.07]"
                 maxLength={6}
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button
+            {error && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
+            <button
               type="submit"
-              className="w-full h-12 text-base bg-purple-600 hover:bg-purple-700"
+              className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080f]"
               disabled={loading || !code || pin.length < 4}
             >
-              {loading ? "Входим…" : "Войти 🚀"}
-            </Button>
+              {loading ? "Входим…" : <>Войти <ArrowRight className="h-4 w-4" /></>}
+            </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs text-white/40 mt-6">
           Родитель?{" "}
-          <Link href="/login" className="text-purple-600 hover:underline">
+          <Link href="/login" className="text-fuchsia-300 hover:underline">
             Вход для родителей
           </Link>
         </p>
