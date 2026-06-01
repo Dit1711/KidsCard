@@ -10,9 +10,11 @@ import uz.kidscard.family.api.dto.CreateChoreRequest
 import uz.kidscard.family.api.dto.toDto
 import uz.kidscard.family.domain.Chore
 import uz.kidscard.family.domain.ChoreStatus
+import uz.kidscard.family.domain.Recurrence
 import uz.kidscard.family.repository.ChildRepository
 import uz.kidscard.family.repository.ChoreRepository
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Service
@@ -145,7 +147,7 @@ class ChoreService(
         return saved.toDto()
     }
 
-    fun approveChore(choreId: UUID, familyId: UUID, requestingUserId: UUID): ChoreDto {
+    fun approveChore(choreId: UUID, familyId: UUID, requestingUserId: UUID, token: String): ChoreDto {
         familyService.requireOwner(familyId, requestingUserId)
 
         val chore = choreRepository.findById(choreId).orElseThrow {
@@ -187,7 +189,50 @@ class ChoreService(
             ),
         )
 
+        // Recurring chore: spawn the next occurrence so it keeps coming back.
+        if (chore.recurrence != Recurrence.NONE) {
+            spawnNext(chore, token)
+        }
+
         log.info("Chore approved: id={} familyId={} approvedBy={}", choreId, familyId, requestingUserId)
         return saved.toDto()
+    }
+
+    /**
+     * Create the next occurrence of a recurring chore (PENDING) and escrow its
+     * reward. If the wallet can't cover the next reward, the chain pauses (no
+     * new chore) instead of failing the approval — the parent can fund the
+     * wallet and re-create it.
+     */
+    private fun spawnNext(prev: Chore, token: String) {
+        val today = LocalDate.now()
+        val base = prev.dueDate?.takeIf { it.isAfter(today) } ?: today
+        val nextDue = when (prev.recurrence) {
+            Recurrence.DAILY -> base.plusDays(1)
+            Recurrence.WEEKLY -> base.plusWeeks(1)
+            else -> return
+        }
+
+        val next = Chore(
+            familyId = prev.familyId,
+            childId = prev.childId,
+            title = prev.title,
+            description = prev.description,
+            rewardAmount = prev.rewardAmount,
+            dueDate = nextDue,
+            recurrence = prev.recurrence,
+        )
+
+        if (prev.rewardAmount > 0) {
+            try {
+                walletClient.placeHold(prev.familyId, next.id, prev.rewardAmount, token)
+            } catch (ex: BusinessException) {
+                log.warn("Recurring chore '{}' not respawned — escrow failed: {}", prev.title, ex.message)
+                return
+            }
+        }
+
+        choreRepository.save(next)
+        log.info("Recurring chore respawned: from={} to={} due={} recurrence={}", prev.id, next.id, nextDue, prev.recurrence)
     }
 }

@@ -28,6 +28,7 @@ export default function ChoresPage() {
   const [title, setTitle] = useState("");
   const [reward, setReward] = useState("");
   const [childId, setChildId] = useState("");
+  const [recurrence, setRecurrence] = useState<"NONE" | "DAILY" | "WEEKLY">("NONE");
   const [createError, setCreateError] = useState("");
 
   const { data: wallet } = useQuery({
@@ -70,6 +71,7 @@ export default function ChoresPage() {
         title,
         childId,
         rewardAmount: Math.round(parseFloat(reward)),
+        recurrence,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
@@ -77,6 +79,7 @@ export default function ChoresPage() {
       setTitle("");
       setReward("");
       setChildId("");
+      setRecurrence("NONE");
       setCreateError("");
       setShowCreate(false);
     },
@@ -117,6 +120,9 @@ export default function ChoresPage() {
 
   const childName = (id: string) =>
     children?.find((c) => c.id === id)?.fullName ?? "Ребёнок";
+
+  const recurBadge = (r: string) =>
+    r === "DAILY" ? "🔁 каждый день" : r === "WEEKLY" ? "🔁 каждую неделю" : null;
 
   if (!family) {
     return (
@@ -211,6 +217,33 @@ export default function ChoresPage() {
                 ))}
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Повтор</Label>
+              <div className="flex gap-2">
+                {[
+                  { v: "NONE", l: "Разовое" },
+                  { v: "DAILY", l: "🔁 Каждый день" },
+                  { v: "WEEKLY", l: "🔁 Каждую неделю" },
+                ].map((r) => (
+                  <button
+                    key={r.v}
+                    onClick={() => setRecurrence(r.v as "NONE" | "DAILY" | "WEEKLY")}
+                    className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
+                      recurrence === r.v
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                        : "border-gray-200 text-gray-600 hover:border-indigo-300"
+                    }`}
+                  >
+                    {r.l}
+                  </button>
+                ))}
+              </div>
+              {recurrence !== "NONE" && (
+                <p className="text-[11px] text-gray-400">
+                  После подтверждения задание появится снова — награда резервируется каждый раз.
+                </p>
+              )}
+            </div>
             {createError && (
               <p className="text-sm text-red-500">{createError}</p>
             )}
@@ -239,7 +272,12 @@ export default function ChoresPage() {
               <Card key={c.id} className="border-amber-200 bg-amber-50">
                 <CardContent className="flex items-center justify-between py-3">
                   <div>
-                    <p className="font-medium">{c.title}</p>
+                    <p className="font-medium">
+                      {c.title}
+                      {c.recurrence !== "NONE" && (
+                        <span className="ml-2 text-[11px] font-normal text-indigo-500">{recurBadge(c.recurrence)}</span>
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">{childName(c.childId)} · награда {formatSum(c.rewardAmount)}</p>
                   </div>
                   <Button size="sm" onClick={() => approve.mutate(c.id)} disabled={approve.isPending}>
@@ -261,7 +299,12 @@ export default function ChoresPage() {
             <Card key={c.id}>
               <CardContent className="flex items-center justify-between py-3">
                 <div>
-                  <p className="font-medium">{c.title}</p>
+                  <p className="font-medium">
+                    {c.title}
+                    {c.recurrence !== "NONE" && (
+                      <span className="ml-2 text-[11px] font-normal text-indigo-500">{recurBadge(c.recurrence)}</span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-400">{childName(c.childId)}</p>
                 </div>
                 <Badge variant="secondary">{formatSum(c.rewardAmount)}</Badge>

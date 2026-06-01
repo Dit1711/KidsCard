@@ -292,7 +292,14 @@ export const familyService = {
 export const choreService = {
   create: (
     familyId: string,
-    payload: { title: string; description?: string; childId: string; rewardAmount: number; dueDate?: string }
+    payload: {
+      title: string;
+      description?: string;
+      childId: string;
+      rewardAmount: number;
+      dueDate?: string;
+      recurrence?: "NONE" | "DAILY" | "WEEKLY";
+    }
   ) =>
     familyApi.post<ApiResponse<ChoreResponse>>(
       `/api/v1/families/${familyId}/chores`,
@@ -759,6 +766,7 @@ export interface ChoreResponse {
   title: string;
   rewardAmount: number;
   status: string; // PENDING, DONE, APPROVED, REJECTED
+  recurrence: string; // NONE, DAILY, WEEKLY
   dueDate: string | null;
   completedAt: string | null;
   approvedAt: string | null;

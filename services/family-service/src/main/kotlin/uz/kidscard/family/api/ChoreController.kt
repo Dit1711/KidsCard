@@ -66,7 +66,7 @@ class ChoreController(
         @AuthenticationPrincipal jwt: Jwt,
     ): ResponseEntity<ApiResponse<ChoreDto>> {
         val userId = UUID.fromString(jwt.subject)
-        val result = choreService.approveChore(choreId, familyId, userId)
+        val result = choreService.approveChore(choreId, familyId, userId, jwt.tokenValue)
         return ResponseEntity.ok(ApiResponse.ok(result))
     }
 }
