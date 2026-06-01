@@ -49,4 +49,16 @@ interface LedgerEntryRepository : JpaRepository<LedgerEntry, UUID> {
           AND e.createdAt >= :since
     """)
     fun computeSpentSince(accountId: String, since: java.time.Instant): Long
+
+    @Query("""
+        SELECT COALESCE(SUM(e.amountUzs), 0)
+        FROM LedgerEntry e
+        WHERE e.accountId = :accountId
+          AND e.accountType = uz.kidscard.payment.domain.AccountType.CARD
+          AND e.direction = uz.kidscard.payment.domain.Direction.DEBIT
+          AND e.transaction.type = uz.kidscard.payment.domain.TransactionType.PURCHASE
+          AND e.transaction.merchantMcc = :mcc
+          AND e.createdAt >= :since
+    """)
+    fun computeCategorySpentSince(accountId: String, mcc: String, since: java.time.Instant): Long
 }

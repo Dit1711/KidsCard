@@ -30,7 +30,21 @@ const LIMIT_TYPES = [
   { value: "DAILY", label: "Дневной" },
   { value: "WEEKLY", label: "Недельный" },
   { value: "MONTHLY", label: "Месячный" },
+  { value: "CATEGORY", label: "По категории" },
 ];
+
+// Shared with the child shop — category = MCC.
+const CATEGORIES = [
+  { mcc: "5814", label: "Еда", icon: "🍔" },
+  { mcc: "5816", label: "Игры", icon: "🎮" },
+  { mcc: "5945", label: "Игрушки", icon: "🧸" },
+  { mcc: "5999", label: "Другое", icon: "🛒" },
+];
+
+function categoryLabel(mcc: string | null) {
+  const c = CATEGORIES.find((x) => x.mcc === mcc);
+  return c ? `${c.icon} ${c.label}` : "Категория";
+}
 
 const WEEKDAYS = [
   { value: 1, label: "Пн" },
@@ -51,6 +65,7 @@ export default function LimitsPage() {
   // Limit form
   const [limitType, setLimitType] = useState("DAILY");
   const [limitAmount, setLimitAmount] = useState("");
+  const [limitCategory, setLimitCategory] = useState("");
 
   // Allowance form
   const [allowanceAmount, setAllowanceAmount] = useState("");
@@ -108,11 +123,13 @@ export default function LimitsPage() {
     mutationFn: () =>
       limitService.set(family!.id, selectedChild, {
         limitType,
+        category: limitType === "CATEGORY" ? limitCategory : undefined,
         amountUzs: Math.round(parseFloat(limitAmount)),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
       setLimitAmount("");
+      setLimitCategory("");
     },
   });
 
@@ -197,11 +214,16 @@ export default function LimitsPage() {
                   >
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">
-                        {LIMIT_TYPES.find((t) => t.value === limit.limitType)?.label ??
-                          limit.limitType}
+                        {limit.limitType === "CATEGORY"
+                          ? categoryLabel(limit.category)
+                          : LIMIT_TYPES.find((t) => t.value === limit.limitType)?.label ??
+                            limit.limitType}
                       </Badge>
                       <span className="text-sm font-medium">
                         {formatSum(limit.amountUzs)}
+                        {limit.limitType === "CATEGORY" && (
+                          <span className="text-xs text-gray-400"> / мес</span>
+                        )}
                       </span>
                     </div>
                     <button
@@ -220,7 +242,7 @@ export default function LimitsPage() {
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>Период</Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {LIMIT_TYPES.map((t) => (
                       <button
                         key={t.value}
@@ -236,6 +258,28 @@ export default function LimitsPage() {
                     ))}
                   </div>
                 </div>
+
+                {limitType === "CATEGORY" && (
+                  <div className="space-y-2">
+                    <Label>Категория (лимит в месяц)</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {CATEGORIES.map((c) => (
+                        <button
+                          key={c.mcc}
+                          onClick={() => setLimitCategory(c.mcc)}
+                          className={`flex flex-col items-center gap-1 rounded-lg border py-2 transition-colors ${
+                            limitCategory === c.mcc
+                              ? "border-indigo-600 bg-indigo-50"
+                              : "border-gray-200 hover:border-indigo-300"
+                          }`}
+                        >
+                          <span className="text-xl">{c.icon}</span>
+                          <span className="text-[11px] text-gray-600">{c.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label>Сумма лимита (сум)</Label>
                   <Input
@@ -250,7 +294,11 @@ export default function LimitsPage() {
                 )}
                 <Button
                   onClick={() => setLimit.mutate()}
-                  disabled={!limitAmount || setLimit.isPending}
+                  disabled={
+                    !limitAmount ||
+                    setLimit.isPending ||
+                    (limitType === "CATEGORY" && !limitCategory)
+                  }
                   className="w-full"
                 >
                   {setLimit.isPending ? "Сохранение..." : "Установить лимит"}

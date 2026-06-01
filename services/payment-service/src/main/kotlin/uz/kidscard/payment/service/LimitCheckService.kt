@@ -112,34 +112,41 @@ class LimitCheckService(
 
         val now = Instant.now()
 
+        val monthStart = now.truncatedTo(ChronoUnit.DAYS).let {
+            val day = java.time.ZonedDateTime.ofInstant(it, java.time.ZoneOffset.UTC).dayOfMonth
+            it.minus((day - 1).toLong(), ChronoUnit.DAYS)
+        }
+
         limits.forEach { limit ->
+            // CATEGORY: monthly budget on one merchant category (exact MCC match).
+            // Only counts this purchase if its MCC matches, and sums only that
+            // category's spend for the month — not total spending.
+            if (limit.limitType == "CATEGORY") {
+                if (limit.category == null || merchantMcc == null || merchantMcc != limit.category) return@forEach
+                val spent = ledgerEntryRepository.computeCategorySpentSince(cardId.toString(), merchantMcc, monthStart)
+                if (spent + amountUzs > limit.amountUzs) {
+                    val available = (limit.amountUzs - spent).coerceAtLeast(0)
+                    log.warn("Category limit exceeded: card={} mcc={} limit={} spent={} requested={}", cardId, merchantMcc, limit.amountUzs, spent, amountUzs)
+                    throw BusinessException(
+                        "CATEGORY_LIMIT_EXCEEDED",
+                        "Превышен лимит по категории: доступно $available UZS, запрошено $amountUzs UZS",
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                    )
+                }
+                return@forEach
+            }
+
             val periodStart: Instant = when (limit.limitType) {
                 "DAILY"   -> now.truncatedTo(ChronoUnit.DAYS)
                 "WEEKLY"  -> now.minus(now.dayOfWeek(), ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS)
-                "MONTHLY" -> now.truncatedTo(ChronoUnit.DAYS).let {
-                    val day = java.time.ZonedDateTime.ofInstant(it, java.time.ZoneOffset.UTC).dayOfMonth
-                    it.minus((day - 1).toLong(), ChronoUnit.DAYS)
-                }
-                "CATEGORY" -> now.truncatedTo(ChronoUnit.DAYS) // daily window for category limits
+                "MONTHLY" -> monthStart
                 else -> return@forEach
             }
 
-            // For CATEGORY limits, only apply if MCC matches (or category matches description)
-            if (limit.limitType == "CATEGORY") {
-                if (limit.category != null && merchantMcc != null && !merchantMcc.startsWith(limit.category.take(2))) {
-                    return@forEach // Category doesn't match, skip
-                }
-            }
-
             val spent = ledgerEntryRepository.computeSpentSince(cardId.toString(), periodStart)
-            val projectedSpend = spent + amountUzs
-
-            if (projectedSpend > limit.amountUzs) {
+            if (spent + amountUzs > limit.amountUzs) {
                 val available = (limit.amountUzs - spent).coerceAtLeast(0)
-                log.warn(
-                    "Limit exceeded: cardId={} type={} limit={} spent={} requested={}",
-                    cardId, limit.limitType, limit.amountUzs, spent, amountUzs,
-                )
+                log.warn("Limit exceeded: cardId={} type={} limit={} spent={} requested={}", cardId, limit.limitType, limit.amountUzs, spent, amountUzs)
                 throw BusinessException(
                     "LIMIT_EXCEEDED",
                     "Превышен лимит ${limit.limitType}: доступно $available UZS, запрошено $amountUzs UZS",
