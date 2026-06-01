@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uz.kidscard.card.api.dto.IssueCardRequest
 import uz.kidscard.card.api.dto.KidsCardDto
+import uz.kidscard.card.api.dto.UpdateCardDesignRequest
 import uz.kidscard.card.service.CardService
 import uz.kidscard.common.api.ApiResponse
 import java.util.UUID
@@ -71,6 +72,18 @@ class CardController(
     ): ResponseEntity<ApiResponse<KidsCardDto>> {
         val requestingUserId = UUID.fromString(jwt.subject)
         val card = cardService.getCard(cardId, requestingUserId)
+        return ResponseEntity.ok(ApiResponse.ok(card))
+    }
+
+    @PostMapping("/{cardId}/design")
+    @PreAuthorize("hasAnyRole('PARENT_OWNER', 'PARENT_CO_OWNER')")
+    fun updateDesign(
+        @PathVariable familyId: UUID,
+        @PathVariable cardId: UUID,
+        @RequestBody request: UpdateCardDesignRequest,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<KidsCardDto>> {
+        val card = cardService.updateDesign(cardId, familyId, request.theme, request.pattern)
         return ResponseEntity.ok(ApiResponse.ok(card))
     }
 

@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { categoryLabel, PERIOD_REMAINING_LABELS } from "@/lib/categories";
+import { CardSurface } from "@/components/CardSurface";
+import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
@@ -79,6 +81,13 @@ export default function KidHomePage() {
   const [reqPeriod, setReqPeriod] = useState("DAILY");
   const [reqNote, setReqNote] = useState("");
 
+  const [showDesign, setShowDesign] = useState(false);
+  const setDesign = useMutation({
+    mutationFn: ({ theme, pattern }: { theme: string; pattern: string }) =>
+      childAuthService.setCardDesign(card!.id, theme, pattern),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["child-cards"] }),
+  });
+
   const createRequest = useMutation({
     mutationFn: () =>
       childAuthService.createRequest({
@@ -111,18 +120,56 @@ export default function KidHomePage() {
         </div>
       )}
       {card && (
-        <div className="rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 text-white p-6 shadow-xl">
-          <div className="flex justify-between items-start mb-8">
-            <span className="text-sm text-white/80">{card.network}</span>
-            <span className="text-2xl">💳</span>
-          </div>
-          <p className="text-white/70 text-xs mb-1">Мои деньги</p>
-          <p className="text-4xl font-extrabold mb-6">{formatSum(balance)}</p>
-          <p className="font-mono tracking-widest text-white/90">{card.maskedPan}</p>
-          {card.status !== "ACTIVE" && (
-            <p className="mt-3 text-xs bg-white/20 rounded-full px-3 py-1 inline-block">
-              {card.status === "FROZEN" ? "❄️ Карта заморожена" : "Карта недоступна"}
-            </p>
+        <div>
+          <CardSurface theme={card.theme} pattern={card.pattern} className="rounded-3xl text-white p-6 shadow-xl">
+            <div className="flex justify-between items-start mb-8">
+              <span className="text-sm text-white/80">{card.network}</span>
+              <button
+                onClick={() => setShowDesign(!showDesign)}
+                className="grid h-9 w-9 place-items-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-lg"
+                title="Оформление карты"
+              >
+                🎨
+              </button>
+            </div>
+            <p className="text-white/70 text-xs mb-1">Мои деньги</p>
+            <p className="text-4xl font-extrabold mb-6">{formatSum(balance)}</p>
+            <p className="font-mono tracking-widest text-white/90">{card.maskedPan}</p>
+            {card.status !== "ACTIVE" && (
+              <p className="mt-3 text-xs bg-white/20 rounded-full px-3 py-1 inline-block">
+                {card.status === "FROZEN" ? "❄️ Карта заморожена" : "Карта недоступна"}
+              </p>
+            )}
+          </CardSurface>
+
+          {showDesign && (
+            <div className="bg-white rounded-2xl p-4 shadow-sm mt-3 space-y-3">
+              <p className="text-sm font-bold text-purple-800">🎨 Цвет карты</p>
+              <div className="grid grid-cols-4 gap-2">
+                {CARD_THEMES.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setDesign.mutate({ theme: t.key, pattern: card.pattern })}
+                    className={`h-12 rounded-xl bg-gradient-to-br ${t.grad} ${card.theme === t.key ? "ring-2 ring-offset-2 ring-purple-500" : ""}`}
+                    title={t.label}
+                  />
+                ))}
+              </div>
+              <p className="text-sm font-bold text-purple-800 pt-1">Узор</p>
+              <div className="flex gap-2 flex-wrap">
+                {CARD_PATTERNS.map((p) => (
+                  <button
+                    key={p.key}
+                    onClick={() => setDesign.mutate({ theme: card.theme, pattern: p.key })}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      card.pattern === p.key ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -38,9 +38,16 @@ data class KidsCardDto(
     val expiryYear: Int,
     val network: CardNetwork,
     val status: CardStatus,
+    val theme: String,
+    val pattern: String,
     val balanceUzs: Long,
     val issuedAt: Instant?,
     val frozenAt: Instant?,
+)
+
+data class UpdateCardDesignRequest(
+    val theme: String,
+    val pattern: String = "none",
 )
 
 data class AllowanceScheduleDto(
@@ -66,6 +73,8 @@ fun KidsCard.toDto() = KidsCardDto(
     expiryYear = expiryYear.toInt(),
     network = network,
     status = status,
+    theme = theme,
+    pattern = pattern,
     balanceUzs = balanceUzs,
     issuedAt = issuedAt,
     frozenAt = frozenAt,

@@ -102,6 +102,28 @@ class CardService(
     fun getCardsForChildSelf(childId: UUID): List<KidsCardDto> =
         kidsCardRepository.findByChildId(childId).map { it.toDto() }
 
+    /** Parent: change a card's background theme + pattern. */
+    fun updateDesign(cardId: UUID, familyId: UUID, theme: String, pattern: String): KidsCardDto {
+        val card = kidsCardRepository.findByIdAndFamilyId(cardId, familyId)
+            ?: throw ResourceNotFoundException("KidsCard", cardId)
+        card.theme = theme.take(32)
+        card.pattern = pattern.take(32)
+        card.updatedAt = Instant.now()
+        return kidsCardRepository.save(card).toDto()
+    }
+
+    /** Child cabinet: personalize own card design. */
+    fun updateDesignForChild(cardId: UUID, childId: UUID, theme: String, pattern: String): KidsCardDto {
+        val card = kidsCardRepository.findById(cardId).orElseThrow {
+            ResourceNotFoundException("KidsCard", cardId)
+        }
+        if (card.childId != childId) throw ResourceNotFoundException("KidsCard", cardId)
+        card.theme = theme.take(32)
+        card.pattern = pattern.take(32)
+        card.updatedAt = Instant.now()
+        return kidsCardRepository.save(card).toDto()
+    }
+
     @Transactional
     fun freezeCard(cardId: UUID, parentId: UUID, familyId: UUID): KidsCardDto {
         val card = kidsCardRepository.findByIdAndFamilyId(cardId, familyId)

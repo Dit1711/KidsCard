@@ -5,9 +5,13 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uz.kidscard.card.api.dto.KidsCardDto
+import uz.kidscard.card.api.dto.UpdateCardDesignRequest
 import uz.kidscard.card.service.CardService
 import uz.kidscard.common.api.ApiResponse
 import java.util.UUID
@@ -27,5 +31,17 @@ class ChildCardController(
     fun myCards(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<ApiResponse<List<KidsCardDto>>> {
         val childId = UUID.fromString(jwt.getClaimAsString("childId"))
         return ResponseEntity.ok(ApiResponse.ok(cardService.getCardsForChildSelf(childId)))
+    }
+
+    /** Child personalizes their own card's background. */
+    @PostMapping("/cards/{cardId}/design")
+    @PreAuthorize("hasRole('CHILD')")
+    fun updateDesign(
+        @PathVariable cardId: UUID,
+        @RequestBody request: UpdateCardDesignRequest,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<KidsCardDto>> {
+        val childId = UUID.fromString(jwt.getClaimAsString("childId"))
+        return ResponseEntity.ok(ApiResponse.ok(cardService.updateDesignForChild(cardId, childId, request.theme, request.pattern)))
     }
 }

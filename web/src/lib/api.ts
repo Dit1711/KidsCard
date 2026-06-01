@@ -145,6 +145,12 @@ export const childAuthService = {
   myCards: () =>
     childCardApi.get<ApiResponse<CardResponse[]>>("/api/v1/child/cards"),
 
+  setCardDesign: (cardId: string, theme: string, pattern: string) =>
+    childCardApi.post<ApiResponse<CardResponse>>(
+      `/api/v1/child/cards/${cardId}/design`,
+      { theme, pattern }
+    ),
+
   balance: (cardId: string) =>
     childPaymentApi.get<ApiResponse<BalanceResponse>>(
       `/api/v1/child/balance?cardId=${cardId}`
@@ -405,6 +411,12 @@ export const cardService = {
     cardApi.post<ApiResponse<CardResponse>>(
       `/api/v1/families/${familyId}/cards/${cardId}/unfreeze`
     ),
+
+  setDesign: (familyId: string, cardId: string, theme: string, pattern: string) =>
+    cardApi.post<ApiResponse<CardResponse>>(
+      `/api/v1/families/${familyId}/cards/${cardId}/design`,
+      { theme, pattern }
+    ),
 };
 
 // ── Allowance (карманные деньги) ───────────────────────────────────────────────
@@ -640,6 +652,8 @@ export interface CardResponse {
   expiryYear: number;
   network: string;
   status: string;
+  theme: string;
+  pattern: string;
   balanceUzs: number;
   issuedAt: string | null;
   frozenAt: string | null;

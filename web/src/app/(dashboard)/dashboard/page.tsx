@@ -7,6 +7,7 @@ import { useFamilyStore } from "@/store/family";
 import { familyService, cardService, parentSavingsService } from "@/lib/api";
 import { useCardBalances } from "@/hooks/useCardBalances";
 import { MotionStagger, MotionItem } from "@/components/motion";
+import { CardSurface } from "@/components/CardSurface";
 import Link from "next/link";
 import {
   IdCard, Plus, ShieldCheck, ListChecks, BarChart3, Users, CreditCard,
@@ -143,15 +144,20 @@ export default function DashboardPage() {
             <Link href="/cards" className="text-sm text-fuchsia-300/80 hover:text-fuchsia-300">Все карты</Link>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-1 -mx-1 px-1">
-            {cardsData.map((card, i) => (
-              <div key={card.id} className={`shrink-0 w-56 rounded-3xl bg-gradient-to-br ${GRADS[i % GRADS.length]} p-5`}>
+            {cardsData.map((card) => (
+              <CardSurface
+                key={card.id}
+                theme={card.theme}
+                pattern={card.pattern}
+                className="shrink-0 w-56 rounded-3xl p-5 text-white"
+              >
                 <div className="flex items-center justify-between">
                   <CreditCard className="h-5 w-5 text-white/80" />
                   <span className="text-xs text-white/70 font-mono">•• {card.maskedPan.slice(-4)}</span>
                 </div>
                 <p className="mt-8 text-white/70 text-xs">{childName(card.childId)}</p>
                 <p className="text-2xl font-bold tabular-nums">{formatSum(balances[card.id] ?? 0)}</p>
-              </div>
+              </CardSurface>
             ))}
           </div>
         </MotionItem>

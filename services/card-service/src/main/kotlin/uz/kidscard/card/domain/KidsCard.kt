@@ -64,6 +64,12 @@ class KidsCard(
     @Column(name = "issued_at")
     var issuedAt: Instant? = null,
 
+    @Column(name = "theme", nullable = false, length = 32)
+    var theme: String = "violet",
+
+    @Column(name = "pattern", nullable = false, length = 32)
+    var pattern: String = "none",
+
     @Column(name = "balance_uzs", nullable = false)
     var balanceUzs: Long = 0,
 
