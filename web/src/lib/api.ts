@@ -155,6 +155,14 @@ export const childAuthService = {
       `/api/v1/child/transactions?cardId=${cardId}&size=${size}`
     ),
 
+  spend: (cardId: string, amountUzs: number, merchantName: string, merchantMcc?: string) =>
+    childPaymentApi.post<ApiResponse<TransactionResponse>>("/api/v1/child/spend", {
+      cardId,
+      amountUzs,
+      merchantName,
+      merchantMcc,
+    }),
+
   myChores: () =>
     childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
 

@@ -90,7 +90,7 @@ class TransactionService(
         return tx.toDto(newBalance)
     }
 
-    fun purchase(req: PurchaseRequest, authToken: String? = null): TransactionDto {
+    fun purchase(req: PurchaseRequest, authToken: String? = null, asChild: Boolean = false): TransactionDto {
         // Idempotency check
         val existing = transactionRepository.findByIdempotencyKey(req.idempotencyKey).orElse(null)
         if (existing != null) {
@@ -100,14 +100,11 @@ class TransactionService(
 
         // Check spending limits (best-effort — skipped if family-service is unavailable)
         if (!authToken.isNullOrBlank()) {
-            limitCheckService.checkLimits(
-                cardId = req.cardId,
-                childId = req.childId,
-                familyId = req.familyId,
-                amountUzs = req.amountUzs,
-                merchantMcc = req.merchantMcc,
-                token = authToken,
-            )
+            if (asChild) {
+                limitCheckService.checkLimitsChild(req.cardId, req.amountUzs, req.merchantMcc, authToken)
+            } else {
+                limitCheckService.checkLimits(req.cardId, req.childId, req.familyId, req.amountUzs, req.merchantMcc, authToken)
+            }
         }
 
         val currentBalance = ledgerEntryRepository.computeBalance(req.cardId.toString())

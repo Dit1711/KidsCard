@@ -45,6 +45,7 @@ interface LedgerEntryRepository : JpaRepository<LedgerEntry, UUID> {
         WHERE e.accountId = :accountId
           AND e.accountType = uz.kidscard.payment.domain.AccountType.CARD
           AND e.direction = uz.kidscard.payment.domain.Direction.DEBIT
+          AND e.transaction.type = uz.kidscard.payment.domain.TransactionType.PURCHASE
           AND e.createdAt >= :since
     """)
     fun computeSpentSince(accountId: String, since: java.time.Instant): Long

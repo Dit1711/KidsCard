@@ -72,18 +72,42 @@ class LimitCheckService(
         }
     }
 
+    /** Fetch the child's own active limits via the child-scoped endpoint. */
+    fun getLimitsForChildSelf(token: String): List<LimitRuleDto> {
+        return try {
+            val url = "$familyServiceUrl/api/v1/child/limits"
+            val headers = HttpHeaders().apply { set("Authorization", "Bearer $token") }
+            val response = restTemplate.exchange(url, HttpMethod.GET, HttpEntity<Void>(headers), FamilyApiResponse::class.java)
+            @Suppress("UNCHECKED_CAST")
+            val raw = (response.body?.data as? List<*>) ?: return emptyList()
+            raw.filterIsInstance<Map<*, *>>().map { m ->
+                LimitRuleDto(
+                    id = m["id"].toString(),
+                    childId = m["childId"].toString(),
+                    limitType = m["limitType"].toString(),
+                    category = m["category"]?.toString(),
+                    amountUzs = (m["amountUzs"] as? Number)?.toLong() ?: 0L,
+                    active = m["active"] as? Boolean ?: true,
+                )
+            }
+        } catch (ex: Exception) {
+            log.warn("Could not fetch child's own limits: {} — skipping limit check", ex.message)
+            emptyList()
+        }
+    }
+
+    /** Parent-initiated purchase: limits fetched via the family path. */
+    fun checkLimits(cardId: UUID, childId: UUID, familyId: UUID, amountUzs: Long, merchantMcc: String?, token: String) =
+        evaluate(cardId, amountUzs, merchantMcc, getLimitsForChild(familyId, childId, token))
+
+    /** Child-initiated purchase: limits fetched via the child path. */
+    fun checkLimitsChild(cardId: UUID, amountUzs: Long, merchantMcc: String?, token: String) =
+        evaluate(cardId, amountUzs, merchantMcc, getLimitsForChildSelf(token))
+
     /**
      * Checks spending limits against current ledger. Throws BusinessException if exceeded.
      */
-    fun checkLimits(
-        cardId: UUID,
-        childId: UUID,
-        familyId: UUID,
-        amountUzs: Long,
-        merchantMcc: String?,
-        token: String,
-    ) {
-        val limits = getLimitsForChild(familyId, childId, token)
+    private fun evaluate(cardId: UUID, amountUzs: Long, merchantMcc: String?, limits: List<LimitRuleDto>) {
         if (limits.isEmpty()) return
 
         val now = Instant.now()

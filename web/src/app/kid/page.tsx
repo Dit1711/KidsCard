@@ -102,6 +102,33 @@ export default function KidCabinetPage() {
     },
   });
 
+  const [showShop, setShowShop] = useState(false);
+  const [shopCat, setShopCat] = useState<{ label: string; icon: string; mcc: string } | null>(null);
+  const [shopAmount, setShopAmount] = useState("");
+  const [shopMsg, setShopMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const spend = useMutation({
+    mutationFn: () =>
+      childAuthService.spend(card!.id, Math.round(parseFloat(shopAmount)), shopCat!.label, shopCat!.mcc),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
+      qc.invalidateQueries({ queryKey: ["child-tx", card?.id] });
+      setShopMsg({ ok: true, text: `Куплено! ${shopCat!.icon} ${shopCat!.label}` });
+      setShopAmount("");
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { error?: { code?: string; message?: string } } } };
+      const code = e.response?.data?.error?.code;
+      const text =
+        code === "LIMIT_EXCEEDED"
+          ? "Упс! На сегодня лимит исчерпан 🙊"
+          : code === "INSUFFICIENT_FUNDS"
+          ? "Не хватает денег на карте 💸"
+          : "Не получилось купить, попробуй ещё";
+      setShopMsg({ ok: false, text });
+    },
+  });
+
   if (!hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-purple-50">
@@ -155,6 +182,70 @@ export default function KidCabinetPage() {
               <p className="mt-3 text-xs bg-white/20 rounded-full px-3 py-1 inline-block">
                 {card.status === "FROZEN" ? "❄️ Карта заморожена" : "Карта недоступна"}
               </p>
+            )}
+          </div>
+        )}
+
+        {/* Shop — child spends their money (limits enforced) */}
+        {card && card.status === "ACTIVE" && (
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className="text-base font-bold text-purple-800">🛍️ Магазин</h2>
+              <button
+                onClick={() => { setShowShop(!showShop); setShopMsg(null); }}
+                className="text-sm text-purple-600 font-medium"
+              >
+                {showShop ? "Закрыть" : "Потратить"}
+              </button>
+            </div>
+
+            {showShop && (
+              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Еда", icon: "🍔", mcc: "5814" },
+                    { label: "Игры", icon: "🎮", mcc: "5816" },
+                    { label: "Игрушки", icon: "🧸", mcc: "5945" },
+                    { label: "Другое", icon: "🛒", mcc: "5999" },
+                  ].map((c) => (
+                    <button
+                      key={c.mcc}
+                      onClick={() => setShopCat(c)}
+                      className={`flex flex-col items-center gap-1 rounded-xl border py-2 transition-colors ${
+                        shopCat?.mcc === c.mcc
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-200 hover:border-purple-300"
+                      }`}
+                    >
+                      <span className="text-2xl">{c.icon}</span>
+                      <span className="text-[11px] text-gray-600">{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  placeholder="Сколько потратить?"
+                  value={shopAmount}
+                  onChange={(e) => setShopAmount(e.target.value)}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                />
+                {shopMsg && (
+                  <p className={`text-sm font-medium ${shopMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                    {shopMsg.text}
+                  </p>
+                )}
+                <button
+                  onClick={() => spend.mutate()}
+                  disabled={!shopCat || !shopAmount || spend.isPending}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+                >
+                  {spend.isPending
+                    ? "Покупаем…"
+                    : shopCat
+                    ? `Купить ${shopCat.icon} за ${shopAmount ? formatSum(parseFloat(shopAmount)) : "…"}`
+                    : "Выбери категорию"}
+                </button>
+              </div>
             )}
           </div>
         )}

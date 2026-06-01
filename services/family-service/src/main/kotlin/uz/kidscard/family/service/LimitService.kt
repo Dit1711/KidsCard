@@ -97,6 +97,11 @@ class LimitService(
         return limitRuleRepository.findByChildIdAndActiveTrue(childId).map { it.toDto() }
     }
 
+    /** Child cabinet / spend-time check: the child's own active limits (scoped by JWT childId). */
+    @Transactional(readOnly = true)
+    fun getChildLimits(childId: UUID): List<LimitRuleDto> =
+        limitRuleRepository.findByChildIdAndActiveTrue(childId).map { it.toDto() }
+
     fun removeLimit(limitId: UUID, familyId: UUID, requestingUserId: UUID) {
         familyService.requireOwner(familyId, requestingUserId)
 
