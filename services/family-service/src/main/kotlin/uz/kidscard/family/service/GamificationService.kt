@@ -2,10 +2,12 @@ package uz.kidscard.family.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uz.kidscard.common.exception.ResourceNotFoundException
 import uz.kidscard.family.api.dto.BadgeDto
 import uz.kidscard.family.api.dto.GamificationDto
 import uz.kidscard.family.domain.ChoreStatus
 import uz.kidscard.family.domain.GoalStatus
+import uz.kidscard.family.repository.ChildRepository
 import uz.kidscard.family.repository.ChoreRepository
 import uz.kidscard.family.repository.LessonProgressRepository
 import uz.kidscard.family.repository.SavingsGoalRepository
@@ -27,6 +29,8 @@ class GamificationService(
     private val choreRepository: ChoreRepository,
     private val lessonProgressRepository: LessonProgressRepository,
     private val savingsGoalRepository: SavingsGoalRepository,
+    private val childRepository: ChildRepository,
+    private val familyService: FamilyService,
 ) {
     private val zone = ZoneId.of("Asia/Tashkent")
 
@@ -40,6 +44,14 @@ class GamificationService(
         private val LEVEL_TITLES = listOf(
             "Новичок", "Копитель", "Стратег", "Инвестор", "Магнат",
         )
+    }
+
+    /** Parent view: verify the requester is in the family and the child belongs to it. */
+    fun snapshotForParent(familyId: UUID, childId: UUID, requestingUserId: UUID): GamificationDto {
+        familyService.requireMember(familyId, requestingUserId)
+        childRepository.findByFamilyIdAndId(familyId, childId)
+            ?: throw ResourceNotFoundException("Child", childId)
+        return snapshot(childId)
     }
 
     fun snapshot(childId: UUID): GamificationDto {

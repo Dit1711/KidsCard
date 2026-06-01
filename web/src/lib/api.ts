@@ -323,6 +323,11 @@ export const familyService = {
       `/api/v1/families/${familyId}/co-parents/invite`,
       { phone, fullName }
     ),
+
+  childGamification: (familyId: string, childId: string) =>
+    familyApi.get<ApiResponse<GamificationResponse>>(
+      `/api/v1/families/${familyId}/children/${childId}/gamification`
+    ),
 };
 
 // ── Chores (gamification) ──────────────────────────────────────────────────────

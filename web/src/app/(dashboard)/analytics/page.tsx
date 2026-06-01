@@ -14,6 +14,21 @@ import { useFamilyStore } from "@/store/family";
 import { categoryByMcc } from "@/lib/categories";
 import { SpendChart } from "@/components/SpendChart";
 import { MotionStagger, MotionItem } from "@/components/motion";
+import { LEAGUE_META } from "@/components/kidkit";
+import {
+  Flame, Trophy, Zap, Award, Lock, Target, GraduationCap, PiggyBank,
+  TrendingUp, Crown, type LucideIcon,
+} from "lucide-react";
+
+const BADGE_ICON: Record<string, LucideIcon> = {
+  first_chore: Target,
+  chore_10: Trophy,
+  first_lesson: GraduationCap,
+  lesson_5: Award,
+  first_goal: PiggyBank,
+  streak_7: TrendingUp,
+  saver_1m: Crown,
+};
 
 const PERIODS = [
   { days: 7, label: "Неделя" },
@@ -94,6 +109,15 @@ export default function AnalyticsPage() {
     enabled: !!family?.id,
   });
 
+  const { data: gami } = useQuery({
+    queryKey: ["child-gamification-parent", family?.id, selectedChild],
+    queryFn: async () => {
+      const { data } = await familyService.childGamification(family!.id, selectedChild);
+      return data.data;
+    },
+    enabled: !!family?.id && !!selectedChild,
+  });
+
   if (!family) {
     return (
       <div className="space-y-3">
@@ -130,6 +154,86 @@ export default function AnalyticsPage() {
         </MotionItem>
       ) : (
         <p className="text-white/50 text-sm">Сначала добавьте детей в разделе «Семья».</p>
+      )}
+
+      {/* Gamification progress */}
+      {gami && selectedChild && (
+        <MotionItem>
+          <div className={panel}>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <p className="font-medium tracking-tight">Прогресс и вовлечённость</p>
+                <p className="text-xs text-white/40">Геймификация: уровень, серия, достижения</p>
+              </div>
+              {(() => {
+                const lg = LEAGUE_META[gami.league] ?? LEAGUE_META.BRONZE;
+                return (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border"
+                    style={{ color: lg.color, borderColor: `${lg.color}40`, backgroundColor: `${lg.color}1a` }}
+                  >
+                    <Trophy className="h-3.5 w-3.5" /> {lg.label}
+                  </span>
+                );
+              })()}
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
+                <p className="text-xs text-white/40">Уровень</p>
+                <p className="text-2xl font-bold tabular-nums">{gami.level}</p>
+                <p className="text-[11px] text-white/40 mt-0.5">{gami.title}</p>
+              </div>
+              <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
+                <p className="text-xs text-white/40">XP всего</p>
+                <p className="text-2xl font-bold tabular-nums flex items-center gap-1.5">
+                  <Zap className="h-5 w-5 text-cyan-300" />{gami.xp}
+                </p>
+                <p className="text-[11px] text-white/40 mt-0.5">{gami.xpIntoLevel} / {gami.xpForNext} до ур. {gami.level + 1}</p>
+              </div>
+              <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
+                <p className="text-xs text-white/40">Серия</p>
+                <p className={`text-2xl font-bold tabular-nums flex items-center gap-1.5 ${gami.streakDays > 0 ? "text-orange-300" : "text-white"}`}>
+                  <Flame className={`h-5 w-5 ${gami.streakDays > 0 ? "text-orange-400" : "text-white/30"}`} />{gami.streakDays}
+                </p>
+                <p className="text-[11px] text-white/40 mt-0.5">рекорд: {gami.longestStreak} дн.</p>
+              </div>
+            </div>
+
+            {/* XP bar */}
+            <div className="mt-3 h-2.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400"
+                style={{ width: `${gami.xpForNext > 0 ? Math.min(100, Math.round((gami.xpIntoLevel / gami.xpForNext) * 100)) : 0}%` }}
+              />
+            </div>
+
+            {/* Badges */}
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium flex items-center gap-1.5"><Award className="h-4 w-4 text-fuchsia-300" /> Достижения</p>
+                <span className="text-[11px] text-white/40">{gami.badges.filter((b) => b.earned).length} из {gami.badges.length}</span>
+              </div>
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                {gami.badges.map((b) => {
+                  const Icon = BADGE_ICON[b.key] ?? Award;
+                  return (
+                    <div
+                      key={b.key}
+                      title={`${b.title} — ${b.description}`}
+                      className={`flex flex-col items-center gap-1 rounded-2xl p-2.5 border ${
+                        b.earned ? "border-white/15 bg-white/[0.06]" : "border-white/5 bg-white/[0.02]"
+                      }`}
+                    >
+                      {b.earned ? <Icon className="h-5 w-5 text-fuchsia-300" /> : <Lock className="h-5 w-5 text-white/25" />}
+                      <span className={`text-[9px] text-center leading-tight ${b.earned ? "text-white/70" : "text-white/30"}`}>{b.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </MotionItem>
       )}
 
       {!card && selectedChild && <p className="text-white/50 text-sm">У ребёнка пока нет карты.</p>}
