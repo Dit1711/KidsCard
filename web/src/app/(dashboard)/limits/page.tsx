@@ -21,11 +21,10 @@ function formatSum(uzs: number) {
   return new Intl.NumberFormat("ru-UZ").format(uzs) + " сум";
 }
 
-const LIMIT_TYPES = [
+const PERIOD_TYPES = [
   { value: "DAILY", label: "Дневной" },
   { value: "WEEKLY", label: "Недельный" },
   { value: "MONTHLY", label: "Месячный" },
-  { value: "CATEGORY", label: "По категории" },
 ];
 
 // Shared with the child shop — category = MCC.
@@ -36,6 +35,9 @@ const CATEGORIES = [
   { mcc: "5999", label: "Другое", icon: "🛒" },
 ];
 
+function periodLabel(type: string) {
+  return PERIOD_TYPES.find((t) => t.value === type)?.label ?? type;
+}
 function categoryLabel(mcc: string | null) {
   const c = CATEGORIES.find((x) => x.mcc === mcc);
   return c ? `${c.icon} ${c.label}` : "Категория";
@@ -46,9 +48,12 @@ export default function LimitsPage() {
   const { family } = useFamilyStore();
 
   const [selectedChild, setSelectedChild] = useState<string>("");
-  const [limitType, setLimitType] = useState("DAILY");
-  const [limitAmount, setLimitAmount] = useState("");
-  const [limitCategory, setLimitCategory] = useState("");
+  // Period-limit form
+  const [periodType, setPeriodType] = useState("DAILY");
+  const [periodAmount, setPeriodAmount] = useState("");
+  // Category-limit form
+  const [catMcc, setCatMcc] = useState("");
+  const [catAmount, setCatAmount] = useState("");
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
@@ -75,16 +80,13 @@ export default function LimitsPage() {
   });
 
   const setLimit = useMutation({
-    mutationFn: () =>
-      limitService.set(family!.id, selectedChild, {
-        limitType,
-        category: limitType === "CATEGORY" ? limitCategory : undefined,
-        amountUzs: Math.round(parseFloat(limitAmount)),
-      }),
+    mutationFn: (p: { limitType: string; category?: string; amountUzs: number }) =>
+      limitService.set(family!.id, selectedChild, p),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
-      setLimitAmount("");
-      setLimitCategory("");
+      setPeriodAmount("");
+      setCatAmount("");
+      setCatMcc("");
     },
   });
 
@@ -103,6 +105,9 @@ export default function LimitsPage() {
       </div>
     );
   }
+
+  const periodLimits = limits?.filter((l) => l.limitType !== "CATEGORY") ?? [];
+  const categoryLimits = limits?.filter((l) => l.limitType === "CATEGORY") ?? [];
 
   return (
     <div className="space-y-6">
@@ -135,79 +140,105 @@ export default function LimitsPage() {
       )}
 
       {selectedChild && (
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle className="text-base">Лимиты трат</CardTitle>
-            <CardDescription>Ограничьте расходы по периодам</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Active limits */}
-            <div className="space-y-2">
-              {limits?.length === 0 && (
-                <p className="text-sm text-gray-400">Лимиты не установлены</p>
-              )}
-              {limits?.map((limit) => (
-                <div
-                  key={limit.id}
-                  className="flex items-center justify-between p-2 rounded-lg bg-gray-50"
-                >
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">
-                      {limit.limitType === "CATEGORY"
-                        ? categoryLabel(limit.category)
-                        : LIMIT_TYPES.find((t) => t.value === limit.limitType)?.label ??
-                          limit.limitType}
-                    </Badge>
-                    <span className="text-sm font-medium">
-                      {formatSum(limit.amountUzs)}
-                      {limit.limitType === "CATEGORY" && (
-                        <span className="text-xs text-gray-400"> / мес</span>
-                      )}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => removeLimit.mutate(limit.id)}
-                    className="text-xs text-red-400 hover:text-red-600"
-                  >
-                    удалить
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <Separator />
-
-            {/* Add limit form */}
-            <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ── Period limits ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Лимиты по периодам</CardTitle>
+              <CardDescription>Сколько можно тратить за день/неделю/месяц</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Период</Label>
-                <div className="flex gap-2 flex-wrap">
-                  {LIMIT_TYPES.map((t) => (
-                    <button
-                      key={t.value}
-                      onClick={() => setLimitType(t.value)}
-                      className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
-                        limitType === t.value
-                          ? "bg-indigo-600 text-white border-indigo-600"
-                          : "border-gray-200 hover:border-indigo-300"
-                      }`}
-                    >
-                      {t.label}
+                {periodLimits.length === 0 && (
+                  <p className="text-sm text-gray-400">Лимиты не установлены</p>
+                )}
+                {periodLimits.map((limit) => (
+                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{periodLabel(limit.limitType)}</Badge>
+                      <span className="text-sm font-medium">{formatSum(limit.amountUzs)}</span>
+                    </div>
+                    <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-red-400 hover:text-red-600">
+                      удалить
                     </button>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
 
-              {limitType === "CATEGORY" && (
+              <Separator />
+
+              <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>Категория (лимит в месяц)</Label>
+                  <Label>Период</Label>
+                  <div className="flex gap-2 flex-wrap">
+                    {PERIOD_TYPES.map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => setPeriodType(t.value)}
+                        className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
+                          periodType === t.value
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "border-gray-200 hover:border-indigo-300"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Сумма лимита (сум)</Label>
+                  <Input type="number" placeholder="100000" value={periodAmount} onChange={(e) => setPeriodAmount(e.target.value)} />
+                </div>
+                <Button
+                  onClick={() => setLimit.mutate({ limitType: periodType, amountUzs: Math.round(parseFloat(periodAmount)) })}
+                  disabled={!periodAmount || setLimit.isPending}
+                  className="w-full"
+                >
+                  {setLimit.isPending ? "Сохранение..." : "Установить лимит"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Category limits ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Лимиты по категориям</CardTitle>
+              <CardDescription>Месячный потолок на категорию покупок</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                {categoryLimits.length === 0 && (
+                  <p className="text-sm text-gray-400">Категорийные лимиты не установлены</p>
+                )}
+                {categoryLimits.map((limit) => (
+                  <div key={limit.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{categoryLabel(limit.category)}</Badge>
+                      <span className="text-sm font-medium">
+                        {formatSum(limit.amountUzs)} <span className="text-xs text-gray-400">/ мес</span>
+                      </span>
+                    </div>
+                    <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-red-400 hover:text-red-600">
+                      удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Категория</Label>
                   <div className="grid grid-cols-4 gap-2">
                     {CATEGORIES.map((c) => (
                       <button
                         key={c.mcc}
-                        onClick={() => setLimitCategory(c.mcc)}
+                        onClick={() => setCatMcc(c.mcc)}
                         className={`flex flex-col items-center gap-1 rounded-lg border py-2 transition-colors ${
-                          limitCategory === c.mcc
+                          catMcc === c.mcc
                             ? "border-indigo-600 bg-indigo-50"
                             : "border-gray-200 hover:border-indigo-300"
                         }`}
@@ -218,33 +249,21 @@ export default function LimitsPage() {
                     ))}
                   </div>
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label>Сумма лимита (сум)</Label>
-                <Input
-                  type="number"
-                  placeholder="100000"
-                  value={limitAmount}
-                  onChange={(e) => setLimitAmount(e.target.value)}
-                />
+                <div className="space-y-2">
+                  <Label>Лимит в месяц (сум)</Label>
+                  <Input type="number" placeholder="50000" value={catAmount} onChange={(e) => setCatAmount(e.target.value)} />
+                </div>
+                <Button
+                  onClick={() => setLimit.mutate({ limitType: "CATEGORY", category: catMcc, amountUzs: Math.round(parseFloat(catAmount)) })}
+                  disabled={!catAmount || !catMcc || setLimit.isPending}
+                  className="w-full"
+                >
+                  {setLimit.isPending ? "Сохранение..." : "Установить лимит"}
+                </Button>
               </div>
-              {setLimit.isError && (
-                <p className="text-sm text-red-500">Ошибка установки лимита</p>
-              )}
-              <Button
-                onClick={() => setLimit.mutate()}
-                disabled={
-                  !limitAmount ||
-                  setLimit.isPending ||
-                  (limitType === "CATEGORY" && !limitCategory)
-                }
-                className="w-full"
-              >
-                {setLimit.isPending ? "Сохранение..." : "Установить лимит"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

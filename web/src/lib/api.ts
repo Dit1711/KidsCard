@@ -198,7 +198,20 @@ export const childAuthService = {
     childPaymentApi.get<ApiResponse<{ annualRatePercent: number }>>(
       "/api/v1/savings/rate"
     ),
+
+  limitUsage: (cardId: string) =>
+    childPaymentApi.get<ApiResponse<LimitUsageResponse[]>>(
+      `/api/v1/child/limit-usage?cardId=${cardId}`
+    ),
 };
+
+export interface LimitUsageResponse {
+  limitType: string; // DAILY, WEEKLY, MONTHLY, CATEGORY
+  category: string | null;
+  limitUzs: number;
+  spentUzs: number;
+  remainingUzs: number;
+}
 
 // ── Family ────────────────────────────────────────────────────────────────────
 

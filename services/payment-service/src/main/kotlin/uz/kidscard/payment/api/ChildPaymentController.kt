@@ -14,6 +14,8 @@ import uz.kidscard.payment.api.dto.BalanceDto
 import uz.kidscard.payment.api.dto.PageDto
 import uz.kidscard.payment.api.dto.PurchaseRequest
 import uz.kidscard.payment.api.dto.TransactionDto
+import uz.kidscard.payment.service.LimitCheckService
+import uz.kidscard.payment.service.LimitUsageDto
 import uz.kidscard.payment.service.TransactionService
 import java.util.UUID
 
@@ -32,7 +34,15 @@ data class ChildSpendRequest(
 @RequestMapping("/api/v1/child")
 class ChildPaymentController(
     private val transactionService: TransactionService,
+    private val limitCheckService: LimitCheckService,
 ) {
+
+    @GetMapping("/limit-usage")
+    fun limitUsage(
+        @RequestParam cardId: UUID,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<List<LimitUsageDto>>> =
+        ResponseEntity.ok(ApiResponse.ok(limitCheckService.usageForChild(cardId, jwt.tokenValue)))
 
     @GetMapping("/balance")
     fun balance(

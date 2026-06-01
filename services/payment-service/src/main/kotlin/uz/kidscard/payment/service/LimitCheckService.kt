@@ -31,6 +31,14 @@ data class FamilyApiResponse<T>(
     val data: T? = null,
 )
 
+data class LimitUsageDto(
+    val limitType: String,
+    val category: String?,
+    val limitUzs: Long,
+    val spentUzs: Long,
+    val remainingUzs: Long,
+)
+
 @Service
 class LimitCheckService(
     private val ledgerEntryRepository: LedgerEntryRepository,
@@ -103,6 +111,31 @@ class LimitCheckService(
     /** Child-initiated purchase: limits fetched via the child path. */
     fun checkLimitsChild(cardId: UUID, amountUzs: Long, merchantMcc: String?, token: String) =
         evaluate(cardId, amountUzs, merchantMcc, getLimitsForChildSelf(token))
+
+    /** Child cabinet: each of the child's limits with how much is spent/left. */
+    fun usageForChild(cardId: UUID, token: String): List<LimitUsageDto> {
+        val now = Instant.now()
+        val monthStart = now.truncatedTo(ChronoUnit.DAYS).let {
+            val day = java.time.ZonedDateTime.ofInstant(it, java.time.ZoneOffset.UTC).dayOfMonth
+            it.minus((day - 1).toLong(), ChronoUnit.DAYS)
+        }
+        return getLimitsForChildSelf(token).mapNotNull { limit ->
+            val spent = when (limit.limitType) {
+                "DAILY"   -> ledgerEntryRepository.computeSpentSince(cardId.toString(), now.truncatedTo(ChronoUnit.DAYS))
+                "WEEKLY"  -> ledgerEntryRepository.computeSpentSince(cardId.toString(), now.minus(now.dayOfWeek(), ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS))
+                "MONTHLY" -> ledgerEntryRepository.computeSpentSince(cardId.toString(), monthStart)
+                "CATEGORY" -> limit.category?.let { ledgerEntryRepository.computeCategorySpentSince(cardId.toString(), it, monthStart) } ?: return@mapNotNull null
+                else -> return@mapNotNull null
+            }
+            LimitUsageDto(
+                limitType = limit.limitType,
+                category = limit.category,
+                limitUzs = limit.amountUzs,
+                spentUzs = spent.coerceAtMost(limit.amountUzs),
+                remainingUzs = (limit.amountUzs - spent).coerceAtLeast(0),
+            )
+        }
+    }
 
     /**
      * Checks spending limits against current ledger. Throws BusinessException if exceeded.

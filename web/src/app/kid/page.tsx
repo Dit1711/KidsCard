@@ -88,6 +88,16 @@ export default function KidCabinetPage() {
     enabled: isChildAuthed,
   });
 
+  const { data: limitUsage } = useQuery({
+    queryKey: ["child-limit-usage", card?.id],
+    queryFn: async () => {
+      const { data } = await childAuthService.limitUsage(card!.id);
+      return data.data;
+    },
+    enabled: !!card?.id,
+    refetchInterval: 15_000,
+  });
+
   const [showGoal, setShowGoal] = useState(false);
   const [goalTitle, setGoalTitle] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
@@ -123,6 +133,7 @@ export default function KidCabinetPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-tx", card?.id] });
+      qc.invalidateQueries({ queryKey: ["child-limit-usage", card?.id] });
       setShopMsg({ ok: true, text: `Куплено! ${shopCat!.icon} ${shopCat!.label}` });
       setShopAmount("");
     },
@@ -193,6 +204,49 @@ export default function KidCabinetPage() {
                 {card.status === "FROZEN" ? "❄️ Карта заморожена" : "Карта недоступна"}
               </p>
             )}
+          </div>
+        )}
+
+        {/* My limits — helps the child self-control and learn */}
+        {limitUsage && limitUsage.length > 0 && (
+          <div>
+            <h2 className="text-base font-bold text-purple-800 mb-1 px-1">🛡️ Мои лимиты</h2>
+            <p className="text-xs text-gray-400 mb-3 px-1">Сколько можно ещё потратить</p>
+            <div className="space-y-2">
+              {limitUsage.map((u, i) => {
+                const cats: Record<string, string> = {
+                  "5814": "🍔 Еда", "5816": "🎮 Игры", "5945": "🧸 Игрушки", "5999": "🛒 Другое",
+                };
+                const periods: Record<string, string> = {
+                  DAILY: "На сегодня", WEEKLY: "На неделю", MONTHLY: "На месяц",
+                };
+                const label =
+                  u.limitType === "CATEGORY"
+                    ? `${u.category ? cats[u.category] ?? "Категория" : "Категория"} (в месяц)`
+                    : periods[u.limitType] ?? u.limitType;
+                const pct = u.limitUzs > 0 ? Math.min(100, Math.round((u.spentUzs / u.limitUzs) * 100)) : 0;
+                const low = u.remainingUzs <= u.limitUzs * 0.15;
+                return (
+                  <div key={i} className="bg-white rounded-2xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-gray-700">{label}</span>
+                      <span className={`text-xs font-semibold ${low ? "text-red-500" : "text-green-600"}`}>
+                        осталось {formatSum(u.remainingUzs)}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${low ? "bg-red-400" : "bg-green-400"}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      потрачено {formatSum(u.spentUzs)} из {formatSum(u.limitUzs)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
