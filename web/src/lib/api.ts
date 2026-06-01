@@ -162,6 +162,29 @@ export const childAuthService = {
     childFamilyApi.post<ApiResponse<ChoreResponse>>(
       `/api/v1/child/chores/${choreId}/complete`
     ),
+
+  myGoals: () =>
+    childFamilyApi.get<ApiResponse<SavingsGoalResponse[]>>(
+      "/api/v1/child/savings-goals"
+    ),
+
+  createGoal: (title: string, targetAmount: number) =>
+    childFamilyApi.post<ApiResponse<SavingsGoalResponse>>(
+      "/api/v1/child/savings-goals",
+      { title, targetAmount }
+    ),
+
+  depositGoal: (goalId: string, cardId: string, amountUzs: number) =>
+    childFamilyApi.post<ApiResponse<SavingsGoalResponse>>(
+      `/api/v1/child/savings-goals/${goalId}/deposit`,
+      { cardId, amountUzs }
+    ),
+
+  withdrawGoal: (goalId: string, cardId: string, amountUzs: number) =>
+    childFamilyApi.post<ApiResponse<SavingsGoalResponse>>(
+      `/api/v1/child/savings-goals/${goalId}/withdraw`,
+      { cardId, amountUzs }
+    ),
 };
 
 // ── Family ────────────────────────────────────────────────────────────────────
@@ -599,4 +622,17 @@ export interface ChoreResponse {
   dueDate: string | null;
   completedAt: string | null;
   approvedAt: string | null;
+}
+
+export interface SavingsGoalResponse {
+  id: string;
+  childId: string;
+  title: string;
+  description: string | null;
+  targetAmount: number;
+  currentAmount: number;
+  currency: string;
+  deadline: string | null;
+  status: string; // ACTIVE, COMPLETED, CANCELLED
+  imageUrl: string | null;
 }

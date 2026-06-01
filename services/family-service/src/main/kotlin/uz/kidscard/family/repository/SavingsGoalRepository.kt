@@ -8,4 +8,6 @@ import java.util.UUID
 interface SavingsGoalRepository : JpaRepository<SavingsGoal, UUID> {
 
     fun findByChildIdAndStatus(childId: UUID, status: GoalStatus): List<SavingsGoal>
+
+    fun findByChildIdOrderByCreatedAtDesc(childId: UUID): List<SavingsGoal>
 }
