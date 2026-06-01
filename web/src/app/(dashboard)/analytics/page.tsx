@@ -162,7 +162,9 @@ export default function AnalyticsPage() {
                       return (
                         <div key={c.mcc}>
                           <div className="flex items-center justify-between text-sm mb-1.5">
-                            <span className="font-medium">{meta.icon} {meta.label}</span>
+                            <span className="font-medium flex items-center gap-2">
+                              <meta.Icon className="h-4 w-4" style={{ color: meta.color }} /> {meta.label}
+                            </span>
                             <span className="text-white/50 tabular-nums">{formatSum(c.amountUzs)} · {pct}%</span>
                           </div>
                           <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">

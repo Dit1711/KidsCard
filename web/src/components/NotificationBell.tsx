@@ -103,16 +103,16 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-card border border-border rounded-xl shadow-soft z-50">
-          <div className="px-4 py-3 border-b border-border sticky top-0 bg-card">
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[#15151f] border border-white/10 rounded-2xl shadow-2xl z-50 text-white">
+          <div className="px-4 py-3 border-b border-white/[0.06] sticky top-0 bg-[#15151f]">
             <p className="font-semibold text-sm">Уведомления</p>
           </div>
           {pushOn === false && pushSupported() && (
-            <div className="px-4 py-2.5 border-b border-border bg-accent/50">
+            <div className="px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.03]">
               <button
                 onClick={handleEnablePush}
                 disabled={pushBusy}
-                className="flex items-center gap-2 text-sm text-primary font-medium hover:opacity-80 disabled:opacity-50"
+                className="flex items-center gap-2 text-sm text-fuchsia-300 font-medium hover:opacity-80 disabled:opacity-50"
               >
                 <Bell className="h-4 w-4" />
                 {pushBusy ? "Включаем…" : "Включить пуш на телефон"}
@@ -120,29 +120,29 @@ export function NotificationBell() {
             </div>
           )}
           {pushOn === true && (
-            <div className="px-4 py-2 border-b border-border text-xs text-emerald-600">
+            <div className="px-4 py-2 border-b border-white/[0.06] text-xs text-emerald-300">
               Пуш-уведомления включены
             </div>
           )}
           {!items && (
-            <p className="px-4 py-6 text-sm text-muted-foreground text-center">Загрузка…</p>
+            <p className="px-4 py-6 text-sm text-white/40 text-center">Загрузка…</p>
           )}
           {items && items.length === 0 && (
-            <p className="px-4 py-8 text-sm text-muted-foreground text-center">Пока нет уведомлений</p>
+            <p className="px-4 py-8 text-sm text-white/40 text-center">Пока нет уведомлений</p>
           )}
           <ul>
             {items?.map((n) => (
               <li
                 key={n.id}
-                className={`px-4 py-3 border-b last:border-0 flex gap-3 ${
-                  n.isRead ? "" : "bg-indigo-50/40"
+                className={`px-4 py-3 border-b border-white/[0.04] last:border-0 flex gap-3 ${
+                  n.isRead ? "" : "bg-white/[0.04]"
                 }`}
               >
                 <span className="text-xl shrink-0">{n.icon ?? "🔔"}</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{n.title}</p>
-                  <p className="text-xs text-gray-500 break-words">{n.message}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+                  <p className="text-sm font-medium">{n.title}</p>
+                  <p className="text-xs text-white/50 break-words">{n.message}</p>
+                  <p className="text-[11px] text-white/35 mt-0.5">{timeAgo(n.createdAt)}</p>
                 </div>
               </li>
             ))}

@@ -8,7 +8,7 @@ import { useFamilyStore } from "@/store/family";
 import { toast } from "sonner";
 import { Panel, DInput, DLabel, DButton, DBadge } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
-import { Plus, Wallet, Check } from "lucide-react";
+import { Plus, Wallet, Check, Repeat } from "lucide-react";
 
 export default function ChoresPage() {
   const qc = useQueryClient();
@@ -211,7 +211,7 @@ export default function ChoresPage() {
                 <div>
                   <p className="font-medium">
                     {c.title}
-                    {c.recurrence !== "NONE" && <span className="ml-2 text-[11px] font-normal text-fuchsia-300">🔁 {recurBadge(c.recurrence)}</span>}
+                    {c.recurrence !== "NONE" && <span className="ml-2 text-[11px] font-normal text-fuchsia-300 inline-flex items-center gap-1"><Repeat className="h-3 w-3" /> {recurBadge(c.recurrence)}</span>}
                   </p>
                   <p className="text-xs text-white/40">{childName(c.childId)} · награда {formatSum(c.rewardAmount)}</p>
                 </div>
@@ -234,7 +234,7 @@ export default function ChoresPage() {
               <div>
                 <p className="font-medium">
                   {c.title}
-                  {c.recurrence !== "NONE" && <span className="ml-2 text-[11px] font-normal text-fuchsia-300">🔁 {recurBadge(c.recurrence)}</span>}
+                  {c.recurrence !== "NONE" && <span className="ml-2 text-[11px] font-normal text-fuchsia-300 inline-flex items-center gap-1"><Repeat className="h-3 w-3" /> {recurBadge(c.recurrence)}</span>}
                 </p>
                 <p className="text-xs text-white/40">{childName(c.childId)}</p>
               </div>

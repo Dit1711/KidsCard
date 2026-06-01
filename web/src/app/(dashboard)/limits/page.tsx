@@ -5,7 +5,7 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, limitService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import { CATEGORIES, categoryLabel, PERIOD_LABELS } from "@/lib/categories";
+import { CATEGORIES, categoryByMcc, PERIOD_LABELS } from "@/lib/categories";
 import { Panel, DInput, DLabel, DButton, DBadge, Pill } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
@@ -145,7 +145,9 @@ export default function LimitsPage() {
                 {categoryLimits.map((limit) => (
                   <div key={limit.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.05]">
                     <div className="flex items-center gap-2">
-                      <DBadge tone="muted">{categoryLabel(limit.category)}</DBadge>
+                      {(() => { const m = categoryByMcc(limit.category); return (
+                        <DBadge tone="muted"><span className="flex items-center gap-1.5"><m.Icon className="h-3.5 w-3.5" /> {m.label}</span></DBadge>
+                      ); })()}
                       <span className="text-sm font-medium tabular-nums">{formatSum(limit.amountUzs)} <span className="text-xs text-white/40">/ мес</span></span>
                     </div>
                     <button onClick={() => removeLimit.mutate(limit.id)} className="text-xs text-rose-300/80 hover:text-rose-300">удалить</button>
@@ -159,10 +161,10 @@ export default function LimitsPage() {
                   <div className="grid grid-cols-4 gap-2">
                     {CATEGORIES.map((c) => (
                       <button key={c.mcc} onClick={() => setCatMcc(c.mcc)}
-                        className={`flex flex-col items-center gap-1 rounded-xl py-2.5 transition-colors ${
+                        className={`flex flex-col items-center gap-1.5 rounded-xl py-3 transition-colors ${
                           catMcc === c.mcc ? "bg-white/15 ring-1 ring-fuchsia-400/50" : "bg-white/[0.04] hover:bg-white/[0.08]"
                         }`}>
-                        <span className="text-xl">{c.icon}</span>
+                        <c.Icon className="h-5 w-5 text-white/70" />
                         <span className="text-[11px] text-white/50">{c.label}</span>
                       </button>
                     ))}
