@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { choreService, familyService } from "@/lib/api";
+import { choreService, familyService, paymentService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import {
   Card,
@@ -28,6 +28,22 @@ export default function ChoresPage() {
   const [title, setTitle] = useState("");
   const [reward, setReward] = useState("");
   const [childId, setChildId] = useState("");
+  const [createError, setCreateError] = useState("");
+
+  const { data: wallet } = useQuery({
+    queryKey: ["wallet", family?.id],
+    queryFn: async () => {
+      const { data } = await paymentService.getWallet(family!.id);
+      return data.data;
+    },
+    enabled: !!family?.id,
+    refetchInterval: 15_000,
+  });
+
+  const fundWallet = useMutation({
+    mutationFn: (amount: number) => paymentService.fundWallet(family!.id, amount),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["wallet", family!.id] }),
+  });
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
@@ -57,16 +73,27 @@ export default function ChoresPage() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
+      qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
       setTitle("");
       setReward("");
       setChildId("");
+      setCreateError("");
       setShowCreate(false);
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { error?: { code?: string; message?: string } } } };
+      setCreateError(
+        e.response?.data?.error?.message ?? "Не удалось создать задание"
+      );
     },
   });
 
   const approve = useMutation({
     mutationFn: (choreId: string) => choreService.approve(family!.id, choreId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["chores", family!.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chores", family!.id] });
+      qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
+    },
   });
 
   const childName = (id: string) =>
@@ -98,6 +125,37 @@ export default function ChoresPage() {
           {showCreate ? "Отмена" : "+ Новое задание"}
         </Button>
       </div>
+
+      {/* Family wallet — rewards are reserved from here */}
+      <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+        <CardContent className="pt-5 pb-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-emerald-100 text-xs">Кошелёк семьи</p>
+              <p className="text-2xl font-bold">{formatSum(wallet?.availableUzs ?? 0)}</p>
+              <p className="text-emerald-100 text-xs mt-1">
+                доступно
+                {wallet && wallet.heldUzs > 0 && ` · заморожено ${formatSum(wallet.heldUzs)}`}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {[50000, 100000, 200000].map((a) => (
+                <button
+                  key={a}
+                  onClick={() => fundWallet.mutate(a)}
+                  disabled={fundWallet.isPending}
+                  className="rounded-md border border-white/40 bg-white/10 px-3 py-1 text-xs font-medium hover:bg-white/20 transition-colors"
+                >
+                  + {formatSum(a)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-emerald-100/80 text-[11px] mt-3">
+            Награда замораживается в кошельке при создании задания — деньги гарантированно будут при выполнении.
+          </p>
+        </CardContent>
+      </Card>
 
       {showCreate && (
         <Card>
@@ -134,13 +192,21 @@ export default function ChoresPage() {
                 ))}
               </div>
             </div>
+            {createError && (
+              <p className="text-sm text-red-500">{createError}</p>
+            )}
             <Button
               onClick={() => create.mutate()}
               disabled={!childId || !title || !reward || create.isPending}
               className="w-full"
             >
-              {create.isPending ? "Создание…" : "Создать задание"}
+              {create.isPending
+                ? "Резервируем награду…"
+                : "Создать задание"}
             </Button>
+            <p className="text-xs text-gray-400 text-center">
+              Доступно в кошельке: {formatSum(wallet?.availableUzs ?? 0)}
+            </p>
           </CardContent>
         </Card>
       )}

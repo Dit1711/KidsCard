@@ -32,7 +32,7 @@ class ChoreController(
         @AuthenticationPrincipal jwt: Jwt,
     ): ResponseEntity<ApiResponse<ChoreDto>> {
         val userId = UUID.fromString(jwt.subject)
-        val result = choreService.createChore(familyId, userId, request)
+        val result = choreService.createChore(familyId, userId, request, jwt.tokenValue)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
     }
 

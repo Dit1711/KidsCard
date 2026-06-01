@@ -22,6 +22,7 @@ class ChoreService(
     private val childRepository: ChildRepository,
     private val familyService: FamilyService,
     private val outboxService: OutboxService,
+    private val walletClient: WalletClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -29,6 +30,7 @@ class ChoreService(
         familyId: UUID,
         requestingUserId: UUID,
         request: CreateChoreRequest,
+        token: String,
     ): ChoreDto {
         familyService.requireOwner(familyId, requestingUserId)
 
@@ -45,9 +47,16 @@ class ChoreService(
             dueDate = request.dueDate,
             recurrence = request.recurrence,
         )
-        val saved = choreRepository.save(chore)
 
-        log.info("Chore created: id={} familyId={} childId={}", saved.id, familyId, request.childId)
+        // Escrow: reserve the reward in the parent wallet BEFORE creating the
+        // chore. If funds are short this throws and no chore is created, so a
+        // promised reward is always backed by held money.
+        if (request.rewardAmount > 0) {
+            walletClient.placeHold(familyId, chore.id, request.rewardAmount, token)
+        }
+
+        val saved = choreRepository.save(chore)
+        log.info("Chore created: id={} familyId={} childId={} reward held={}", saved.id, familyId, request.childId, request.rewardAmount)
         return saved.toDto()
     }
 

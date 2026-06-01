@@ -16,7 +16,7 @@ import org.springframework.data.domain.Persistable
 import java.time.Instant
 import java.util.UUID
 
-enum class AccountType { CARD, FLOAT, REVENUE }
+enum class AccountType { CARD, FLOAT, REVENUE, WALLET }
 
 @Entity
 @Table(name = "ledger_entries", schema = "payment")

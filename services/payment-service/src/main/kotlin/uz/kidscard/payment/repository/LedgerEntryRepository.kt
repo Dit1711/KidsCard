@@ -20,6 +20,16 @@ interface LedgerEntryRepository : JpaRepository<LedgerEntry, UUID> {
     fun findTopByAccountIdOrderByCreatedAtDesc(accountId: String): LedgerEntry?
 
     @Query("""
+        SELECT COALESCE(SUM(
+            CASE WHEN e.direction = 'CREDIT' THEN e.amountUzs
+                 ELSE -e.amountUzs END
+        ), 0)
+        FROM LedgerEntry e
+        WHERE e.accountId = :accountId AND e.accountType = uz.kidscard.payment.domain.AccountType.WALLET
+    """)
+    fun computeWalletBalance(accountId: String): Long
+
+    @Query("""
         SELECT COALESCE(SUM(e.amountUzs), 0)
         FROM LedgerEntry e
         WHERE e.accountId = :accountId

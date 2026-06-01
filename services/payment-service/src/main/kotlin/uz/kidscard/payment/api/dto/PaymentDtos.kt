@@ -54,6 +54,25 @@ data class BalanceDto(
     val currency: String = "UZS",
 )
 
+data class WalletDto(
+    val familyId: UUID,
+    val balanceUzs: Long,
+    val heldUzs: Long,
+    val availableUzs: Long,
+    val currency: String = "UZS",
+)
+
+data class FundWalletRequest(
+    val familyId: UUID,
+    val amountUzs: Long,
+)
+
+data class HoldRequest(
+    val familyId: UUID,
+    val reference: String,
+    val amountUzs: Long,
+)
+
 data class PageDto<T>(
     val content: List<T>,
     val page: Int,

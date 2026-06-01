@@ -310,6 +310,15 @@ export const paymentService = {
   getBalance: (cardId: string) =>
     paymentApi.get<ApiResponse<BalanceResponse>>(`/api/v1/wallets/cards/${cardId}/balance`),
 
+  getWallet: (familyId: string) =>
+    paymentApi.get<ApiResponse<WalletResponse>>(`/api/v1/wallet/${familyId}`),
+
+  fundWallet: (familyId: string, amountUzs: number) =>
+    paymentApi.post<ApiResponse<WalletResponse>>("/api/v1/wallet/fund", {
+      familyId,
+      amountUzs,
+    }),
+
   getCardTransactions: (cardId: string, page = 0, size = 20) =>
     paymentApi.get<ApiResponse<PageResponse<TransactionResponse>>>(
       `/api/v1/transactions/card/${cardId}?page=${page}&size=${size}`
@@ -480,6 +489,14 @@ export interface TransactionResponse {
 export interface BalanceResponse {
   cardId: string;
   balanceUzs: number;
+  currency: string;
+}
+
+export interface WalletResponse {
+  familyId: string;
+  balanceUzs: number;
+  heldUzs: number;
+  availableUzs: number;
   currency: string;
 }
 

@@ -27,6 +27,7 @@ import java.util.UUID
 @Service
 class AllowanceConsumer(
     private val transactionService: TransactionService,
+    private val walletService: WalletService,
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -59,17 +60,30 @@ class AllowanceConsumer(
         val familyId = node.get("familyId")?.asText()?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return
         val amountUzs = node.get("amountUzs")?.asLong() ?: return
 
-        val (description, idempotencyKey) = if (eventType == "card.chore.reward") {
-            val choreId = node.get("choreId")?.asText() ?: UUID.randomUUID().toString()
+        // Chore rewards are backed by an escrow hold placed at chore creation:
+        // capture it (real wallet debit → card credit) instead of a free top-up.
+        if (eventType == "card.chore.reward") {
+            val choreId = node.get("choreId")?.asText() ?: return
             val title = node.get("title")?.takeIf { !it.isNull }?.asText() ?: "Задание"
-            "Награда за задание: $title" to "chore-$choreId"
-        } else {
-            val scheduleId = node.get("scheduleId")?.asText() ?: UUID.randomUUID().toString()
-            "Карманные деньги (автоматически)" to "allowance-$scheduleId"
+            try {
+                val captured = walletService.captureToCard(
+                    reference = "chore:$choreId",
+                    cardId = cardId,
+                    childId = childId,
+                    description = "Награда за задание: $title",
+                )
+                if (!captured) {
+                    log.warn("No hold to capture for chore={}, reward not paid", choreId)
+                } else {
+                    log.info("Chore reward captured from wallet: card={} amount={}", cardId, amountUzs)
+                }
+            } catch (ex: Exception) {
+                log.error("Chore reward capture failed: chore={} error={}", choreId, ex.message)
+            }
+            return
         }
 
-        log.info("Credit event {}: cardId={} amount={}", eventType, cardId, amountUzs)
-
+        val scheduleId = node.get("scheduleId")?.asText() ?: UUID.randomUUID().toString()
         try {
             val result = transactionService.topUp(
                 TopUpRequest(
@@ -77,13 +91,13 @@ class AllowanceConsumer(
                     childId = childId,
                     familyId = familyId,
                     amountUzs = amountUzs,
-                    description = description,
-                    idempotencyKey = idempotencyKey,
+                    description = "Карманные деньги (автоматически)",
+                    idempotencyKey = "allowance-$scheduleId",
                 )
             )
-            log.info("Credit OK: cardId={} amount={} newBalance={}", cardId, amountUzs, result.balanceAfter)
+            log.info("Allowance credit OK: cardId={} amount={} newBalance={}", cardId, amountUzs, result.balanceAfter)
         } catch (ex: Exception) {
-            log.error("Credit failed: cardId={} error={}", cardId, ex.message)
+            log.error("Allowance credit failed: cardId={} error={}", cardId, ex.message)
         }
     }
 }
