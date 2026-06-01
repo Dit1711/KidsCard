@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
+import { enablePush, pushSupported } from "@/lib/push";
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -21,6 +22,23 @@ export function NotificationBell() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const [pushOn, setPushOn] = useState<boolean | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => {
+    if (pushSupported()) setPushOn(Notification.permission === "granted");
+    else setPushOn(false);
+  }, []);
+
+  const handleEnablePush = async () => {
+    if (!familyId) return;
+    setPushBusy(true);
+    const r = await enablePush(familyId);
+    setPushBusy(false);
+    if (r.ok) setPushOn(true);
+    else if (r.reason === "denied") alert("Уведомления заблокированы в браузере. Разрешите их в настройках сайта.");
+  };
 
   const { data: unread } = useQuery({
     queryKey: ["notif-unread", familyId],
@@ -88,6 +106,22 @@ export function NotificationBell() {
           <div className="px-4 py-3 border-b sticky top-0 bg-white">
             <p className="font-semibold text-sm">Уведомления</p>
           </div>
+          {pushOn === false && pushSupported() && (
+            <div className="px-4 py-2.5 border-b bg-indigo-50/40">
+              <button
+                onClick={handleEnablePush}
+                disabled={pushBusy}
+                className="text-sm text-indigo-700 font-medium hover:text-indigo-900 disabled:opacity-50"
+              >
+                {pushBusy ? "Включаем…" : "🔔 Включить пуш на телефон"}
+              </button>
+            </div>
+          )}
+          {pushOn === true && (
+            <div className="px-4 py-2 border-b text-xs text-green-600">
+              ✓ Пуш-уведомления включены
+            </div>
+          )}
           {!items && (
             <p className="px-4 py-6 text-sm text-gray-400 text-center">Загрузка…</p>
           )}

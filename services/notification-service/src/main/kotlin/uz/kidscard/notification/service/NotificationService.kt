@@ -14,6 +14,7 @@ import java.util.UUID
 @Service
 class NotificationService(
     private val notificationRepository: NotificationRepository,
+    private val pushSender: PushSender,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -37,6 +38,9 @@ class NotificationService(
             ),
         )
         log.debug("Notification created: family={} category={} title={}", familyId, category, title)
+
+        // Best-effort push to the family's devices (async, never blocks the feed write).
+        pushSender.sendToFamily(familyId, title, message, icon)
     }
 
     @Transactional(readOnly = true)

@@ -511,6 +511,20 @@ export const notificationService = {
 
   markAllRead: (familyId: string) =>
     notificationApi.post(`/api/v1/notifications/read-all?familyId=${familyId}`),
+
+  vapidKey: () =>
+    notificationApi.get<ApiResponse<{ publicKey: string }>>(
+      "/api/v1/notifications/push/vapid-key"
+    ),
+
+  subscribePush: (
+    familyId: string,
+    sub: { endpoint: string; keys: { p256dh: string; auth: string } }
+  ) =>
+    notificationApi.post(
+      `/api/v1/notifications/push/subscribe?familyId=${familyId}`,
+      sub
+    ),
 };
 
 // ── Open Banking ──────────────────────────────────────────────────────────────

@@ -20,6 +20,9 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.micrometer.registry.prometheus)
+    // Web Push (VAPID) — deliver browser/phone push notifications
+    implementation("nl.martijndwars:web-push:5.1.1")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
     developmentOnly(libs.spring.boot.devtools)
 
     testImplementation(libs.spring.boot.test)

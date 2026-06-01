@@ -67,3 +67,10 @@ logging:
 app:
   jwt:
     secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
+  push:
+    vapid:
+      # Dev VAPID keypair. Override via env in prod. The public key is shared
+      # with browsers to subscribe; the private key signs push requests.
+      public-key: ${VAPID_PUBLIC_KEY:BC4FKehtYR9MBDz4ofmpmSIFcoIexWu6LYiX-GSt7tULRT4PS8fr2Ip8DtoOAUQ2q30StAmHRypXZ2W3_8kUg9c}
+      private-key: ${VAPID_PRIVATE_KEY:9Q2K1aNUumiwuYeqBTecGUhfW0ZR200s95h8l5C-qqc}
+      subject: ${VAPID_SUBJECT:mailto:dit.kalanov@gmail.com}
