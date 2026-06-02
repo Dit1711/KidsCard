@@ -31,6 +31,29 @@ data class PurchaseRequest(
     @field:NotBlank val idempotencyKey: String,
 )
 
+/** Card-to-card transfer within a family. */
+data class TransferRequest(
+    @field:NotNull val fromCardId: UUID,
+    @field:NotNull val toCardId: UUID,
+    @field:NotNull val fromChildId: UUID,
+    @field:NotNull val toChildId: UUID,
+    @field:NotNull val familyId: UUID,
+    @field:Min(100) val amountUzs: Long,
+    val description: String? = null,
+    @field:NotBlank val idempotencyKey: String,
+)
+
+/** Withdraw from a card to a linked bank account (payout). */
+data class PayoutRequest(
+    @field:NotNull val cardId: UUID,
+    @field:NotNull val childId: UUID,
+    @field:NotNull val familyId: UUID,
+    @field:NotNull val accountId: UUID,
+    @field:Min(100) val amountUzs: Long,
+    val description: String? = null,
+    @field:NotBlank val idempotencyKey: String,
+)
+
 // ── Responses ─────────────────────────────────────────────────────────────────
 
 data class TransactionDto(

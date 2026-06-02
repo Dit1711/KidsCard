@@ -38,6 +38,11 @@ spring:
     consumer:
       group-id: open-banking-service
       auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
 
 # Uzbek bank adapter configurations
 banks:

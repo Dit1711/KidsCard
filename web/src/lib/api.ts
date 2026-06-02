@@ -511,6 +511,27 @@ export const paymentService = {
     idempotencyKey: string;
   }) => paymentApi.post<ApiResponse<TransactionResponse>>("/api/v1/transactions/purchase", payload),
 
+  transfer: (payload: {
+    fromCardId: string;
+    toCardId: string;
+    fromChildId: string;
+    toChildId: string;
+    familyId: string;
+    amountUzs: number;
+    description?: string;
+    idempotencyKey: string;
+  }) => paymentApi.post<ApiResponse<TransactionResponse>>("/api/v1/transactions/transfer", payload),
+
+  payout: (payload: {
+    cardId: string;
+    childId: string;
+    familyId: string;
+    accountId: string;
+    amountUzs: number;
+    description?: string;
+    idempotencyKey: string;
+  }) => paymentApi.post<ApiResponse<TransactionResponse>>("/api/v1/transactions/payout", payload),
+
   getBalance: (cardId: string) =>
     paymentApi.get<ApiResponse<BalanceResponse>>(`/api/v1/wallets/cards/${cardId}/balance`),
 

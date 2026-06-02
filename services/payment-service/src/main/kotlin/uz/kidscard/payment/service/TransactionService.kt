@@ -9,8 +9,10 @@ import uz.kidscard.common.exception.BusinessException
 import uz.kidscard.common.exception.ResourceNotFoundException
 import uz.kidscard.payment.api.dto.BalanceDto
 import uz.kidscard.payment.api.dto.PageDto
+import uz.kidscard.payment.api.dto.PayoutRequest
 import uz.kidscard.payment.api.dto.PurchaseRequest
 import uz.kidscard.payment.api.dto.TopUpRequest
+import uz.kidscard.payment.api.dto.TransferRequest
 import uz.kidscard.payment.api.dto.TransactionDto
 import uz.kidscard.payment.api.dto.toDto
 import uz.kidscard.payment.domain.AccountType
@@ -87,6 +89,91 @@ class TransactionService(
 
         publishTransactionEvent(tx, newBalance)
         log.info("Top-up completed: cardId={} amount={} newBalance={}", req.cardId, req.amountUzs, newBalance)
+        return tx.toDto(newBalance)
+    }
+
+    /** Move money between two cards in the same family (double-entry via FLOAT). */
+    fun transfer(req: TransferRequest): TransactionDto {
+        require(req.fromCardId != req.toCardId) { "Cannot transfer to the same card" }
+        val outKey = "${req.idempotencyKey}-out"
+        transactionRepository.findByIdempotencyKey(outKey).orElse(null)?.let {
+            return it.toDto(ledgerEntryRepository.computeBalance(req.fromCardId.toString()))
+        }
+
+        val srcBalance = ledgerEntryRepository.computeBalance(req.fromCardId.toString())
+        if (srcBalance < req.amountUzs) {
+            throw BusinessException("INSUFFICIENT_FUNDS", "Недостаточно средств на карте", HttpStatus.UNPROCESSABLE_ENTITY)
+        }
+
+        // OUT: debit source card, credit float
+        val outTx = transactionRepository.save(
+            Transaction(
+                idempotencyKey = outKey, cardId = req.fromCardId, childId = req.fromChildId, familyId = req.familyId,
+                type = TransactionType.TRANSFER, status = TransactionStatus.PENDING, amountUzs = req.amountUzs,
+                direction = Direction.DEBIT, description = req.description ?: "Перевод на карту",
+            ),
+        )
+        val newSrc = srcBalance - req.amountUzs
+        ledgerEntryRepository.save(LedgerEntry(transaction = outTx, accountId = req.fromCardId.toString(), accountType = AccountType.CARD, direction = Direction.DEBIT, amountUzs = req.amountUzs, runningBalance = newSrc))
+        ledgerEntryRepository.save(LedgerEntry(transaction = outTx, accountId = "PARENT_FLOAT", accountType = AccountType.FLOAT, direction = Direction.CREDIT, amountUzs = req.amountUzs, runningBalance = 0L))
+        outTx.status = TransactionStatus.COMPLETED; outTx.capturedAt = Instant.now(); outTx.updatedAt = Instant.now()
+        transactionRepository.save(outTx)
+
+        // IN: credit destination card, debit float
+        val destBalance = ledgerEntryRepository.computeBalance(req.toCardId.toString())
+        val inTx = transactionRepository.save(
+            Transaction(
+                idempotencyKey = "${req.idempotencyKey}-in", cardId = req.toCardId, childId = req.toChildId, familyId = req.familyId,
+                type = TransactionType.TRANSFER, status = TransactionStatus.PENDING, amountUzs = req.amountUzs,
+                direction = Direction.CREDIT, description = "Перевод с карты",
+            ),
+        )
+        val newDest = destBalance + req.amountUzs
+        ledgerEntryRepository.save(LedgerEntry(transaction = inTx, accountId = req.toCardId.toString(), accountType = AccountType.CARD, direction = Direction.CREDIT, amountUzs = req.amountUzs, runningBalance = newDest))
+        ledgerEntryRepository.save(LedgerEntry(transaction = inTx, accountId = "PARENT_FLOAT", accountType = AccountType.FLOAT, direction = Direction.DEBIT, amountUzs = req.amountUzs, runningBalance = 0L))
+        inTx.status = TransactionStatus.COMPLETED; inTx.capturedAt = Instant.now(); inTx.updatedAt = Instant.now()
+        transactionRepository.save(inTx)
+
+        publishTransactionEvent(outTx, newSrc)
+        publishTransactionEvent(inTx, newDest)
+        log.info("Transfer completed: {} -> {} amount={}", req.fromCardId, req.toCardId, req.amountUzs)
+        return outTx.toDto(newSrc)
+    }
+
+    /** Withdraw from a card to a linked bank account; OB credits the account on the event. */
+    fun payout(req: PayoutRequest): TransactionDto {
+        transactionRepository.findByIdempotencyKey(req.idempotencyKey).orElse(null)?.let {
+            return it.toDto(ledgerEntryRepository.computeBalance(req.cardId.toString()))
+        }
+        val srcBalance = ledgerEntryRepository.computeBalance(req.cardId.toString())
+        if (srcBalance < req.amountUzs) {
+            throw BusinessException("INSUFFICIENT_FUNDS", "Недостаточно средств на карте", HttpStatus.UNPROCESSABLE_ENTITY)
+        }
+
+        val tx = transactionRepository.save(
+            Transaction(
+                idempotencyKey = req.idempotencyKey, cardId = req.cardId, childId = req.childId, familyId = req.familyId,
+                type = TransactionType.TRANSFER, status = TransactionStatus.PENDING, amountUzs = req.amountUzs,
+                direction = Direction.DEBIT, description = req.description ?: "Вывод на счёт",
+            ),
+        )
+        val newBalance = srcBalance - req.amountUzs
+        ledgerEntryRepository.save(LedgerEntry(transaction = tx, accountId = req.cardId.toString(), accountType = AccountType.CARD, direction = Direction.DEBIT, amountUzs = req.amountUzs, runningBalance = newBalance))
+        ledgerEntryRepository.save(LedgerEntry(transaction = tx, accountId = "PARENT_FLOAT", accountType = AccountType.FLOAT, direction = Direction.CREDIT, amountUzs = req.amountUzs, runningBalance = 0L))
+        tx.status = TransactionStatus.COMPLETED; tx.capturedAt = Instant.now(); tx.updatedAt = Instant.now()
+        transactionRepository.save(tx)
+
+        publishTransactionEvent(tx, newBalance)
+        outboxService.publish(
+            aggregateType = "Transaction", aggregateId = tx.id.toString(),
+            eventType = "payment.payout.completed", topic = "payment.events",
+            payload = mapOf(
+                "eventType" to "payment.payout.completed",
+                "transactionId" to tx.id, "accountId" to req.accountId, "cardId" to req.cardId,
+                "familyId" to req.familyId, "amountUzs" to req.amountUzs,
+            ),
+        )
+        log.info("Payout completed: card={} account={} amount={}", req.cardId, req.accountId, req.amountUzs)
         return tx.toDto(newBalance)
     }
 

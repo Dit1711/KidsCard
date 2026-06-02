@@ -4,16 +4,17 @@ import { useState } from "react";
 import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  cardService, paymentService, disputeService,
+  cardService, paymentService, disputeService, familyService, openBankingService,
   type CardResponse, type DisputeReason, type DisputeResponse,
 } from "@/lib/api";
-import { Panel, DInput, DButton, DBadge, Pill } from "@/components/dark";
+import { Panel, DInput, DButton, DBadge, DSelect, Pill } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
 import { toast } from "sonner";
 import {
   Snowflake, Palette, Ban, ShieldCheck, Trash2, ChevronDown,
   ArrowDownLeft, ArrowUpRight, Wallet, Settings2, X, ShieldAlert,
+  ArrowLeftRight, CreditCard, Landmark,
 } from "lucide-react";
 
 function formatDate(iso: string) {
@@ -102,6 +103,73 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["disputes", familyId] }); toast("Спор отозван"); },
     onError: () => toast.error("Не удалось отозвать спор"),
   });
+
+  // Transfer (card→card / card→account)
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferMode, setTransferMode] = useState<"card" | "account">("card");
+  const [transferTarget, setTransferTarget] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+
+  const { data: familyCards } = useQuery({
+    queryKey: ["family-cards", familyId],
+    queryFn: async () => (await cardService.getByFamily(familyId)).data.data,
+  });
+  const { data: children } = useQuery({
+    queryKey: ["family-children", familyId],
+    queryFn: async () => (await familyService.getChildren(familyId)).data.data,
+  });
+  const { data: accounts } = useQuery({
+    queryKey: ["bank-accounts"],
+    queryFn: async () => (await openBankingService.accounts()).data.data,
+  });
+  const otherCards = (familyCards ?? []).filter((c) => c.id !== cardId && c.status === "ACTIVE");
+
+  const transferCard = useMutation({
+    mutationFn: () => {
+      const dest = familyCards?.find((c) => c.id === transferTarget);
+      return paymentService.transfer({
+        fromCardId: cardId, toCardId: transferTarget,
+        fromChildId: card.childId, toChildId: dest!.childId,
+        familyId, amountUzs: Math.round(parseFloat(transferAmount)),
+        idempotencyKey: `transfer-${cardId}-${transferTarget}-${transferAmount}`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["balance", cardId] });
+      qc.invalidateQueries({ queryKey: ["balance", transferTarget] });
+      qc.invalidateQueries({ queryKey: ["transactions", cardId] });
+      qc.invalidateQueries({ queryKey: ["transactions", transferTarget] });
+      setTransferAmount(""); setTransferTarget(""); setShowTransfer(false);
+      toast.success("Перевод выполнен");
+    },
+    onError: (err: unknown) => {
+      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data?.error?.code;
+      toast.error(code === "INSUFFICIENT_FUNDS" ? "Недостаточно средств на карте" : "Не удалось выполнить перевод");
+    },
+  });
+
+  const payout = useMutation({
+    mutationFn: () =>
+      paymentService.payout({
+        cardId, childId: card.childId, familyId, accountId: transferTarget,
+        amountUzs: Math.round(parseFloat(transferAmount)),
+        idempotencyKey: `payout-${cardId}-${transferTarget}-${transferAmount}`,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["balance", cardId] });
+      qc.invalidateQueries({ queryKey: ["transactions", cardId] });
+      qc.invalidateQueries({ queryKey: ["bank-accounts"] });
+      setTransferAmount(""); setTransferTarget(""); setShowTransfer(false);
+      toast.success("Деньги выведены на счёт");
+    },
+    onError: (err: unknown) => {
+      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data?.error?.code;
+      toast.error(code === "INSUFFICIENT_FUNDS" ? "Недостаточно средств на карте" : "Не удалось вывести деньги");
+    },
+  });
+
+  const childName2 = (cid: string) => children?.find((c) => c.id === cid)?.fullName ?? "";
+  const targetValid = !!transferTarget && !!transferAmount && parseFloat(transferAmount) >= 100;
 
   const refreshCards = () => qc.invalidateQueries({ queryKey: ["family-cards", familyId] });
 
@@ -203,6 +271,69 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                   <DInput placeholder="Комментарий (необязательно)" value={topUpDesc} onChange={(e) => setTopUpDesc(e.target.value)} />
                   <DButton onClick={() => topUp.mutate()} disabled={!topUpAmount || parseFloat(topUpAmount) < 100 || topUp.isPending} className="w-full">
                     {topUp.isPending ? "Обработка…" : `Пополнить на ${topUpAmount ? formatSum(parseFloat(topUpAmount)) : "…"}`}
+                  </DButton>
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {/* Transfer */}
+          {!isBlocked && (
+            <Panel className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-medium tracking-tight flex items-center gap-2"><ArrowLeftRight className="h-4 w-4 text-fuchsia-300" /> Перевод</p>
+                <button onClick={() => setShowTransfer(!showTransfer)} className="text-sm text-fuchsia-300 font-medium">
+                  {showTransfer ? "Скрыть" : "Перевести"}
+                </button>
+              </div>
+              {showTransfer && (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Pill active={transferMode === "card"} onClick={() => { setTransferMode("card"); setTransferTarget(""); }}>
+                      <span className="inline-flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> На карту</span>
+                    </Pill>
+                    <Pill active={transferMode === "account"} onClick={() => { setTransferMode("account"); setTransferTarget(""); }}>
+                      <span className="inline-flex items-center gap-1.5"><Landmark className="h-3.5 w-3.5" /> На счёт</span>
+                    </Pill>
+                  </div>
+
+                  {transferMode === "card" ? (
+                    otherCards.length === 0 ? (
+                      <p className="text-xs text-white/40">Нет других активных карт для перевода.</p>
+                    ) : (
+                      <DSelect value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)}>
+                        <option value="">Карта получателя</option>
+                        {otherCards.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {childName2(c.childId)} · {c.maskedPan}
+                          </option>
+                        ))}
+                      </DSelect>
+                    )
+                  ) : (
+                    (accounts ?? []).length === 0 ? (
+                      <p className="text-xs text-white/40">Нет привязанных счетов. Привяжите счёт в разделе «Банк».</p>
+                    ) : (
+                      <DSelect value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)}>
+                        <option value="">Банковский счёт</option>
+                        {accounts!.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.bankCode} · {a.maskedNumber ?? "счёт"}
+                          </option>
+                        ))}
+                      </DSelect>
+                    )
+                  )}
+
+                  <DInput type="number" placeholder="Сумма (сум)" min="100" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
+                  <DButton
+                    className="w-full"
+                    disabled={!targetValid || transferCard.isPending || payout.isPending}
+                    onClick={() => (transferMode === "card" ? transferCard : payout).mutate()}
+                  >
+                    {transferCard.isPending || payout.isPending
+                      ? "Перевод…"
+                      : `Перевести ${transferAmount ? formatSum(parseFloat(transferAmount)) : "…"}`}
                   </DButton>
                 </div>
               )}

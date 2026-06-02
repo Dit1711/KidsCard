@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController
 import uz.kidscard.common.api.ApiResponse
 import uz.kidscard.payment.api.dto.BalanceDto
 import uz.kidscard.payment.api.dto.PageDto
+import uz.kidscard.payment.api.dto.PayoutRequest
 import uz.kidscard.payment.api.dto.PurchaseRequest
 import uz.kidscard.payment.api.dto.TopUpRequest
 import uz.kidscard.payment.api.dto.TransactionDto
+import uz.kidscard.payment.api.dto.TransferRequest
 import uz.kidscard.payment.service.TransactionService
 import java.util.UUID
 
@@ -46,6 +48,26 @@ class TransactionController(
     ): ResponseEntity<ApiResponse<TransactionDto>> {
         val token = request.getHeader("Authorization")?.removePrefix("Bearer ")
         val result = transactionService.purchase(req, token)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
+    }
+
+    /** Перевод с карты на карту (внутри семьи) */
+    @PostMapping("/transactions/transfer")
+    fun transfer(
+        @Valid @RequestBody req: TransferRequest,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<TransactionDto>> {
+        val result = transactionService.transfer(req)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
+    }
+
+    /** Вывод с карты на привязанный банковский счёт */
+    @PostMapping("/transactions/payout")
+    fun payout(
+        @Valid @RequestBody req: PayoutRequest,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<TransactionDto>> {
+        val result = transactionService.payout(req)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(result))
     }
 
