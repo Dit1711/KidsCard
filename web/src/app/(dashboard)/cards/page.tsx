@@ -11,7 +11,7 @@ import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
-import { Plus, Snowflake, Palette, CreditCard } from "lucide-react";
+import { Plus, Snowflake, Palette, CreditCard, Ban, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 const CARD_TYPES = ["VIRTUAL", "PHYSICAL"];
@@ -26,6 +26,7 @@ export default function CardsPage() {
   const [cardType, setCardType] = useState("VIRTUAL");
   const [network, setNetwork] = useState("UZCARD");
   const [designCard, setDesignCard] = useState<string | null>(null);
+  const [confirmClose, setConfirmClose] = useState<string | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
@@ -59,6 +60,21 @@ export default function CardsPage() {
   const unfreezeCard = useMutation({
     mutationFn: (cardId: string) => cardService.unfreeze(family!.id, cardId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }); toast.success("Карта разморожена"); },
+  });
+  const blockCard = useMutation({
+    mutationFn: (cardId: string) => cardService.block(family!.id, cardId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }); toast("Карта заблокирована"); },
+    onError: () => toast.error("Не удалось заблокировать карту"),
+  });
+  const unblockCard = useMutation({
+    mutationFn: (cardId: string) => cardService.unblock(family!.id, cardId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }); toast.success("Карта разблокирована"); },
+    onError: () => toast.error("Не удалось разблокировать карту"),
+  });
+  const closeCard = useMutation({
+    mutationFn: (cardId: string) => cardService.close(family!.id, cardId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["family-cards", family!.id] }); toast("Карта удалена"); },
+    onError: () => toast.error("Не удалось удалить карту"),
   });
   const setDesign = useMutation({
     mutationFn: ({ cardId, theme, pattern }: { cardId: string; theme: string; pattern: string }) =>
@@ -167,19 +183,48 @@ export default function CardsPage() {
                   </div>
                 </CardSurface>
 
-                {!isBlocked && (
-                  <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {!isBlocked && (
+                    <>
+                      <DButton variant="outline" className="py-2"
+                        onClick={() => (isFrozen ? unfreezeCard : freezeCard).mutate(card.id)}
+                        disabled={freezeCard.isPending || unfreezeCard.isPending}>
+                        <Snowflake className="h-4 w-4" /> {isFrozen ? "Разморозить" : "Заморозить"}
+                      </DButton>
+                      <DButton variant="outline" className="py-2"
+                        onClick={() => blockCard.mutate(card.id)} disabled={blockCard.isPending}>
+                        <Ban className="h-4 w-4" /> Заблокировать
+                      </DButton>
+                      <DButton variant="outline" className="py-2"
+                        onClick={() => setDesignCard(designOpen ? null : card.id)}>
+                        <Palette className="h-4 w-4" /> Оформление
+                      </DButton>
+                    </>
+                  )}
+                  {isBlocked && (
                     <DButton variant="outline" className="py-2"
-                      onClick={() => (isFrozen ? unfreezeCard : freezeCard).mutate(card.id)}
-                      disabled={freezeCard.isPending || unfreezeCard.isPending}>
-                      <Snowflake className="h-4 w-4" /> {isFrozen ? "Разморозить" : "Заморозить"}
+                      onClick={() => unblockCard.mutate(card.id)} disabled={unblockCard.isPending}>
+                      <ShieldCheck className="h-4 w-4" /> Разблокировать
                     </DButton>
-                    <DButton variant="outline" className="py-2"
-                      onClick={() => setDesignCard(designOpen ? null : card.id)}>
-                      <Palette className="h-4 w-4" /> Оформление
+                  )}
+                  {confirmClose === card.id ? (
+                    <>
+                      <DButton variant="outline" className="py-2 border-rose-400/40 text-rose-300"
+                        onClick={() => { closeCard.mutate(card.id); setConfirmClose(null); }}
+                        disabled={closeCard.isPending}>
+                        <Trash2 className="h-4 w-4" /> Точно удалить?
+                      </DButton>
+                      <DButton variant="ghost" className="py-2" onClick={() => setConfirmClose(null)}>
+                        Отмена
+                      </DButton>
+                    </>
+                  ) : (
+                    <DButton variant="ghost" className="py-2 text-rose-300/80 hover:text-rose-300"
+                      onClick={() => setConfirmClose(card.id)}>
+                      <Trash2 className="h-4 w-4" /> Удалить
                     </DButton>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {designOpen && (
                   <Panel className="p-4 mt-3 space-y-3">

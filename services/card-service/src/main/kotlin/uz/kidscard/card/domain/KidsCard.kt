@@ -16,7 +16,7 @@ import java.util.UUID
 
 enum class CardType { VIRTUAL, PHYSICAL }
 enum class CardNetwork { UZCARD, HUMO, VISA }
-enum class CardStatus { PENDING, ACTIVE, FROZEN, BLOCKED, EXPIRED }
+enum class CardStatus { PENDING, ACTIVE, FROZEN, BLOCKED, EXPIRED, CLOSED }
 
 @Entity
 @Table(name = "kids_cards", schema = "card")

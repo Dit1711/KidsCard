@@ -86,16 +86,19 @@ class CardService(
 
     @Transactional(readOnly = true)
     fun getCardsByFamily(familyId: UUID, requestingUserId: UUID): List<KidsCardDto> =
-        kidsCardRepository.findByFamilyIdOrderByCreatedAtAsc(familyId).map { it.toDto() }
+        kidsCardRepository.findByFamilyIdOrderByCreatedAtAsc(familyId)
+            .filter { it.status != CardStatus.CLOSED }.map { it.toDto() }
 
     @Transactional(readOnly = true)
     fun getCardsByChild(familyId: UUID, childId: UUID, requestingUserId: UUID): List<KidsCardDto> =
-        kidsCardRepository.findByFamilyIdAndChildIdOrderByCreatedAtAsc(familyId, childId).map { it.toDto() }
+        kidsCardRepository.findByFamilyIdAndChildIdOrderByCreatedAtAsc(familyId, childId)
+            .filter { it.status != CardStatus.CLOSED }.map { it.toDto() }
 
     /** Child cabinet: the child reads their own cards (scoped by JWT childId claim). */
     @Transactional(readOnly = true)
     fun getCardsForChildSelf(childId: UUID): List<KidsCardDto> =
-        kidsCardRepository.findByChildIdOrderByCreatedAtAsc(childId).map { it.toDto() }
+        kidsCardRepository.findByChildIdOrderByCreatedAtAsc(childId)
+            .filter { it.status != CardStatus.CLOSED }.map { it.toDto() }
 
     /** Parent: change a card's background theme + pattern. */
     fun updateDesign(cardId: UUID, familyId: UUID, theme: String, pattern: String): KidsCardDto {
@@ -213,6 +216,71 @@ class CardService(
                 "familyId" to familyId,
                 "blockedBy" to parentId,
                 "blockedAt" to now,
+            ),
+        )
+
+        return saved.toDto()
+    }
+
+    @Transactional
+    fun unblockCard(cardId: UUID, parentId: UUID, familyId: UUID): KidsCardDto {
+        val card = kidsCardRepository.findByIdAndFamilyId(cardId, familyId)
+            ?: throw ResourceNotFoundException("KidsCard", cardId)
+
+        if (card.status != CardStatus.BLOCKED) {
+            throw ConflictException("CARD_NOT_BLOCKED", "Only BLOCKED cards can be unblocked")
+        }
+
+        val now = Instant.now()
+        card.status = CardStatus.ACTIVE
+        card.updatedAt = now
+
+        val saved = kidsCardRepository.save(card)
+        log.debug("Card unblocked: id={} by={}", cardId, parentId)
+
+        outboxService.publish(
+            aggregateType = "KidsCard",
+            aggregateId = cardId.toString(),
+            eventType = "card.unblocked",
+            topic = "card.events",
+            payload = mapOf(
+                "cardId" to cardId,
+                "familyId" to familyId,
+                "unblockedBy" to parentId,
+                "unblockedAt" to now,
+            ),
+        )
+
+        return saved.toDto()
+    }
+
+    /** Soft-close: terminal state, hidden from card lists, ledger/history preserved. */
+    @Transactional
+    fun closeCard(cardId: UUID, parentId: UUID, familyId: UUID): KidsCardDto {
+        val card = kidsCardRepository.findByIdAndFamilyId(cardId, familyId)
+            ?: throw ResourceNotFoundException("KidsCard", cardId)
+
+        if (card.status == CardStatus.CLOSED) {
+            throw ConflictException("CARD_ALREADY_CLOSED", "Card is already closed")
+        }
+
+        val now = Instant.now()
+        card.status = CardStatus.CLOSED
+        card.updatedAt = now
+
+        val saved = kidsCardRepository.save(card)
+        log.debug("Card closed: id={} by={}", cardId, parentId)
+
+        outboxService.publish(
+            aggregateType = "KidsCard",
+            aggregateId = cardId.toString(),
+            eventType = "card.closed",
+            topic = "card.events",
+            payload = mapOf(
+                "cardId" to cardId,
+                "familyId" to familyId,
+                "closedBy" to parentId,
+                "closedAt" to now,
             ),
         )
 

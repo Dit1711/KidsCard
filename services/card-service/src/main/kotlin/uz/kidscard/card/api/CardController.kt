@@ -122,4 +122,28 @@ class CardController(
         val card = cardService.blockCard(cardId, parentId, familyId)
         return ResponseEntity.ok(ApiResponse.ok(card))
     }
+
+    @PostMapping("/{cardId}/unblock")
+    @PreAuthorize("hasAnyRole('PARENT_OWNER', 'PARENT_CO_OWNER')")
+    fun unblockCard(
+        @PathVariable familyId: UUID,
+        @PathVariable cardId: UUID,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<KidsCardDto>> {
+        val parentId = UUID.fromString(jwt.subject)
+        val card = cardService.unblockCard(cardId, parentId, familyId)
+        return ResponseEntity.ok(ApiResponse.ok(card))
+    }
+
+    @PostMapping("/{cardId}/close")
+    @PreAuthorize("hasAnyRole('PARENT_OWNER', 'PARENT_CO_OWNER')")
+    fun closeCard(
+        @PathVariable familyId: UUID,
+        @PathVariable cardId: UUID,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ApiResponse<KidsCardDto>> {
+        val parentId = UUID.fromString(jwt.subject)
+        val card = cardService.closeCard(cardId, parentId, familyId)
+        return ResponseEntity.ok(ApiResponse.ok(card))
+    }
 }

@@ -443,6 +443,21 @@ export const cardService = {
       `/api/v1/families/${familyId}/cards/${cardId}/unfreeze`
     ),
 
+  block: (familyId: string, cardId: string) =>
+    cardApi.post<ApiResponse<CardResponse>>(
+      `/api/v1/families/${familyId}/cards/${cardId}/block`
+    ),
+
+  unblock: (familyId: string, cardId: string) =>
+    cardApi.post<ApiResponse<CardResponse>>(
+      `/api/v1/families/${familyId}/cards/${cardId}/unblock`
+    ),
+
+  close: (familyId: string, cardId: string) =>
+    cardApi.post<ApiResponse<CardResponse>>(
+      `/api/v1/families/${familyId}/cards/${cardId}/close`
+    ),
+
   setDesign: (familyId: string, cardId: string, theme: string, pattern: string) =>
     cardApi.post<ApiResponse<CardResponse>>(
       `/api/v1/families/${familyId}/cards/${cardId}/design`,
