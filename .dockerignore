@@ -1,0 +1,8 @@
+# Keep the JVM build context lean (the image builds from source via Gradle).
+.git
+web
+**/build
+**/.gradle
+.gradle
+**/node_modules
+*.log

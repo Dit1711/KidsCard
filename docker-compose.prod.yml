@@ -1,0 +1,163 @@
+# Production stack: infra + all microservices + web + a private Cloudflare tunnel.
+# Nothing is published to the host — the only ingress is cloudflared, gated by
+# Cloudflare Access. Bring up with:  docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#
+# Secrets come from .env.prod (see .env.prod.example).
+
+x-jvm-build: &jvm-build
+  context: .
+  dockerfile: Dockerfile
+
+x-service-env: &service-env
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: kidscard
+  DB_USER: ${DB_USER:-kidscard}
+  DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.prod}
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.prod}
+  KAFKA_BROKERS: kafka:29092
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.prod}
+
+x-depends: &depends-infra
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  kafka:
+    condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-kidscard}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+      POSTGRES_DB: kidscard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-kidscard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?} --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.1
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    restart: unless-stopped
+    depends_on: [zookeeper]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: kafka-topics --bootstrap-server kafka:29092 --list
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  auth-service:
+    build: { <<: *jvm-build, args: { SERVICE: auth-service } }
+    restart: unless-stopped
+    environment: { <<: *service-env }
+    depends_on: *depends-infra
+
+  family-service:
+    build: { <<: *jvm-build, args: { SERVICE: family-service } }
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      APP_AUTH_SERVICE_URL: http://auth-service:8081
+      APP_PAYMENT_SERVICE_URL: http://payment-service:8084
+    depends_on: *depends-infra
+
+  card-service:
+    build: { <<: *jvm-build, args: { SERVICE: card-service } }
+    restart: unless-stopped
+    environment: { <<: *service-env }
+    depends_on: *depends-infra
+
+  payment-service:
+    build: { <<: *jvm-build, args: { SERVICE: payment-service } }
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      APP_FAMILY_SERVICE_URL: http://family-service:8082
+    depends_on: *depends-infra
+
+  open-banking-service:
+    build: { <<: *jvm-build, args: { SERVICE: open-banking-service } }
+    restart: unless-stopped
+    environment: { <<: *service-env }
+    depends_on: *depends-infra
+
+  notification-service:
+    build: { <<: *jvm-build, args: { SERVICE: notification-service } }
+    restart: unless-stopped
+    environment: { <<: *service-env }
+    depends_on: *depends-infra
+
+  kyc-service:
+    build: { <<: *jvm-build, args: { SERVICE: kyc-service } }
+    restart: unless-stopped
+    environment: { <<: *service-env }
+    depends_on: *depends-infra
+
+  web:
+    build:
+      context: web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - auth-service
+      - family-service
+      - card-service
+      - payment-service
+      - open-banking-service
+      - notification-service
+      - kyc-service
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env.prod}
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  redis_data:
+  zookeeper_data:
+  kafka_data:
