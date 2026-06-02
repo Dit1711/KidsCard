@@ -49,7 +49,7 @@ class ChoreRewardConsumer(
             return
         }
 
-        val card = kidsCardRepository.findByChildIdAndStatus(childId, CardStatus.ACTIVE).firstOrNull()
+        val card = kidsCardRepository.findByChildIdAndStatusOrderByCreatedAtAsc(childId, CardStatus.ACTIVE).firstOrNull()
         if (card == null) {
             log.warn("Chore reward: no active card for childId={}", childId)
             return

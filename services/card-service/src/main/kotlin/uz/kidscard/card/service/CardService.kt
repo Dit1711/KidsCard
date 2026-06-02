@@ -31,14 +31,9 @@ class CardService(
         network: CardNetwork,
         requestingUserId: UUID,
     ): KidsCardDto {
-        val existing = kidsCardRepository.findByChildIdAndStatus(childId, CardStatus.ACTIVE)
-        if (existing.isNotEmpty()) {
-            throw ConflictException(
-                "CARD_ALREADY_EXISTS",
-                "Child already has an active card",
-            )
-        }
-
+        // Multiple active cards per child are allowed (e.g. virtual + physical, or
+        // several cards). The oldest active card acts as the "primary" for chore
+        // rewards and default displays — see ChoreRewardConsumer / card ordering.
         val now = Instant.now()
         val expiryDate = now.atZone(ZoneOffset.UTC).plusYears(3)
         val lastFour = (1000..9999).random().toString()
@@ -91,16 +86,16 @@ class CardService(
 
     @Transactional(readOnly = true)
     fun getCardsByFamily(familyId: UUID, requestingUserId: UUID): List<KidsCardDto> =
-        kidsCardRepository.findByFamilyId(familyId).map { it.toDto() }
+        kidsCardRepository.findByFamilyIdOrderByCreatedAtAsc(familyId).map { it.toDto() }
 
     @Transactional(readOnly = true)
     fun getCardsByChild(familyId: UUID, childId: UUID, requestingUserId: UUID): List<KidsCardDto> =
-        kidsCardRepository.findByFamilyIdAndChildId(familyId, childId).map { it.toDto() }
+        kidsCardRepository.findByFamilyIdAndChildIdOrderByCreatedAtAsc(familyId, childId).map { it.toDto() }
 
     /** Child cabinet: the child reads their own cards (scoped by JWT childId claim). */
     @Transactional(readOnly = true)
     fun getCardsForChildSelf(childId: UUID): List<KidsCardDto> =
-        kidsCardRepository.findByChildId(childId).map { it.toDto() }
+        kidsCardRepository.findByChildIdOrderByCreatedAtAsc(childId).map { it.toDto() }
 
     /** Parent: change a card's background theme + pattern. */
     fun updateDesign(cardId: UUID, familyId: UUID, theme: String, pattern: String): KidsCardDto {
