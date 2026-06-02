@@ -8,6 +8,7 @@ import { useCardBalances } from "@/hooks/useCardBalances";
 import { useFamilyStore } from "@/store/family";
 import { Panel, DLabel, DButton, Pill, DSelect } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
+import { CardDetailModal } from "@/components/CardDetailModal";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
 import { Plus, CreditCard, ChevronRight } from "lucide-react";
@@ -24,6 +25,7 @@ export default function CardsPage() {
   const [selectedChild, setSelectedChild] = useState("");
   const [cardType, setCardType] = useState("VIRTUAL");
   const [network, setNetwork] = useState("UZCARD");
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
@@ -128,7 +130,8 @@ export default function CardsPage() {
 
           return (
             <MotionItem key={card.id}>
-              <Link href={`/cards/${card.id}`} className={`block transition-transform hover:scale-[1.01] ${isBlocked ? "opacity-60" : ""}`}>
+              <button onClick={() => setOpenCardId(card.id)}
+                className={`block w-full text-left transition-transform hover:scale-[1.01] ${isBlocked ? "opacity-60" : ""}`}>
                 <CardSurface theme={card.theme} pattern={card.pattern} className="rounded-2xl text-white p-5">
                   <div className="flex justify-between items-start mb-7">
                     <div>
@@ -152,11 +155,18 @@ export default function CardsPage() {
                     </div>
                   </div>
                 </CardSurface>
-              </Link>
+              </button>
             </MotionItem>
           );
         })}
       </div>
+
+      {openCardId && (() => {
+        const c = cards?.find((x) => x.id === openCardId);
+        if (!c) return null;
+        const childName = children?.find((ch) => ch.id === c.childId)?.fullName ?? "Ребёнок";
+        return <CardDetailModal card={c} childName={childName} familyId={family.id} onClose={() => setOpenCardId(null)} />;
+      })()}
     </MotionStagger>
   );
 }
