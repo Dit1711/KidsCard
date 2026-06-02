@@ -3,14 +3,17 @@
 import { useState } from "react";
 import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { cardService, paymentService, type CardResponse } from "@/lib/api";
-import { Panel, DInput, DButton, Pill } from "@/components/dark";
+import {
+  cardService, paymentService, disputeService,
+  type CardResponse, type DisputeReason, type DisputeResponse,
+} from "@/lib/api";
+import { Panel, DInput, DButton, DBadge, Pill } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
 import { toast } from "sonner";
 import {
   Snowflake, Palette, Ban, ShieldCheck, Trash2, ChevronDown,
-  ArrowDownLeft, ArrowUpRight, Wallet, Settings2, X,
+  ArrowDownLeft, ArrowUpRight, Wallet, Settings2, X, ShieldAlert,
 } from "lucide-react";
 
 function formatDate(iso: string) {
@@ -22,6 +25,22 @@ function formatDate(iso: string) {
 const typeLabel: Record<string, string> = {
   TOPUP: "Пополнение", PURCHASE: "Покупка", REFUND: "Возврат",
   TRANSFER: "Перевод", ALLOWANCE: "Карманные деньги",
+};
+
+const DISPUTE_REASONS: { value: DisputeReason; label: string }[] = [
+  { value: "UNRECOGNIZED", label: "Не узнаю покупку" },
+  { value: "WRONG_AMOUNT", label: "Неверная сумма" },
+  { value: "NOT_RECEIVED", label: "Товар/услуга не получены" },
+  { value: "DUPLICATE", label: "Двойное списание" },
+  { value: "OTHER", label: "Другое" },
+];
+const reasonLabel = (r: string) => DISPUTE_REASONS.find((x) => x.value === r)?.label ?? r;
+
+const DISPUTE_STATUS: Record<string, { label: string; tone: "warn" | "success" | "danger" | "muted" }> = {
+  OPEN: { label: "Спор открыт", tone: "warn" },
+  UNDER_REVIEW: { label: "На рассмотрении", tone: "warn" },
+  RESOLVED: { label: "Возврат одобрен", tone: "success" },
+  REJECTED: { label: "Спор отклонён", tone: "muted" },
 };
 
 /** Modal with a card's balance, top-up, operations and settings. */
@@ -53,6 +72,35 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
   const { data: txPage } = useQuery({
     queryKey: ["transactions", cardId],
     queryFn: async () => (await paymentService.getCardTransactions(cardId, 0, 30)).data.data,
+  });
+
+  const { data: disputes } = useQuery({
+    queryKey: ["disputes", familyId],
+    queryFn: async () => (await disputeService.listByFamily(familyId)).data.data,
+  });
+  const disputeByTx = new Map<string, DisputeResponse>();
+  disputes?.forEach((d) => { if (!disputeByTx.has(d.transactionId)) disputeByTx.set(d.transactionId, d); });
+
+  const [disputeTxId, setDisputeTxId] = useState<string | null>(null);
+  const [disputeReason, setDisputeReason] = useState<DisputeReason>("UNRECOGNIZED");
+  const [disputeDesc, setDisputeDesc] = useState("");
+
+  const raiseDispute = useMutation({
+    mutationFn: () => disputeService.raise({ transactionId: disputeTxId!, reason: disputeReason, description: disputeDesc || undefined }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["disputes", familyId] });
+      setDisputeTxId(null); setDisputeDesc(""); setDisputeReason("UNRECOGNIZED");
+      toast.success("Спор открыт. Мы рассмотрим обращение.");
+    },
+    onError: (err: unknown) => {
+      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data?.error?.code;
+      toast.error(code === "DISPUTE_ALREADY_OPEN" ? "По этой операции уже открыт спор" : "Не удалось открыть спор");
+    },
+  });
+  const withdrawDispute = useMutation({
+    mutationFn: (disputeId: string) => disputeService.withdraw(disputeId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["disputes", familyId] }); toast("Спор отозван"); },
+    onError: () => toast.error("Не удалось отозвать спор"),
   });
 
   const refreshCards = () => qc.invalidateQueries({ queryKey: ["family-cards", familyId] });
@@ -166,26 +214,77 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
             <p className="font-medium tracking-tight mb-3">Операции</p>
             {!txPage && <p className="text-white/50 text-sm">Загрузка…</p>}
             {txPage?.content.length === 0 && <p className="text-white/40 text-sm">Операций по этой карте ещё нет.</p>}
-            <div className="space-y-2 max-h-72 overflow-y-auto">
+            <div className="space-y-1 max-h-80 overflow-y-auto">
               {txPage?.content.map((tx) => {
                 const isCredit = tx.direction === "CREDIT";
+                const dispute = disputeByTx.get(tx.id);
+                const canDispute = !isCredit && (tx.type === "PURCHASE" || tx.type === "TRANSFER") && !dispute;
+                const st = dispute ? DISPUTE_STATUS[dispute.status] : null;
+                const isOpen = dispute?.status === "OPEN" || dispute?.status === "UNDER_REVIEW";
+                const raising = disputeTxId === tx.id;
                 return (
-                  <div key={tx.id} className="flex items-center justify-between py-2 border-b border-white/[0.05] last:border-0">
-                    <div className="flex items-center gap-3">
-                      <span className={`grid h-9 w-9 place-items-center rounded-full ${isCredit ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
-                        {isCredit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium">{tx.merchantName ?? typeLabel[tx.type] ?? tx.type}</p>
-                        <p className="text-xs text-white/40">{formatDate(tx.createdAt)}</p>
+                  <div key={tx.id} className="py-2 border-b border-white/[0.05] last:border-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`grid h-9 w-9 place-items-center rounded-full ${isCredit ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+                          {isCredit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium">{tx.merchantName ?? typeLabel[tx.type] ?? tx.type}</p>
+                          <p className="text-xs text-white/40">{formatDate(tx.createdAt)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold text-sm tabular-nums ${isCredit ? "text-emerald-300" : "text-white"}`}>
+                          {isCredit ? "+" : "−"}{formatSum(tx.amountUzs)}
+                        </p>
+                        <p className="text-xs text-white/40 tabular-nums">{formatSum(tx.balanceAfter)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-semibold text-sm tabular-nums ${isCredit ? "text-emerald-300" : "text-white"}`}>
-                        {isCredit ? "+" : "−"}{formatSum(tx.amountUzs)}
-                      </p>
-                      <p className="text-xs text-white/40 tabular-nums">{formatSum(tx.balanceAfter)}</p>
-                    </div>
+
+                    {(canDispute || dispute) && (
+                      <div className="flex items-center justify-end gap-2 mt-1.5">
+                        {dispute && st && (
+                          <>
+                            <DBadge tone={st.tone}>{st.label}</DBadge>
+                            <span className="text-[11px] text-white/40 mr-auto">{reasonLabel(dispute.reason)}</span>
+                            {isOpen && (
+                              <button onClick={() => withdrawDispute.mutate(dispute.id)} disabled={withdrawDispute.isPending}
+                                className="text-[11px] font-medium text-white/50 hover:text-white">Отозвать</button>
+                            )}
+                          </>
+                        )}
+                        {canDispute && !raising && (
+                          <button onClick={() => setDisputeTxId(tx.id)}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-300/90 hover:text-rose-300">
+                            <ShieldAlert className="h-3.5 w-3.5" /> Оспорить
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {raising && (
+                      <div className="mt-2 rounded-xl bg-white/[0.04] border border-white/10 p-3 space-y-2">
+                        <p className="text-xs font-medium text-white/70">Причина спора</p>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {DISPUTE_REASONS.map((r) => (
+                            <button key={r.value} onClick={() => setDisputeReason(r.value)}
+                              className={`text-left rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+                                disputeReason === r.value ? "border-fuchsia-400/50 bg-fuchsia-500/15 text-fuchsia-100" : "border-white/10 text-white/70 hover:bg-white/[0.05]"
+                              }`}>
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                        <DInput placeholder="Комментарий (необязательно)" value={disputeDesc} onChange={(e) => setDisputeDesc(e.target.value)} />
+                        <div className="flex gap-2">
+                          <DButton variant="ghost" className="flex-1 py-1.5" onClick={() => { setDisputeTxId(null); setDisputeDesc(""); }}>Отмена</DButton>
+                          <DButton className="flex-1 py-1.5" onClick={() => raiseDispute.mutate()} disabled={raiseDispute.isPending}>
+                            {raiseDispute.isPending ? "Отправка…" : "Открыть спор"}
+                          </DButton>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

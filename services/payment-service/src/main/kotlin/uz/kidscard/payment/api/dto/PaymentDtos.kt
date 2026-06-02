@@ -3,6 +3,8 @@ package uz.kidscard.payment.api.dto
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import uz.kidscard.payment.domain.Dispute
+import uz.kidscard.payment.domain.DisputeReason
 import uz.kidscard.payment.domain.Transaction
 import java.time.Instant
 import java.util.UUID
@@ -98,4 +100,45 @@ fun Transaction.toDto(balanceAfter: Long) = TransactionDto(
     description = description,
     balanceAfter = balanceAfter,
     createdAt = createdAt,
+)
+
+// ── Disputes ─────────────────────────────────────────────────────────────────
+
+data class RaiseDisputeRequest(
+    @field:NotNull val transactionId: UUID,
+    @field:NotNull val reason: DisputeReason,
+    val description: String? = null,
+)
+
+data class DisputeDto(
+    val id: UUID,
+    val transactionId: UUID,
+    val familyId: UUID?,
+    val childId: UUID?,
+    val reason: String,
+    val description: String?,
+    val status: String,
+    val resolution: String?,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    // transaction snapshot for display (null if the tx was purged)
+    val txAmountUzs: Long?,
+    val txMerchantName: String?,
+    val txCreatedAt: Instant?,
+)
+
+fun Dispute.toDto(tx: Transaction? = null) = DisputeDto(
+    id = id,
+    transactionId = transactionId,
+    familyId = familyId,
+    childId = childId,
+    reason = reason.name,
+    description = description,
+    status = status.name,
+    resolution = resolution,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    txAmountUzs = tx?.amountUzs,
+    txMerchantName = tx?.merchantName,
+    txCreatedAt = tx?.createdAt,
 )

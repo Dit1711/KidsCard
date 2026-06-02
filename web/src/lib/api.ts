@@ -529,6 +529,40 @@ export const paymentService = {
     ),
 };
 
+// ── Disputes ──────────────────────────────────────────────────────────────────
+
+export type DisputeReason = "UNRECOGNIZED" | "WRONG_AMOUNT" | "NOT_RECEIVED" | "DUPLICATE" | "OTHER";
+
+export interface DisputeResponse {
+  id: string;
+  transactionId: string;
+  familyId: string | null;
+  childId: string | null;
+  reason: DisputeReason;
+  description: string | null;
+  status: "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "REJECTED";
+  resolution: string | null;
+  createdAt: string;
+  updatedAt: string;
+  txAmountUzs: number | null;
+  txMerchantName: string | null;
+  txCreatedAt: string | null;
+}
+
+export const disputeService = {
+  raise: (payload: { transactionId: string; reason: DisputeReason; description?: string }) =>
+    paymentApi.post<ApiResponse<DisputeResponse>>("/api/v1/disputes", payload),
+
+  listByFamily: (familyId: string) =>
+    paymentApi.get<ApiResponse<DisputeResponse[]>>(`/api/v1/disputes/family/${familyId}`),
+
+  getByTransaction: (transactionId: string) =>
+    paymentApi.get<ApiResponse<DisputeResponse[]>>(`/api/v1/disputes/transaction/${transactionId}`),
+
+  withdraw: (disputeId: string) =>
+    paymentApi.post<ApiResponse<DisputeResponse>>(`/api/v1/disputes/${disputeId}/withdraw`, {}),
+};
+
 // ── Analytics ─────────────────────────────────────────────────────────────────
 
 export const analyticsService = {
