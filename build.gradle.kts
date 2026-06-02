@@ -35,5 +35,14 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
         jvmArgs("-XX:+EnableDynamicAgentLoading")
+        // Forward Docker env to forked test JVMs so Testcontainers finds the daemon
+        // (no-op in CI with the standard socket; helps with OrbStack/Colima locally).
+        listOf("DOCKER_HOST", "TESTCONTAINERS_RYUK_DISABLED", "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE").forEach { key ->
+            System.getenv(key)?.let { environment(key, it) }
+        }
+        // Optional: run against an external Postgres (e.g. local compose) instead of
+        // Testcontainers by setting TEST_DB_URL — handy when the local Docker engine
+        // is incompatible with Testcontainers' client API version.
+        System.getenv("TEST_DB_URL")?.let { environment("TEST_DB_URL", it) }
     }
 }
