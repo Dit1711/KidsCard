@@ -9,7 +9,7 @@ import { useFamilyStore } from "@/store/family";
 import { authService, familyService } from "@/lib/api";
 import { NotificationBell } from "@/components/NotificationBell";
 import {
-  LayoutGrid, Users, CreditCard, ListChecks, ArrowLeftRight, Inbox,
+  LayoutGrid, Users, CreditCard, ListChecks, Inbox,
   BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut,
 } from "lucide-react";
 
@@ -20,7 +20,6 @@ const navItems = [
   { href: "/family", label: "Семья", icon: Users },
   { href: "/cards", label: "Карты", icon: CreditCard },
   { href: "/chores", label: "Задания", icon: ListChecks },
-  { href: "/transactions", label: "Операции", icon: ArrowLeftRight },
   { href: "/requests", label: "Запросы", icon: Inbox },
   { href: "/analytics", label: "Аналитика", icon: BarChart3 },
   { href: "/banks", label: "Банк", icon: Landmark },
