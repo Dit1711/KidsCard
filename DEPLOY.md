@@ -11,15 +11,20 @@ you and your wife can reach it.
 
 ---
 
-## 1. Provision a VPS
+## 1. Provision a VPS (in Uzbekistan — data localization, ЗРУ-547)
 
-Any provider works; the stack needs ~**4 GB RAM minimum, 8 GB comfortable**
-(8 JVM services + Kafka). Good picks:
+Host inside Uzbekistan so personal data stays in-country (TZ compliance). The
+stack needs ~**4 GB RAM minimum, 8 GB comfortable**, 2–4 vCPU, ~40 GB disk
+(8 JVM services + Kafka).
 
-- **Hetzner Cloud** CPX21 (3 vCPU / 4 GB, ~€8/mo) or CPX31 (8 GB) — best value.
-- **DigitalOcean** Droplet 4–8 GB.
+- **Uztelecom Cloud** — cloud.uztelecom.uz / uztelecom.uz → Бизнесу → Облачные
+  сервисы → Virtual Dedicated Server. TIER 3 DC in UZ. Order a VM with
+  **Ubuntu 22.04+**. (Uztelecom B2B cloud usually needs a legal-entity contract.)
+- Faster self-service UZ alternatives (also in-country, same compliance):
+  **Serverspace.uz**, **SmartCloud.uz**, **PS Cloud (pscloud.uz)**, **UzCloud.uz**.
 
-On the server (Ubuntu 22.04+):
+Pick Ubuntu 22.04/24.04, give it a public IP (only outbound is actually needed —
+see the tunnel below). On the server:
 
 ```bash
 # install Docker + compose plugin
