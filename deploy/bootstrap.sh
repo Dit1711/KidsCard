@@ -29,13 +29,23 @@ if grep -q "CHANGE_ME" .env.prod; then
   exit 1
 fi
 
-echo "==> 3/3  Building & starting the stack (first run takes several minutes)"
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+echo "==> 3/3  Building images one at a time, then starting"
+# Build sequentially — building all 7 JVM services in parallel needs ~14 GB and
+# OOMs on a smaller box. One at a time fits comfortably (~2.5 GB peak).
+COMPOSE="docker compose -f docker-compose.prod.yml --env-file .env.prod"
+for svc in auth-service family-service card-service payment-service \
+           open-banking-service notification-service kyc-service web; do
+  echo "    -> building $svc"
+  $COMPOSE build "$svc"
+done
+
+echo "    -> starting all containers"
+$COMPOSE up -d
 
 echo
 echo "==> Status:"
-docker compose -f docker-compose.prod.yml ps
+$COMPOSE ps
 echo
 echo "Done. Watch it come up with:"
-echo "  docker compose -f docker-compose.prod.yml logs -f web cloudflared"
-echo "Once cloudflared shows a registered connection, open your Cloudflare hostname."
+echo "  docker compose -f docker-compose.prod.yml logs -f caddy web"
+echo "Once Caddy has a certificate and web is up, open https://<your domain>."
