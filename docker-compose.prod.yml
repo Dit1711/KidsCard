@@ -19,6 +19,9 @@ x-service-env: &service-env
   REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.prod}
   KAFKA_BROKERS: kafka:29092
   JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.prod}
+  # Browser sends Origin: https://<domain>; Spring CORS must allow it (localhost
+  # is always allowed in code). Without this, every browser API call gets 403.
+  APP_CORS_ALLOWED_ORIGIN_PATTERNS: "https://${DOMAIN:-kidscard.uz}"
 
 x-depends: &depends-infra
   postgres:
