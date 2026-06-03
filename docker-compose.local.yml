@@ -83,7 +83,9 @@ services:
 
   auth-service:
     build: { <<: *jvm-build, args: { SERVICE: auth-service } }
-    environment: { <<: *service-env }
+    environment:
+      <<: *service-env
+      APP_OTP_DEV_FIXED_CODE: "123456"   # simulated SMS — any OTP is 123456
     depends_on: *depends-infra
 
   family-service:
