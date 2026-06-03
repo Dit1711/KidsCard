@@ -1,12 +1,12 @@
-# Private deployment (VPS + Cloudflare Tunnel + Access)
+# Private deployment (VPS in Uzbekistan, served directly with Caddy)
 
-The whole stack runs in Docker on a single VPS. Nothing is exposed to the public
-internet: the **only** ingress is a Cloudflare Tunnel (outbound connection, no
-open ports), and **Cloudflare Access** gates it to an email allow-list — so only
-you and your wife can reach it.
+The whole stack runs in Docker on a single VPS in Uzbekistan. The site is served
+on your own domain over HTTPS (Caddy auto-issues a Let's Encrypt cert) and gated
+behind a password (HTTP basic auth) so only people you give the password to can
+use it.
 
 ```
-  wife's phone ──https──► Cloudflare ──(Access login wall)──► Tunnel ──► web:3000 ──► backends
+  wife's phone ──https──► your-domain ──(password)──► Caddy ──► web:3000 ──► backends
 ```
 
 ---
@@ -34,31 +34,24 @@ sudo usermod -aG docker $USER   # re-login after this
 
 Copy the repo to the server (git clone, or `scp` / `rsync` your local checkout).
 
-## 2. Cloudflare: a private tunnel + Access
+## 2. Point your domain at the server + open 80/443
 
-You need a domain on Cloudflare (free plan is fine; a cheap domain ~$10/yr).
-
-1. **Zero Trust dashboard** → **Networks → Tunnels → Create a tunnel** (type
-   *Cloudflared*). Name it e.g. `kidscard`.
-2. Copy the **tunnel token** (the long string in the `cloudflared ... run <TOKEN>`
-   command). You'll put it in `.env.prod`.
-3. In the tunnel's **Public Hostname** tab, add:
-   - Subdomain/domain: e.g. `kidscard.yourdomain.com`
-   - Service: **HTTP** → `web:3000`
-4. **Access → Applications → Add an application → Self-hosted**:
-   - Application domain: `kidscard.yourdomain.com`
-   - Policy: **Allow**, include **Emails** → add your email and your wife's.
-   - (Optional) session duration, one-time-PIN or Google login.
-
-Now anyone hitting the URL must pass the Access login first; everyone else is
-blocked. No app code is exposed publicly.
+1. At your domain registrar, set an **A record**: `yourdomain` → the server's
+   public IP. (Caddy needs ports 80/443 reachable to get the TLS cert.)
+2. Make sure the server firewall allows inbound **80** and **443** (and 22 for
+   SSH). On a plain Ubuntu VM with no ufw rules this is already open.
 
 ## 3. Configure secrets
 
 ```bash
 cp .env.prod.example .env.prod
-# edit .env.prod — set DB_PASSWORD, REDIS_PASSWORD, JWT_SECRET (openssl rand -base64 48),
-# and CLOUDFLARE_TUNNEL_TOKEN from step 2.
+# edit .env.prod:
+#   DB_PASSWORD, REDIS_PASSWORD  — strong passwords
+#   JWT_SECRET                   — openssl rand -base64 48
+#   DOMAIN                       — your domain (e.g. kidscard.uz)
+#   BASIC_AUTH_USER              — e.g. admin
+#   BASIC_AUTH_HASH              — bcrypt hash of your password:
+#       docker run --rm caddy:2 caddy hash-password --plaintext 'YourPassword'
 ```
 
 ## 4. Build & run
@@ -72,11 +65,12 @@ it come up:
 
 ```bash
 docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs -f cloudflared web
+docker compose -f docker-compose.prod.yml logs -f caddy web
 ```
 
-When healthy, open `https://kidscard.yourdomain.com` — you'll hit the Access
-login, then the app.
+When healthy, open `https://yourdomain` — the browser asks for the basic-auth
+username/password, then loads the app. (First load may take a few seconds while
+Caddy obtains the TLS certificate.)
 
 ## 5. Test logins (dev mode)
 
@@ -105,7 +99,7 @@ docker compose -f docker-compose.prod.yml down
 
 ## Notes & hardening (later)
 
-- This is still **dev-grade auth** (simulated OTP). Access is the security
+- This is still **dev-grade auth** (simulated OTP). The basic-auth password is the security
   boundary — keep the allow-list tight.
 - Single Postgres with per-service **schemas** (not separate DBs) — fine for
   testing; the ТЗ calls for separate instances in real production.

@@ -1,0 +1,8 @@
+# Caddy serves the app over HTTPS at your domain, behind a password.
+# DOMAIN / BASIC_AUTH_USER / BASIC_AUTH_HASH come from .env.prod.
+{$DOMAIN} {
+	reverse_proxy web:3000
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+}

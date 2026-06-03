@@ -147,12 +147,19 @@ services:
       - notification-service
       - kyc-service
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
+  # Reverse proxy: automatic HTTPS (Let's Encrypt) for your domain + a password
+  # gate (HTTP basic auth) so the test site is private. Serves web:3000.
+  caddy:
+    image: caddy:2
     restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env.prod}
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env.prod          # passes DOMAIN / BASIC_AUTH_* literally (bcrypt hash has $)
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - web
 
@@ -161,3 +168,5 @@ volumes:
   redis_data:
   zookeeper_data:
   kafka_data:
+  caddy_data:
+  caddy_config:
