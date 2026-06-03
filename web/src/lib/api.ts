@@ -1,16 +1,21 @@
 import axios from "axios";
 
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:8081";
+// Default to same-origin /proxy/* paths (routed to each backend container by
+// the next.config.ts rewrites). Works both locally (npm run dev) and in Docker,
+// and does NOT depend on web/.env.local — which is gitignored and so never
+// reaches the production build, where it would otherwise fall back to localhost
+// (= the user's own device, not the server) and break every API call.
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || "/proxy/auth";
 const FAMILY_URL =
-  process.env.NEXT_PUBLIC_FAMILY_URL || "http://localhost:8082";
-const CARD_URL = process.env.NEXT_PUBLIC_CARD_URL || "http://localhost:8083";
+  process.env.NEXT_PUBLIC_FAMILY_URL || "/proxy/family";
+const CARD_URL = process.env.NEXT_PUBLIC_CARD_URL || "/proxy/card";
 const PAYMENT_URL =
-  process.env.NEXT_PUBLIC_PAYMENT_URL || "http://localhost:8084";
-const KYC_URL = process.env.NEXT_PUBLIC_KYC_URL || "http://localhost:8087";
+  process.env.NEXT_PUBLIC_PAYMENT_URL || "/proxy/payment";
+const KYC_URL = process.env.NEXT_PUBLIC_KYC_URL || "/proxy/kyc";
 const NOTIFICATION_URL =
-  process.env.NEXT_PUBLIC_NOTIFICATION_URL || "http://localhost:8086";
+  process.env.NEXT_PUBLIC_NOTIFICATION_URL || "/proxy/notification";
 const OPENBANKING_URL =
-  process.env.NEXT_PUBLIC_OPENBANKING_URL || "http://localhost:8085";
+  process.env.NEXT_PUBLIC_OPENBANKING_URL || "/proxy/openbanking";
 
 function makeClient(baseURL: string) {
   const client = axios.create({ baseURL });
