@@ -1,13 +1,19 @@
 # Caddy serves the app over HTTPS at your domain, behind a password.
 # DOMAIN / BASIC_AUTH_USER / BASIC_AUTH_HASH come from .env.prod.
 {$DOMAIN} {
+	# The app's own API calls (/proxy/*) carry a JWT in the Authorization header.
+	# HTTP basic_auth ALSO uses Authorization, so password-gating /proxy/* collides:
+	# the Bearer JWT overrides the Basic credentials, and Caddy 401s every data
+	# call. So gate only the app PAGES with the password; the /proxy/* API is
+	# protected by the backend services' own JWT auth.
+	@pages not path /proxy/*
+	basic_auth @pages {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+
 	reverse_proxy web:3000 {
-		# The whole app is same-origin behind this proxy, so no cross-origin
-		# requests are legitimate. Strip the browser's Origin header so the Spring
+		# Same-origin app behind this proxy — strip the Origin header so the Spring
 		# backends don't treat proxied API calls as CORS requests and 403 them.
 		header_up -Origin
-	}
-	basic_auth {
-		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
 	}
 }
