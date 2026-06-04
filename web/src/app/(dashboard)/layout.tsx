@@ -123,6 +123,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Search className="h-4 w-4" /> {t("common.search")}
               </div>
               <NotificationBell />
+              {/* Logout — visible on mobile (desktop has it in the sidebar) */}
+              <button
+                onClick={handleLogout}
+                title={t("common.logout")}
+                className="md:hidden grid h-9 w-9 place-items-center rounded-full bg-white/[0.05] text-white/50 hover:text-white transition-colors"
+              >
+                <LogOut className="h-[18px] w-[18px]" />
+              </button>
             </div>
           </header>
 

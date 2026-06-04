@@ -90,6 +90,15 @@ const ru: Dictionary = {
   "dashboard.savingsGoals": "Цели накопления",
   "dashboard.noGoals": "Целей пока нет",
   "dashboard.goalProgress": "{current} из {target}",
+
+  // kid interface
+  "kid.nav.home": "Главная",
+  "kid.nav.spending": "Траты",
+  "kid.nav.quests": "Квесты",
+  "kid.nav.goals": "Цели",
+  "kid.nav.learn": "Учёба",
+  "kid.friend": "друг",
+  "kid.level": "Ур. {level} · {title}",
 };
 
 const uz: Dictionary = {
@@ -171,6 +180,14 @@ const uz: Dictionary = {
   "dashboard.savingsGoals": "Jamg'arma maqsadlari",
   "dashboard.noGoals": "Hozircha maqsadlar yo'q",
   "dashboard.goalProgress": "{current} / {target}",
+
+  "kid.nav.home": "Bosh sahifa",
+  "kid.nav.spending": "Xarajatlar",
+  "kid.nav.quests": "Kvestlar",
+  "kid.nav.goals": "Maqsadlar",
+  "kid.nav.learn": "Ta'lim",
+  "kid.friend": "do'st",
+  "kid.level": "Dar. {level} · {title}",
 };
 
 const en: Dictionary = {
@@ -252,6 +269,14 @@ const en: Dictionary = {
   "dashboard.savingsGoals": "Savings goals",
   "dashboard.noGoals": "No goals yet",
   "dashboard.goalProgress": "{current} of {target}",
+
+  "kid.nav.home": "Home",
+  "kid.nav.spending": "Spending",
+  "kid.nav.quests": "Quests",
+  "kid.nav.goals": "Goals",
+  "kid.nav.learn": "Learning",
+  "kid.friend": "friend",
+  "kid.level": "Lv. {level} · {title}",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = { ru, uz, en };

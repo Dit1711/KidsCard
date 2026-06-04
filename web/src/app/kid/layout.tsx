@@ -10,21 +10,23 @@ import { useChildStore } from "@/store/child";
 import { childAuthService } from "@/lib/api";
 import { XpRing, StreakChip } from "@/components/kidkit";
 import { GamificationCelebration } from "@/components/GamificationCelebration";
+import { useT } from "@/i18n/locale";
 
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 const navItems = [
-  { href: "/kid", label: "Главная", Icon: Home },
-  { href: "/kid/shop", label: "Магазин", Icon: ShoppingBag },
-  { href: "/kid/chores", label: "Квесты", Icon: Target },
-  { href: "/kid/goals", label: "Цели", Icon: PiggyBank },
-  { href: "/kid/learn", label: "Учёба", Icon: GraduationCap },
+  { href: "/kid", labelKey: "kid.nav.home", Icon: Home },
+  { href: "/kid/shop", labelKey: "kid.nav.spending", Icon: ShoppingBag },
+  { href: "/kid/chores", labelKey: "kid.nav.quests", Icon: Target },
+  { href: "/kid/goals", labelKey: "kid.nav.goals", Icon: PiggyBank },
+  { href: "/kid/learn", labelKey: "kid.nav.learn", Icon: GraduationCap },
 ];
 
 export default function KidLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { isChildAuthed, hasHydrated, displayName, logout } = useChildStore();
+  const t = useT();
 
   const { data: gami } = useQuery({
     queryKey: ["child-gamification"],
@@ -40,13 +42,13 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
   if (!hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
-        <p className="text-fuchsia-300/70 animate-pulse">Загрузка…</p>
+        <p className="text-fuchsia-300/70 animate-pulse">{t("common.loading")}</p>
       </div>
     );
   }
   if (!isChildAuthed) return null;
 
-  const name = displayName ?? "друг";
+  const name = displayName ?? t("kid.friend");
   const initial = name.charAt(0).toUpperCase();
   const pct = gami ? gami.xpIntoLevel / gami.xpForNext : 0;
 
@@ -67,7 +69,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
             <div>
               <p className="text-sm font-semibold leading-tight">{name}</p>
               <p className="text-[11px] text-fuchsia-300/90">
-                {gami ? `Ур. ${gami.level} · ${gami.title}` : "Загрузка…"}
+                {gami ? t("kid.level", { level: gami.level, title: gami.title }) : t("common.loading")}
               </p>
             </div>
           </div>
@@ -76,7 +78,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => { logout(); router.replace("/child-login"); }}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.05] border border-white/10 text-white/50 hover:text-white transition-colors"
-              title="Выйти"
+              title={t("common.logout")}
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -87,7 +89,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
 
         {/* Bottom nav */}
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0c0c16]/95 backdrop-blur border-t border-white/[0.07] flex rounded-t-3xl">
-          {navItems.map(({ href, label, Icon }) => {
+          {navItems.map(({ href, labelKey, Icon }) => {
             const isActive = href === "/kid" ? pathname === "/kid" : pathname.startsWith(href);
             return (
               <Link
@@ -98,7 +100,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                {label}
+                {t(labelKey)}
               </Link>
             );
           })}

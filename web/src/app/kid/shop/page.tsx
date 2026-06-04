@@ -8,9 +8,11 @@ import { useChildStore } from "@/store/child";
 import { CATEGORIES, type SpendCategory } from "@/lib/categories";
 import { KCard } from "@/components/kidkit";
 import { ShoppingBag, Snowflake } from "lucide-react";
+import { useT } from "@/i18n/locale";
 
 export default function KidShopPage() {
   const { isChildAuthed } = useChildStore();
+  const t = useT();
   const qc = useQueryClient();
 
   const { data: cards } = useQuery({
@@ -76,7 +78,7 @@ export default function KidShopPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3 px-1">
-        <h2 className="text-base font-bold flex items-center gap-1.5"><ShoppingBag className="h-4 w-4 text-fuchsia-300" /> Магазин</h2>
+        <h2 className="text-base font-bold flex items-center gap-1.5"><ShoppingBag className="h-4 w-4 text-fuchsia-300" /> {t("kid.nav.spending")}</h2>
         <span className="text-sm text-white/60 tabular-nums">{formatSum(balance)}</span>
       </div>
 
