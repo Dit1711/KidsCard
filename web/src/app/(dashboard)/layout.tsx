@@ -9,6 +9,7 @@ import { useFamilyStore } from "@/store/family";
 import { authService, familyService } from "@/lib/api";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useT } from "@/i18n/locale";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   LayoutGrid, Users, CreditCard, ListChecks, Inbox,
   BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut,
@@ -122,6 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="hidden sm:flex items-center gap-2 rounded-full bg-white/[0.05] px-3.5 h-10 text-sm text-white/40 w-48">
                 <Search className="h-4 w-4" /> {t("common.search")}
               </div>
+              <LanguageSwitcher variant="dark" />
               <NotificationBell />
               {/* Logout — visible on mobile (desktop has it in the sidebar) */}
               <button

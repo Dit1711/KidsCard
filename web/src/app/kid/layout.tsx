@@ -11,6 +11,7 @@ import { childAuthService } from "@/lib/api";
 import { XpRing, StreakChip } from "@/components/kidkit";
 import { GamificationCelebration } from "@/components/GamificationCelebration";
 import { useT } from "@/i18n/locale";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
@@ -74,6 +75,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="dark" />
             <StreakChip days={gami?.streakDays ?? 0} />
             <button
               onClick={() => { logout(); router.replace("/child-login"); }}
