@@ -10,22 +10,24 @@ import { Panel, DInput, DLabel, DButton, DBadge } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
 import { UserPlus, Plus } from "lucide-react";
+import { useT } from "@/i18n/locale";
 
 function calcAge(dob: string) {
   return new Date().getFullYear() - new Date(dob).getFullYear();
 }
 
-const AGE_GROUP_LABELS: Record<string, string> = {
-  CHILD_6_10: "6–10 лет",
-  CHILD_11_14: "11–14 лет",
-  TEEN_15_17: "15–17 лет",
+const AGE_GROUP_KEYS: Record<string, string> = {
+  CHILD_6_10: "family.age610",
+  CHILD_11_14: "family.age1114",
+  TEEN_15_17: "family.age1517",
 };
-const ageGroupLabel = (g: string) => AGE_GROUP_LABELS[g] ?? g.replace(/_/g, " ");
+const ageGroupKey = (g: string) => AGE_GROUP_KEYS[g] ?? g.replace(/_/g, " ");
 
 export default function FamilyPage() {
   const qc = useQueryClient();
   const { family, setFamily } = useFamilyStore();
   const { user } = useAuthStore();
+  const t = useT();
 
   const [showInvite, setShowInvite] = useState(false);
   const [coPhone, setCoPhone] = useState("");
@@ -63,9 +65,9 @@ export default function FamilyPage() {
     onSuccess: ({ data }) => {
       setFamily(data.data);
       qc.invalidateQueries({ queryKey: ["my-family"] });
-      toast.success("Семья создана");
+      toast.success(t("family.toastCreated"));
     },
-    onError: () => toast.error("Не удалось создать семью"),
+    onError: () => toast.error(t("family.toastCreateError")),
   });
 
   const addChild = useMutation({
@@ -75,9 +77,9 @@ export default function FamilyPage() {
       setChildName("");
       setChildDob("");
       setShowAddChild(false);
-      toast.success("Ребёнок добавлен");
+      toast.success(t("family.toastChildAdded"));
     },
-    onError: () => toast.error("Ошибка добавления"),
+    onError: () => toast.error(t("family.toastAddError")),
   });
 
   const inviteCoParent = useMutation({
@@ -90,11 +92,11 @@ export default function FamilyPage() {
       setCoName("");
       setInviteError("");
       setShowInvite(false);
-      toast.success("Со-родитель добавлен");
+      toast.success(t("family.toastCoAdded"));
     },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setInviteError(e.response?.data?.error?.message ?? "Не удалось пригласить со-родителя");
+      setInviteError(e.response?.data?.error?.message ?? t("family.toastInviteError"));
     },
   });
 
@@ -105,27 +107,27 @@ export default function FamilyPage() {
   return (
     <MotionStagger className="space-y-6">
       <MotionItem>
-        <h1 className="text-2xl font-bold tracking-tight">Семья</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("nav.family")}</h1>
       </MotionItem>
 
-      {isLoading && <p className="text-white/50">Загрузка…</p>}
+      {isLoading && <p className="text-white/50">{t("common.loading")}</p>}
 
       {noFamily && (
         <MotionItem>
           <Panel>
-            <p className="font-semibold text-lg">Создайте семью</p>
-            <p className="text-white/50 text-sm mt-1 mb-4">Семья — это центр управления картами и детьми</p>
+            <p className="font-semibold text-lg">{t("family.createTitle")}</p>
+            <p className="text-white/50 text-sm mt-1 mb-4">{t("family.createSubtitle")}</p>
             <div className="space-y-3">
               <div>
-                <DLabel>Название семьи</DLabel>
-                <DInput placeholder="Семья Ивановых" value={familyName} onChange={(e) => setFamilyName(e.target.value)} />
+                <DLabel>{t("family.nameLabel")}</DLabel>
+                <DInput placeholder={t("family.namePlaceholder")} value={familyName} onChange={(e) => setFamilyName(e.target.value)} />
               </div>
               <div>
-                <DLabel>Ваше имя</DLabel>
-                <DInput placeholder="Иван Иванов" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                <DLabel>{t("family.yourName")}</DLabel>
+                <DInput placeholder={t("family.yourNamePlaceholder")} value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <DButton onClick={() => createFamily.mutate()} disabled={!familyName || !fullName || createFamily.isPending} className="w-full">
-                {createFamily.isPending ? "Создание…" : "Создать семью"}
+                {createFamily.isPending ? t("family.creating") : t("dashboard.createFamily")}
               </DButton>
             </div>
           </Panel>
@@ -138,7 +140,7 @@ export default function FamilyPage() {
             <Panel className="p-5 flex items-center justify-between">
               <div>
                 <p className="font-semibold text-lg">{family.name}</p>
-                <p className="text-xs text-white/40 mt-0.5">Создана {new Date(family.createdAt).toLocaleDateString("ru-RU")}</p>
+                <p className="text-xs text-white/40 mt-0.5">{t("family.createdOn", { date: new Date(family.createdAt).toLocaleDateString() })}</p>
               </div>
               <DBadge tone={family.status === "ACTIVE" ? "success" : "muted"}>{family.status}</DBadge>
             </Panel>
@@ -147,28 +149,28 @@ export default function FamilyPage() {
           {/* Parents */}
           <MotionItem>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold tracking-tight">Родители</h2>
+              <h2 className="text-lg font-semibold tracking-tight">{t("family.parents")}</h2>
               {isOwner && (
                 <DButton variant="outline" onClick={() => { setShowInvite(!showInvite); setInviteError(""); }} className="py-2">
-                  {showInvite ? "Отмена" : <><UserPlus className="h-4 w-4" /> Пригласить</>}
+                  {showInvite ? t("common.cancel") : <><UserPlus className="h-4 w-4" /> {t("family.invite")}</>}
                 </DButton>
               )}
             </div>
 
             {showInvite && isOwner && (
               <Panel className="p-5 mb-3 space-y-3">
-                <p className="text-sm text-white/50">Со-родитель должен быть уже зарегистрирован в KidsCard по своему номеру.</p>
+                <p className="text-sm text-white/50">{t("family.inviteHint")}</p>
                 <div>
-                  <DLabel>Телефон</DLabel>
+                  <DLabel>{t("login.phoneLabel")}</DLabel>
                   <DInput placeholder="+998901112233" value={coPhone} onChange={(e) => setCoPhone(e.target.value)} />
                 </div>
                 <div>
-                  <DLabel>Имя</DLabel>
-                  <DInput placeholder="Мама / Папа / Имя" value={coName} onChange={(e) => setCoName(e.target.value)} />
+                  <DLabel>{t("family.nameField")}</DLabel>
+                  <DInput placeholder={t("family.coNamePlaceholder")} value={coName} onChange={(e) => setCoName(e.target.value)} />
                 </div>
                 {inviteError && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{inviteError}</p>}
                 <DButton onClick={() => inviteCoParent.mutate()} disabled={!coPhone || !coName || inviteCoParent.isPending} className="w-full">
-                  {inviteCoParent.isPending ? "Приглашаем…" : "Пригласить"}
+                  {inviteCoParent.isPending ? t("family.inviting") : t("family.invite")}
                 </DButton>
               </Panel>
             )}
@@ -183,13 +185,13 @@ export default function FamilyPage() {
                     <div>
                       <p className="font-medium">
                         {p.fullName}
-                        {p.userId === user?.id && <span className="ml-2 text-xs text-white/40">(вы)</span>}
+                        {p.userId === user?.id && <span className="ml-2 text-xs text-white/40">{t("family.you")}</span>}
                       </p>
                       <p className="text-sm text-white/40 tabular-nums">{p.phone}</p>
                     </div>
                   </div>
                   <DBadge tone={p.role === "OWNER" ? "default" : "muted"}>
-                    {p.role === "OWNER" ? "Владелец" : "Со-родитель"}
+                    {p.role === "OWNER" ? t("common.owner") : t("family.coParent")}
                   </DBadge>
                 </Panel>
               ))}
@@ -199,30 +201,30 @@ export default function FamilyPage() {
           {/* Children */}
           <MotionItem>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold tracking-tight">Дети</h2>
+              <h2 className="text-lg font-semibold tracking-tight">{t("family.children")}</h2>
               <DButton variant="outline" onClick={() => setShowAddChild(!showAddChild)} className="py-2">
-                {showAddChild ? "Отмена" : <><Plus className="h-4 w-4" /> Добавить</>}
+                {showAddChild ? t("common.cancel") : <><Plus className="h-4 w-4" /> {t("common.add")}</>}
               </DButton>
             </div>
 
             {showAddChild && (
               <Panel className="p-5 mb-3 space-y-3">
                 <div>
-                  <DLabel>Имя ребёнка</DLabel>
-                  <DInput placeholder="Анна Иванова" value={childName} onChange={(e) => setChildName(e.target.value)} />
+                  <DLabel>{t("family.childName")}</DLabel>
+                  <DInput placeholder={t("family.childNamePlaceholder")} value={childName} onChange={(e) => setChildName(e.target.value)} />
                 </div>
                 <div>
-                  <DLabel>Дата рождения</DLabel>
+                  <DLabel>{t("family.dob")}</DLabel>
                   <DInput type="date" value={childDob} onChange={(e) => setChildDob(e.target.value)} max={new Date().toISOString().split("T")[0]} className="[color-scheme:dark]" />
                 </div>
                 <DButton onClick={() => addChild.mutate()} disabled={!childName || !childDob || addChild.isPending} className="w-full">
-                  {addChild.isPending ? "Добавление…" : "Добавить"}
+                  {addChild.isPending ? t("family.adding") : t("common.add")}
                 </DButton>
               </Panel>
             )}
 
-            {childrenLoading && <p className="text-white/50">Загрузка детей…</p>}
-            {children?.length === 0 && <p className="text-white/50 text-sm">Детей ещё нет. Добавьте первого ребёнка.</p>}
+            {childrenLoading && <p className="text-white/50">{t("family.loadingChildren")}</p>}
+            {children?.length === 0 && <p className="text-white/50 text-sm">{t("family.noChildren")}</p>}
 
             <div className="space-y-2.5">
               {children?.map((child) => (
@@ -234,7 +236,7 @@ export default function FamilyPage() {
                       </span>
                       <div>
                         <p className="font-medium">{child.fullName}</p>
-                        <p className="text-sm text-white/40">{calcAge(child.dateOfBirth)} лет · {ageGroupLabel(child.ageGroup)}</p>
+                        <p className="text-sm text-white/40">{t("family.ageLine", { age: calcAge(child.dateOfBirth), group: t(ageGroupKey(child.ageGroup)) })}</p>
                       </div>
                     </div>
                     <DBadge tone={child.status === "ACTIVE" ? "success" : "muted"}>{child.status}</DBadge>
