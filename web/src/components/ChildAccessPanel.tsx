@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/lib/api";
 import { DInput, DButton, DLabel } from "@/components/dark";
+import { useT } from "@/i18n/locale";
 
 export function ChildAccessPanel({
   childId,
@@ -15,6 +16,7 @@ export function ChildAccessPanel({
   childName: string;
 }) {
   const qc = useQueryClient();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pin, setPin] = useState("");
 
@@ -42,25 +44,25 @@ export function ChildAccessPanel({
         onClick={() => setOpen(!open)}
         className="text-sm text-fuchsia-300/80 hover:text-fuchsia-300"
       >
-        {open ? "▾ Вход для ребёнка" : "▸ Вход для ребёнка"}
+        {open ? `▾ ${t("cap.title")}` : `▸ ${t("cap.title")}`}
       </button>
 
       {open && (
         <div className="mt-3 space-y-3">
           {access && (
             <div className="rounded-xl bg-white/[0.05] border border-white/10 p-3">
-              <p className="text-xs text-white/40 mb-1">Код для входа ребёнка</p>
+              <p className="text-xs text-white/40 mb-1">{t("cap.codeLabel")}</p>
               <p className="text-2xl font-mono font-bold tracking-widest text-fuchsia-200">
                 {access.loginCode}
               </p>
               <p className="text-xs text-white/40 mt-1">
-                Ребёнок входит на <span className="font-mono">/child-login</span> с этим кодом и PIN
+                {t("cap.hint")}
               </p>
             </div>
           )}
 
           <div>
-            <DLabel>{access ? "Сбросить PIN" : "Задать PIN (4–6 цифр)"}</DLabel>
+            <DLabel>{access ? t("cap.resetPin") : t("cap.setPin")}</DLabel>
             <div className="flex gap-2">
               <DInput
                 type="text"
@@ -71,11 +73,11 @@ export function ChildAccessPanel({
                 className="font-mono"
               />
               <DButton onClick={() => create.mutate()} disabled={pin.length < 4 || create.isPending} className="shrink-0">
-                {create.isPending ? "…" : access ? "Сбросить" : "Создать"}
+                {create.isPending ? "…" : access ? t("cap.reset") : t("cap.create")}
               </DButton>
             </div>
-            {create.isError && <p className="text-xs text-rose-300 mt-1">Ошибка. Попробуйте ещё раз.</p>}
-            {create.isSuccess && <p className="text-xs text-emerald-300 mt-1">Готово! Код выше, PIN сохранён.</p>}
+            {create.isError && <p className="text-xs text-rose-300 mt-1">{t("cap.error")}</p>}
+            {create.isSuccess && <p className="text-xs text-emerald-300 mt-1">{t("cap.success")}</p>}
           </div>
         </div>
       )}

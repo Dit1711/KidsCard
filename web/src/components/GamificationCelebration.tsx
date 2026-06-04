@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy, Sparkles, Star } from "lucide-react";
 import { childAuthService, type GamificationResponse } from "@/lib/api";
 import { useChildStore } from "@/store/child";
+import { useT } from "@/i18n/locale";
 
 type Celebration = { kind: "level" | "badge"; title: string; subtitle: string };
 
@@ -45,6 +46,7 @@ function Confetti() {
 
 export function GamificationCelebration() {
   const { isChildAuthed, childId } = useChildStore();
+  const t = useT();
   const [queue, setQueue] = useState<Celebration[]>([]);
   const seeded = useRef(false);
 
@@ -78,12 +80,12 @@ export function GamificationCelebration() {
 
     const events: Celebration[] = [];
     if (gami.level > prev.level) {
-      events.push({ kind: "level", title: `Уровень ${gami.level}!`, subtitle: gami.title });
+      events.push({ kind: "level", title: t("gc.level", { level: gami.level }), subtitle: gami.title });
     }
     const prevSet = new Set(prev.badges);
     for (const b of gami.badges) {
       if (b.earned && !prevSet.has(b.key)) {
-        events.push({ kind: "badge", title: "Новая ачивка!", subtitle: b.title });
+        events.push({ kind: "badge", title: t("gc.newBadge"), subtitle: b.title });
       }
     }
 
@@ -94,8 +96,8 @@ export function GamificationCelebration() {
   // Auto-dismiss the front celebration.
   useEffect(() => {
     if (queue.length === 0) return;
-    const t = setTimeout(() => setQueue((q) => q.slice(1)), 3200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setQueue((q) => q.slice(1)), 3200);
+    return () => clearTimeout(timer);
   }, [queue]);
 
   const current = queue[0];
@@ -136,7 +138,7 @@ export function GamificationCelebration() {
               {current.kind === "badge" && <Star className="h-3.5 w-3.5 fill-current" />}
               {current.subtitle}
             </p>
-            <p className="text-[11px] text-white/30 mt-3">нажми, чтобы закрыть</p>
+            <p className="text-[11px] text-white/30 mt-3">{t("gc.tapClose")}</p>
           </motion.div>
         </motion.div>
       )}

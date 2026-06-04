@@ -6,21 +6,23 @@ import { notificationService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { enablePush, pushSupported } from "@/lib/push";
 import { Bell } from "lucide-react";
+import { useT } from "@/i18n/locale";
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, t: (key: string, params?: Record<string, string | number>) => string) {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);
-  if (min < 1) return "только что";
-  if (min < 60) return `${min} мин назад`;
+  if (min < 1) return t("nb.justNow");
+  if (min < 60) return t("nb.minAgo", { min });
   const hrs = Math.floor(min / 60);
-  if (hrs < 24) return `${hrs} ч назад`;
-  return new Date(iso).toLocaleDateString("ru-RU");
+  if (hrs < 24) return t("nb.hrAgo", { hrs });
+  return new Date(iso).toLocaleDateString();
 }
 
 export function NotificationBell() {
   const { family } = useFamilyStore();
   const familyId = family?.id;
   const qc = useQueryClient();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,7 +40,7 @@ export function NotificationBell() {
     const r = await enablePush(familyId);
     setPushBusy(false);
     if (r.ok) setPushOn(true);
-    else if (r.reason === "denied") alert("Уведомления заблокированы в браузере. Разрешите их в настройках сайта.");
+    else if (r.reason === "denied") alert(t("nb.blocked"));
   };
 
   const { data: unread } = useQuery({
@@ -92,7 +94,7 @@ export function NotificationBell() {
       <button
         onClick={handleOpen}
         className="relative p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        aria-label="Уведомления"
+        aria-label={t("nb.title")}
       >
         <Bell className="h-5 w-5" />
         {count > 0 && (
@@ -105,7 +107,7 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[#15151f] border border-white/10 rounded-2xl shadow-2xl z-50 text-white">
           <div className="px-4 py-3 border-b border-white/[0.06] sticky top-0 bg-[#15151f]">
-            <p className="font-semibold text-sm">Уведомления</p>
+            <p className="font-semibold text-sm">{t("nb.title")}</p>
           </div>
           {pushOn === false && pushSupported() && (
             <div className="px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.03]">
@@ -115,20 +117,20 @@ export function NotificationBell() {
                 className="flex items-center gap-2 text-sm text-fuchsia-300 font-medium hover:opacity-80 disabled:opacity-50"
               >
                 <Bell className="h-4 w-4" />
-                {pushBusy ? "Включаем…" : "Включить пуш на телефон"}
+                {pushBusy ? t("nb.enabling") : t("nb.enablePush")}
               </button>
             </div>
           )}
           {pushOn === true && (
             <div className="px-4 py-2 border-b border-white/[0.06] text-xs text-emerald-300">
-              Пуш-уведомления включены
+              {t("nb.pushOn")}
             </div>
           )}
           {!items && (
-            <p className="px-4 py-6 text-sm text-white/40 text-center">Загрузка…</p>
+            <p className="px-4 py-6 text-sm text-white/40 text-center">{t("common.loading")}</p>
           )}
           {items && items.length === 0 && (
-            <p className="px-4 py-8 text-sm text-white/40 text-center">Пока нет уведомлений</p>
+            <p className="px-4 py-8 text-sm text-white/40 text-center">{t("nb.empty")}</p>
           )}
           <ul>
             {items?.map((n) => (
@@ -142,7 +144,7 @@ export function NotificationBell() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{n.title}</p>
                   <p className="text-xs text-white/50 break-words">{n.message}</p>
-                  <p className="text-[11px] text-white/35 mt-0.5">{timeAgo(n.createdAt)}</p>
+                  <p className="text-[11px] text-white/35 mt-0.5">{timeAgo(n.createdAt, t)}</p>
                 </div>
               </li>
             ))}

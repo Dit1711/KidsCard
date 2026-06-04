@@ -6,6 +6,7 @@
 import * as React from "react";
 import { Flame } from "lucide-react";
 import { getRuntimeLocale } from "@/i18n/runtime";
+import { useT } from "@/i18n/locale";
 
 export const LEAGUE_META: Record<string, { label: string; color: string; ring: string }> = {
   BRONZE: { label: "Бронза", color: "#d39b6a", ring: "ring-amber-700/40" },
@@ -70,13 +71,14 @@ export function XpRing({
 
 /** Streak flame chip. */
 export function StreakChip({ days }: { days: number }) {
+  const t = useT();
   const lit = days > 0;
   return (
     <div
       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${
         lit ? "bg-orange-500/15 border-orange-500/30" : "bg-white/[0.04] border-white/10"
       }`}
-      title={lit ? `${days} дней подряд` : "Серия прервана — вернись сегодня!"}
+      title={lit ? t("kk.streakDays", { days }) : t("kk.streakBroken")}
     >
       <Flame className={`h-4 w-4 ${lit ? "text-orange-400" : "text-white/30"}`} />
       <span className={`text-sm font-bold ${lit ? "text-orange-300" : "text-white/40"}`}>{days}</span>
