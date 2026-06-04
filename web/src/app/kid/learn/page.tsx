@@ -7,9 +7,11 @@ import { useChildStore } from "@/store/child";
 import { LESSONS, BADGES, type Lesson } from "@/lib/lessons";
 import { KCard } from "@/components/kidkit";
 import { GraduationCap, Star, ArrowLeft, CheckCircle2, Zap } from "lucide-react";
+import { useT } from "@/i18n/locale";
 
 export default function KidLearnPage() {
   const { isChildAuthed } = useChildStore();
+  const t = useT();
   const qc = useQueryClient();
 
   const { data: progress } = useQuery({
@@ -67,7 +69,7 @@ export default function KidLearnPage() {
           onClick={() => setActive(null)}
           className="text-sm text-fuchsia-300 mb-3 inline-flex items-center gap-1"
         >
-          <ArrowLeft className="h-4 w-4" /> Назад к урокам
+          <ArrowLeft className="h-4 w-4" /> {t("kidl.back")}
         </button>
 
         <KCard className="p-5">
@@ -113,13 +115,13 @@ export default function KidLearnPage() {
               <div className="mt-4 text-center">
                 {correct ? (
                   <p className="text-emerald-300 font-semibold inline-flex items-center gap-1.5">
-                    {alreadyDone ? "Снова верно! 🎉" : <>Верно! +{active.stars} <Star className="h-4 w-4 fill-current" /> <span className="text-cyan-300 inline-flex items-center gap-0.5"><Zap className="h-3.5 w-3.5" /> XP</span></>}
+                    {alreadyDone ? t("kidl.correctAgain") : <>{t("kidl.correct")} +{active.stars} <Star className="h-4 w-4 fill-current" /> <span className="text-cyan-300 inline-flex items-center gap-0.5"><Zap className="h-3.5 w-3.5" /> XP</span></>}
                   </p>
                 ) : (
                   <div>
-                    <p className="text-rose-300 font-medium mb-2">Почти! Попробуй ещё разок 🙂</p>
+                    <p className="text-rose-300 font-medium mb-2">{t("kidl.almost")}</p>
                     <button onClick={() => setAnswered(null)} className="text-sm text-fuchsia-300 font-medium">
-                      Ответить заново
+                      {t("kidl.retry")}
                     </button>
                   </div>
                 )}
@@ -128,7 +130,7 @@ export default function KidLearnPage() {
                     onClick={() => setActive(null)}
                     className="mt-3 block mx-auto bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-full px-6 py-2 text-sm font-semibold"
                   >
-                    Дальше
+                    {t("kidl.next")}
                   </button>
                 )}
               </div>
@@ -142,18 +144,18 @@ export default function KidLearnPage() {
   // ── Lesson list ──
   return (
     <div>
-      <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><GraduationCap className="h-4 w-4 text-fuchsia-300" /> Учёба про деньги</h2>
-      <p className="text-xs text-white/40 mb-3 px-1">Проходи уроки, отвечай на вопросы — копи звёзды и XP</p>
+      <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><GraduationCap className="h-4 w-4 text-fuchsia-300" /> {t("kidl.title")}</h2>
+      <p className="text-xs text-white/40 mb-3 px-1">{t("kidl.subtitle")}</p>
 
       {/* Stars + badges */}
       <KCard className="p-4 mb-4 bg-gradient-to-br from-amber-500/20 to-orange-500/10 border-amber-500/20">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white/60 text-xs">Мои звёзды</p>
+            <p className="text-white/60 text-xs">{t("kidl.myStars")}</p>
             <p className="text-3xl font-extrabold flex items-center gap-1.5">{totalStars} <Star className="h-6 w-6 text-amber-400 fill-amber-400" /></p>
           </div>
           <div className="text-right">
-            <p className="text-white/60 text-xs">Уроков пройдено</p>
+            <p className="text-white/60 text-xs">{t("kidl.lessonsDone")}</p>
             <p className="text-2xl font-bold">{completedCount} / {LESSONS.length}</p>
           </div>
         </div>

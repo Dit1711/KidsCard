@@ -346,6 +346,32 @@ const ru: Dictionary = {
   "kidg.earned": "заработано {sum}",
   "kidg.perMonthEst": "≈ +{sum}/мес",
   "kidg.achieved": "Цель достигнута!",
+
+  // kid: learn
+  "kidl.back": "Назад к урокам",
+  "kidl.correctAgain": "Снова верно! 🎉",
+  "kidl.correct": "Верно!",
+  "kidl.almost": "Почти! Попробуй ещё разок 🙂",
+  "kidl.retry": "Ответить заново",
+  "kidl.next": "Дальше",
+  "kidl.title": "Учёба про деньги",
+  "kidl.subtitle": "Проходи уроки, отвечай на вопросы — копи звёзды и XP",
+  "kidl.myStars": "Мои звёзды",
+  "kidl.lessonsDone": "Уроков пройдено",
+
+  // kid: shop / spending
+  "kids.bought": "Куплено! {cat}",
+  "kids.errLimit": "Упс! На сегодня лимит исчерпан 🙊",
+  "kids.errCatLimit": "На эту категорию лимит исчерпан 🙊",
+  "kids.errFunds": "Не хватает денег на карте 💸",
+  "kids.errGeneric": "Не получилось купить, попробуй ещё",
+  "kids.frozen": "Карта заморожена",
+  "kids.unavailable": "Карта недоступна",
+  "kids.whatBuy": "Что покупаем?",
+  "kids.howMuch": "Сколько потратить?",
+  "kids.buying": "Покупаем…",
+  "kids.buyFor": "Купить {cat} за {sum}",
+  "kids.pickCategory": "Выбери категорию",
 };
 
 const uz: Dictionary = {
@@ -671,6 +697,30 @@ const uz: Dictionary = {
   "kidg.earned": "ishlandi {sum}",
   "kidg.perMonthEst": "≈ +{sum}/oy",
   "kidg.achieved": "Maqsadga erishildi!",
+
+  "kidl.back": "Darslarga qaytish",
+  "kidl.correctAgain": "Yana to'g'ri! 🎉",
+  "kidl.correct": "To'g'ri!",
+  "kidl.almost": "Deyarli! Yana urinib ko'r 🙂",
+  "kidl.retry": "Qayta javob berish",
+  "kidl.next": "Keyingi",
+  "kidl.title": "Pul haqida ta'lim",
+  "kidl.subtitle": "Darslardan o't, savollarga javob ber — yulduz va XP yig'",
+  "kidl.myStars": "Mening yulduzlarim",
+  "kidl.lessonsDone": "Darslar o'tilgan",
+
+  "kids.bought": "Sotib olindi! {cat}",
+  "kids.errLimit": "Voy! Bugunga limit tugadi 🙊",
+  "kids.errCatLimit": "Bu toifaga limit tugadi 🙊",
+  "kids.errFunds": "Kartada pul yetmaydi 💸",
+  "kids.errGeneric": "Sotib bo'lmadi, qayta urinib ko'r",
+  "kids.frozen": "Karta muzlatilgan",
+  "kids.unavailable": "Karta mavjud emas",
+  "kids.whatBuy": "Nima sotib olamiz?",
+  "kids.howMuch": "Qancha sarflaymiz?",
+  "kids.buying": "Sotib olinmoqda…",
+  "kids.buyFor": "{cat}ni {sum}ga sotib olish",
+  "kids.pickCategory": "Toifani tanla",
 };
 
 const en: Dictionary = {
@@ -996,6 +1046,30 @@ const en: Dictionary = {
   "kidg.earned": "earned {sum}",
   "kidg.perMonthEst": "≈ +{sum}/mo",
   "kidg.achieved": "Goal reached!",
+
+  "kidl.back": "Back to lessons",
+  "kidl.correctAgain": "Correct again! 🎉",
+  "kidl.correct": "Correct!",
+  "kidl.almost": "Almost! Try again 🙂",
+  "kidl.retry": "Answer again",
+  "kidl.next": "Next",
+  "kidl.title": "Money lessons",
+  "kidl.subtitle": "Take lessons, answer questions — collect stars and XP",
+  "kidl.myStars": "My stars",
+  "kidl.lessonsDone": "Lessons done",
+
+  "kids.bought": "Bought! {cat}",
+  "kids.errLimit": "Oops! Today's limit is used up 🙊",
+  "kids.errCatLimit": "This category's limit is used up 🙊",
+  "kids.errFunds": "Not enough money on the card 💸",
+  "kids.errGeneric": "Couldn't buy, try again",
+  "kids.frozen": "Card frozen",
+  "kids.unavailable": "Card unavailable",
+  "kids.whatBuy": "What are we buying?",
+  "kids.howMuch": "How much to spend?",
+  "kids.buying": "Buying…",
+  "kids.buyFor": "Buy {cat} for {sum}",
+  "kids.pickCategory": "Pick a category",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = { ru, uz, en };

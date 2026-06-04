@@ -5,7 +5,7 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-import { CATEGORIES, type SpendCategory } from "@/lib/categories";
+import { CATEGORIES, catLabel, type SpendCategory } from "@/lib/categories";
 import { KCard } from "@/components/kidkit";
 import { ShoppingBag, Snowflake } from "lucide-react";
 import { useT } from "@/i18n/locale";
@@ -46,7 +46,7 @@ export default function KidShopPage() {
       qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-tx", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-limit-usage", card?.id] });
-      setShopMsg({ ok: true, text: `Куплено! ${shopCat!.label}` });
+      setShopMsg({ ok: true, text: t("kids.bought", { cat: catLabel(shopCat!.mcc) }) });
       setShopAmount("");
     },
     onError: (err: unknown) => {
@@ -54,23 +54,23 @@ export default function KidShopPage() {
       const code = e.response?.data?.error?.code;
       const text =
         code === "LIMIT_EXCEEDED"
-          ? "Упс! На сегодня лимит исчерпан 🙊"
+          ? t("kids.errLimit")
           : code === "CATEGORY_LIMIT_EXCEEDED"
-          ? "На эту категорию лимит исчерпан 🙊"
+          ? t("kids.errCatLimit")
           : code === "INSUFFICIENT_FUNDS"
-          ? "Не хватает денег на карте 💸"
-          : "Не получилось купить, попробуй ещё";
+          ? t("kids.errFunds")
+          : t("kids.errGeneric");
       setShopMsg({ ok: false, text });
     },
   });
 
   if (!card) {
-    return <KCard className="p-8 text-center text-white/40">У тебя пока нет карты 🙃</KCard>;
+    return <KCard className="p-8 text-center text-white/40">{t("kidg.noCard")}</KCard>;
   }
   if (card.status !== "ACTIVE") {
     return (
       <KCard className="p-8 text-center text-white/40 inline-flex flex-col items-center gap-2 w-full">
-        {card.status === "FROZEN" ? <><Snowflake className="h-6 w-6 text-cyan-300" /> Карта заморожена</> : "Карта недоступна"}
+        {card.status === "FROZEN" ? <><Snowflake className="h-6 w-6 text-cyan-300" /> {t("kids.frozen")}</> : t("kids.unavailable")}
       </KCard>
     );
   }
@@ -83,7 +83,7 @@ export default function KidShopPage() {
       </div>
 
       <KCard className="p-4 space-y-3">
-        <p className="text-sm text-white/50">Что покупаем?</p>
+        <p className="text-sm text-white/50">{t("kids.whatBuy")}</p>
         <div className="grid grid-cols-4 gap-2">
           {CATEGORIES.map((c) => (
             <button
@@ -96,13 +96,13 @@ export default function KidShopPage() {
               }`}
             >
               <c.Icon className="h-5 w-5" style={{ color: c.color }} />
-              <span className="text-[11px] text-white/60">{c.label}</span>
+              <span className="text-[11px] text-white/60">{catLabel(c.mcc)}</span>
             </button>
           ))}
         </div>
         <input
           type="number"
-          placeholder="Сколько потратить?"
+          placeholder={t("kids.howMuch")}
           value={shopAmount}
           onChange={(e) => setShopAmount(e.target.value)}
           className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:border-fuchsia-400/60"
@@ -118,10 +118,10 @@ export default function KidShopPage() {
           className="w-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
         >
           {spend.isPending
-            ? "Покупаем…"
+            ? t("kids.buying")
             : shopCat
-            ? `Купить ${shopCat.label} за ${shopAmount ? formatSum(parseFloat(shopAmount)) : "…"}`
-            : "Выбери категорию"}
+            ? t("kids.buyFor", { cat: catLabel(shopCat.mcc), sum: shopAmount ? formatSum(parseFloat(shopAmount)) : "…" })
+            : t("kids.pickCategory")}
         </button>
       </KCard>
     </div>
