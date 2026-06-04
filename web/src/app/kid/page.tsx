@@ -6,9 +6,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { categoryLabel, periodRemainingLabel } from "@/lib/categories";
+import { useT } from "@/i18n/locale";
 import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
-import { KCard, XpBar, LEAGUE_META } from "@/components/kidkit";
+import { KCard, XpBar, LEAGUE_META, leagueLabel } from "@/components/kidkit";
 import {
   Palette, Snowflake, TrendingUp, ShieldCheck, Wallet, Send,
   PiggyBank, Award, Target, GraduationCap, Crown, Trophy, Lock, type LucideIcon,
@@ -19,11 +20,11 @@ function formatDate(iso: string) {
 }
 
 const typeMeta: Record<string, { label: string; icon: string }> = {
-  TOPUP: { label: "Пополнение", icon: "💰" },
-  PURCHASE: { label: "Покупка", icon: "🛒" },
-  ALLOWANCE: { label: "Карманные", icon: "💸" },
-  REFUND: { label: "Возврат", icon: "↩️" },
-  TRANSFER: { label: "Перевод", icon: "🔁" },
+  TOPUP: { label: "kidh.txTopup", icon: "💰" },
+  PURCHASE: { label: "kidh.txPurchase", icon: "🛒" },
+  ALLOWANCE: { label: "kidh.txAllowance", icon: "💸" },
+  REFUND: { label: "kidh.txRefund", icon: "↩️" },
+  TRANSFER: { label: "kidh.txTransfer", icon: "🔁" },
 };
 
 const BADGE_ICON: Record<string, LucideIcon> = {
@@ -38,6 +39,7 @@ const BADGE_ICON: Record<string, LucideIcon> = {
 
 export default function KidHomePage() {
   const { isChildAuthed } = useChildStore();
+  const t = useT();
   const qc = useQueryClient();
 
   const { data: cards } = useQuery({
@@ -110,19 +112,19 @@ export default function KidHomePage() {
   });
 
   const reqStatus: Record<string, { label: string; cls: string }> = {
-    PENDING: { label: "Ждём ответа", cls: "text-amber-300" },
-    APPROVED: { label: "Одобрено", cls: "text-emerald-300" },
-    DECLINED: { label: "Отклонено", cls: "text-white/40" },
+    PENDING: { label: "kidh.reqWaiting", cls: "text-amber-300" },
+    APPROVED: { label: "requests.statusApproved", cls: "text-emerald-300" },
+    DECLINED: { label: "requests.statusDeclined", cls: "text-white/40" },
   };
 
   const league = gami ? LEAGUE_META[gami.league] ?? LEAGUE_META.BRONZE : null;
   const mascotMsg = !gami
     ? ""
     : !gami.activeToday
-    ? "Сделай что-то полезное сегодня, чтобы не потерять серию 🔥"
+    ? t("kidh.mascotIdle")
     : gami.streakDays >= 3
-    ? `Огонь! ${gami.streakDays} дней подряд — так держать 🔥`
-    : "Отличный старт! Продолжай в том же духе ✨";
+    ? t("kidh.mascotStreak", { days: gami.streakDays })
+    : t("kidh.mascotStart");
 
   return (
     <>
@@ -131,15 +133,15 @@ export default function KidHomePage() {
         <KCard className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold">Уровень {gami.level}</p>
-              <p className="text-[11px] text-white/50">{gami.xpIntoLevel} / {gami.xpForNext} XP до ур. {gami.level + 1}</p>
+              <p className="text-sm font-semibold">{t("kidh.level", { level: gami.level })}</p>
+              <p className="text-[11px] text-white/50">{t("kidh.xpTo", { into: gami.xpIntoLevel, need: gami.xpForNext, next: gami.level + 1 })}</p>
             </div>
             {league && (
               <span
                 className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border"
                 style={{ color: league.color, borderColor: `${league.color}40`, backgroundColor: `${league.color}1a` }}
               >
-                <Trophy className="h-3.5 w-3.5" /> {league.label}
+                <Trophy className="h-3.5 w-3.5" /> {leagueLabel(gami.league)}
               </span>
             )}
           </div>
@@ -150,7 +152,7 @@ export default function KidHomePage() {
 
       {/* Card / balance */}
       {!card && (
-        <KCard className="p-8 text-center text-white/40">У тебя пока нет карты 🙃</KCard>
+        <KCard className="p-8 text-center text-white/40">{t("kidg.noCard")}</KCard>
       )}
       {card && (
         <div className="space-y-3">
@@ -160,35 +162,35 @@ export default function KidHomePage() {
               <button
                 onClick={() => setShowDesign(!showDesign)}
                 className="grid h-9 w-9 place-items-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                title="Оформление карты"
+                title={t("kidh.cardDesign")}
               >
                 <Palette className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-white/70 text-xs mb-1">Мои деньги</p>
+            <p className="text-white/70 text-xs mb-1">{t("kidh.myMoney")}</p>
             <p className="text-4xl font-extrabold mb-6">{formatSum(balance)}</p>
             <p className="font-mono tracking-widest text-white/90">{card.maskedPan}</p>
             {card.status !== "ACTIVE" && (
               <p className="mt-3 text-xs bg-white/20 rounded-full px-3 py-1 inline-flex items-center gap-1.5">
-                {card.status === "FROZEN" ? <><Snowflake className="h-3.5 w-3.5" /> Карта заморожена</> : "Карта недоступна"}
+                {card.status === "FROZEN" ? <><Snowflake className="h-3.5 w-3.5" /> {t("kids.frozen")}</> : t("kids.unavailable")}
               </p>
             )}
           </CardSurface>
 
           {showDesign && (
             <KCard className="p-4 space-y-3">
-              <p className="text-sm font-bold flex items-center gap-1.5"><Palette className="h-4 w-4 text-fuchsia-300" /> Цвет карты</p>
+              <p className="text-sm font-bold flex items-center gap-1.5"><Palette className="h-4 w-4 text-fuchsia-300" /> {t("kidh.cardColor")}</p>
               <div className="grid grid-cols-4 gap-2">
-                {CARD_THEMES.map((t) => (
+                {CARD_THEMES.map((th) => (
                   <button
-                    key={t.key}
-                    onClick={() => setDesign.mutate({ theme: t.key, pattern: card.pattern })}
-                    className={`h-12 rounded-xl bg-gradient-to-br ${t.grad} ${card.theme === t.key ? "ring-2 ring-offset-2 ring-offset-[#08080f] ring-fuchsia-400" : ""}`}
-                    title={t.label}
+                    key={th.key}
+                    onClick={() => setDesign.mutate({ theme: th.key, pattern: card.pattern })}
+                    className={`h-12 rounded-xl bg-gradient-to-br ${th.grad} ${card.theme === th.key ? "ring-2 ring-offset-2 ring-offset-[#08080f] ring-fuchsia-400" : ""}`}
+                    title={th.label}
                   />
                 ))}
               </div>
-              <p className="text-sm font-bold pt-1">Узор</p>
+              <p className="text-sm font-bold pt-1">{t("kidh.pattern")}</p>
               <div className="flex gap-2 flex-wrap">
                 {CARD_PATTERNS.map((p) => (
                   <button
@@ -211,8 +213,8 @@ export default function KidHomePage() {
       {gami && (
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
-            <h2 className="text-base font-bold flex items-center gap-1.5"><Award className="h-4 w-4 text-fuchsia-300" /> Достижения</h2>
-            <span className="text-[11px] text-white/40">{gami.badges.filter((b) => b.earned).length} из {gami.badges.length}</span>
+            <h2 className="text-base font-bold flex items-center gap-1.5"><Award className="h-4 w-4 text-fuchsia-300" /> {t("analytics.badges")}</h2>
+            <span className="text-[11px] text-white/40">{t("analytics.ofCount", { earned: gami.badges.filter((b) => b.earned).length, total: gami.badges.length })}</span>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {gami.badges.map((b) => {
@@ -242,9 +244,9 @@ export default function KidHomePage() {
       {card && (
         <div>
           <div className="flex items-center justify-between mb-2 px-1">
-            <h2 className="text-base font-bold flex items-center gap-1.5"><Send className="h-4 w-4 text-fuchsia-300" /> Попросить у родителей</h2>
+            <h2 className="text-base font-bold flex items-center gap-1.5"><Send className="h-4 w-4 text-fuchsia-300" /> {t("kidh.askParents")}</h2>
             <button onClick={() => setShowReq(!showReq)} className="text-sm text-fuchsia-300 font-medium">
-              {showReq ? "Отмена" : "Попросить"}
+              {showReq ? t("common.cancel") : t("kidh.ask")}
             </button>
           </div>
 
@@ -257,7 +259,7 @@ export default function KidHomePage() {
                     reqType === "TOPUP" ? "border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-200" : "border-white/10 text-white/60"
                   }`}
                 >
-                  <Wallet className="h-4 w-4" /> Пополнить
+                  <Wallet className="h-4 w-4" /> {t("common.topUp")}
                 </button>
                 <button
                   onClick={() => setReqType("LIMIT")}
@@ -265,13 +267,13 @@ export default function KidHomePage() {
                     reqType === "LIMIT" ? "border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-200" : "border-white/10 text-white/60"
                   }`}
                 >
-                  <ShieldCheck className="h-4 w-4" /> Поднять лимит
+                  <ShieldCheck className="h-4 w-4" /> {t("kidh.raiseLimit")}
                 </button>
               </div>
 
               {reqType === "LIMIT" && (
                 <div className="flex gap-2">
-                  {[{ v: "DAILY", l: "День" }, { v: "WEEKLY", l: "Неделя" }, { v: "MONTHLY", l: "Месяц" }].map((p) => (
+                  {[{ v: "DAILY", l: "kidh.day" }, { v: "WEEKLY", l: "kidh.week" }, { v: "MONTHLY", l: "kidh.month" }].map((p) => (
                     <button
                       key={p.v}
                       onClick={() => setReqPeriod(p.v)}
@@ -279,7 +281,7 @@ export default function KidHomePage() {
                         reqPeriod === p.v ? "border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-200" : "border-white/10 text-white/60"
                       }`}
                     >
-                      {p.l}
+                      {t(p.l)}
                     </button>
                   ))}
                 </div>
@@ -287,13 +289,13 @@ export default function KidHomePage() {
 
               <input
                 type="number"
-                placeholder={reqType === "TOPUP" ? "Сколько денег?" : "Новый лимит (сум)"}
+                placeholder={reqType === "TOPUP" ? t("kidh.howMuchMoney") : t("kidh.newLimit")}
                 value={reqAmount}
                 onChange={(e) => setReqAmount(e.target.value)}
                 className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:border-fuchsia-400/60"
               />
               <input
-                placeholder="Зачем? (по желанию)"
+                placeholder={t("kidh.why")}
                 value={reqNote}
                 onChange={(e) => setReqNote(e.target.value)}
                 className="w-full rounded-xl bg-white/[0.05] border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-colors focus:border-fuchsia-400/60"
@@ -303,7 +305,7 @@ export default function KidHomePage() {
                 disabled={!reqAmount || createRequest.isPending}
                 className="w-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
               >
-                {createRequest.isPending ? "Отправляем…" : "Отправить запрос"}
+                {createRequest.isPending ? t("kidh.sending") : t("kidh.sendRequest")}
               </button>
             </KCard>
           )}
@@ -317,11 +319,11 @@ export default function KidHomePage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium flex items-center gap-1.5">
                         {r.type === "TOPUP" ? <Wallet className="h-3.5 w-3.5 text-white/60" /> : <ShieldCheck className="h-3.5 w-3.5 text-white/60" />}
-                        {r.type === "TOPUP" ? "Пополнение" : "Лимит"} · {formatSum(r.amountUzs)}
+                        {r.type === "TOPUP" ? t("kidh.txTopup") : t("kidh.limitWord")} · {formatSum(r.amountUzs)}
                       </p>
                       {r.note && <p className="text-xs text-white/40 truncate">«{r.note}»</p>}
                     </div>
-                    <span className={`shrink-0 text-xs font-semibold ${st.cls}`}>{st.label}</span>
+                    <span className={`shrink-0 text-xs font-semibold ${st.cls}`}>{t(st.label)}</span>
                   </KCard>
                 );
               })}
@@ -333,13 +335,13 @@ export default function KidHomePage() {
       {/* My limits */}
       {limitUsage && limitUsage.length > 0 && (
         <div>
-          <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-fuchsia-300" /> Мои лимиты</h2>
-          <p className="text-xs text-white/40 mb-3 px-1">Сколько можно ещё потратить</p>
+          <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-fuchsia-300" /> {t("kidh.myLimits")}</h2>
+          <p className="text-xs text-white/40 mb-3 px-1">{t("kidh.canSpend")}</p>
           <div className="space-y-2">
             {limitUsage.map((u, i) => {
               const label =
                 u.limitType === "CATEGORY"
-                  ? `${categoryLabel(u.category)} (в месяц)`
+                  ? t("kidh.catMonthly", { cat: categoryLabel(u.category) })
                   : periodRemainingLabel(u.limitType);
               const pct = u.limitUzs > 0 ? Math.min(100, Math.round((u.spentUzs / u.limitUzs) * 100)) : 0;
               const low = u.remainingUzs <= u.limitUzs * 0.15;
@@ -348,13 +350,13 @@ export default function KidHomePage() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm font-medium text-white/80">{label}</span>
                     <span className={`text-xs font-semibold ${low ? "text-rose-300" : "text-emerald-300"}`}>
-                      осталось {formatSum(u.remainingUzs)}
+                      {t("kidh.left", { sum: formatSum(u.remainingUzs) })}
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                     <div className={`h-full rounded-full ${low ? "bg-rose-400" : "bg-emerald-400"}`} style={{ width: `${pct}%` }} />
                   </div>
-                  <p className="text-[11px] text-white/40 mt-1">потрачено {formatSum(u.spentUzs)} из {formatSum(u.limitUzs)}</p>
+                  <p className="text-[11px] text-white/40 mt-1">{t("kidh.spentOf", { spent: formatSum(u.spentUzs), limit: formatSum(u.limitUzs) })}</p>
                 </KCard>
               );
             })}
@@ -365,8 +367,8 @@ export default function KidHomePage() {
       {/* Recent transactions */}
       {card && (
         <div>
-          <h2 className="text-base font-bold mb-3 px-1">История</h2>
-          {txPage?.content.length === 0 && <p className="text-white/40 text-sm px-1">Пока операций нет</p>}
+          <h2 className="text-base font-bold mb-3 px-1">{t("kidh.history")}</h2>
+          {txPage?.content.length === 0 && <p className="text-white/40 text-sm px-1">{t("kidh.noTx")}</p>}
           <div className="space-y-2">
             {txPage?.content.map((tx) => {
               const isCredit = tx.direction === "CREDIT";
@@ -375,7 +377,7 @@ export default function KidHomePage() {
                 <KCard key={tx.id} className="p-3 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center text-lg">{meta.icon}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.merchantName ?? meta.label}</p>
+                    <p className="text-sm font-medium truncate">{tx.merchantName ?? t(meta.label)}</p>
                     <p className="text-xs text-white/40">{formatDate(tx.createdAt)}</p>
                   </div>
                   <p className={`font-bold text-sm ${isCredit ? "text-emerald-300" : "text-white"}`}>
