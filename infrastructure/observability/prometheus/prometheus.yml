@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # Every Spring Boot service exposes Micrometer metrics at /actuator/prometheus.
+  - job_name: kidscard-services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - auth-service:8081
+          - family-service:8082
+          - card-service:8083
+          - payment-service:8084
+          - open-banking-service:8085
+          - notification-service:8086
+          - kyc-service:8087
+          - compliance-service:8088
+    relabel_configs:
+      # Derive a short `service` label (e.g. "payment-service") from host:port.
+      - source_labels: [__address__]
+        regex: '([^:]+):.*'
+        target_label: service
+        replacement: '$1'

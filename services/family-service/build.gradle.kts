@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgresql)
     implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.micrometer.tracing.bridge.otel)
+    implementation(libs.opentelemetry.exporter.otlp)
     implementation(libs.spring.boot.starter.aop)
     implementation(libs.resilience4j.spring.boot3)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)

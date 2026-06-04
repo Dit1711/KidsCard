@@ -10,7 +10,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import uz.kidscard.common.http.internalRestTemplate
+import org.springframework.web.client.RestTemplate
 import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -20,9 +20,9 @@ private data class UserLookupBody(val success: Boolean, val data: Map<String, St
 @Service
 class AuthClient(
     @Value("\${app.auth-service.url:http://localhost:8081}") private val authUrl: String,
+    private val restTemplate: RestTemplate,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val restTemplate = internalRestTemplate()
 
     /** Returns the userId for a phone, or null if no such registered user / auth unavailable. */
     @Retry(name = "auth", fallbackMethod = "findUserIdFallback")

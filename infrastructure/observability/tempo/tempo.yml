@@ -1,0 +1,25 @@
+server:
+  http_listen_port: 3200
+
+# Receive spans from every service over OTLP (HTTP on 4318, gRPC on 4317).
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+        grpc:
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 24h   # local/dev retention — keep traces for a day
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/blocks
+    wal:
+      path: /var/tempo/wal

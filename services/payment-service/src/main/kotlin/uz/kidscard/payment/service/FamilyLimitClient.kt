@@ -9,8 +9,8 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
 import java.util.UUID
-import uz.kidscard.common.http.internalRestTemplate
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class LimitRuleDto(
@@ -43,9 +43,9 @@ data class FamilyApiResponse<T>(
 @Service
 class FamilyLimitClient(
     @Value("\${app.family-service.url:http://localhost:8082}") private val familyServiceUrl: String,
+    private val restTemplate: RestTemplate,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val restTemplate = internalRestTemplate()
 
     /** Active limits for a child via the family-scoped (parent) endpoint. */
     @Retry(name = "family", fallbackMethod = "limitsFallback")

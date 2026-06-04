@@ -41,6 +41,8 @@ springdoc-openapi-starter-webflux-ui = { module = "org.springdoc:springdoc-opena
 
 otel-spring-boot-starter = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter", version.ref = "otel" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+micrometer-tracing-bridge-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
 
 spring-boot-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }

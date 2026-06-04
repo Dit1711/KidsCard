@@ -1,0 +1,60 @@
+groups:
+  - name: kidscard-platform
+    rules:
+      # A service stopped being scrapeable — it's down or unreachable.
+      - alert: ServiceDown
+        expr: up{job="kidscard-services"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.service }} is down"
+          description: "Prometheus cannot scrape {{ $labels.service }} for >1m."
+
+      # 5xx error ratio above 5% over 5 minutes.
+      - alert: HighErrorRate
+        expr: |
+          sum by (service) (rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+            /
+          sum by (service) (rate(http_server_requests_seconds_count[5m]))
+            > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "5xx error rate >5% on {{ $labels.service }}"
+
+      # p95 latency over the ТЗ target of 300 ms.
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (service, le) (rate(http_server_requests_seconds_bucket[5m]))
+          ) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency >300ms on {{ $labels.service }}"
+
+      # A circuit breaker opened — a downstream dependency is unhealthy.
+      - alert: CircuitBreakerOpen
+        expr: resilience4j_circuitbreaker_state{state="open"} == 1
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker '{{ $labels.name }}' is OPEN ({{ $labels.service }})"
+
+      # Ledger reconciliation found a money-integrity violation — page someone.
+      - alert: LedgerReconciliationDiscrepancy
+        expr: |
+          payment_reconciliation_unbalanced_transactions > 0
+            or payment_reconciliation_negative_accounts > 0
+            or payment_reconciliation_systemwide_net != 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ledger reconciliation discrepancy detected"
+          description: "Unbalanced tx / negative accounts / non-zero system net in the payment ledger."

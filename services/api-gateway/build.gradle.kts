@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.spring.boot.starter.oauth2.resource.server)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.micrometer.tracing.bridge.otel)
+    implementation(libs.opentelemetry.exporter.otlp)
     developmentOnly(libs.spring.boot.devtools)
 
     testImplementation(libs.spring.boot.test)

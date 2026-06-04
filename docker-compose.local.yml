@@ -21,6 +21,11 @@ x-service-env: &service-env
   REDIS_PASSWORD: kidscard_dev
   KAFKA_BROKERS: kafka:29092
   JWT_SECRET: kids-card-local-dev-secret-minimum-32-characters
+  # Observability: export traces to Tempo (OTLP) and trace Kafka producers/consumers.
+  MANAGEMENT_OTLP_TRACING_ENDPOINT: http://tempo:4318/v1/traces
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+  SPRING_KAFKA_TEMPLATE_OBSERVATION_ENABLED: "true"
+  SPRING_KAFKA_LISTENER_OBSERVATION_ENABLED: "true"
 
 x-depends: &depends-infra
   postgres: { condition: service_healthy }
@@ -143,8 +148,50 @@ services:
       - notification-service
       - kyc-service
 
+  # ── Observability stack ──────────────────────────────────────────────
+  # Tempo stores distributed traces (receives OTLP from every service).
+  tempo:
+    image: grafana/tempo:2.6.1
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./infrastructure/observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo_data:/var/tempo
+
+  # Prometheus scrapes /actuator/prometheus from every service + holds alert rules.
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./infrastructure/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+
+  # Grafana — dashboards + datasources auto-provisioned. Open http://localhost:3001
+  grafana:
+    image: grafana/grafana:11.3.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./infrastructure/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+      - tempo
+
 volumes:
   postgres_data:
   redis_data:
   zookeeper_data:
   kafka_data:
+  tempo_data:
+  prometheus_data:
+  grafana_data:
