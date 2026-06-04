@@ -10,6 +10,7 @@ import {
 import { Panel, DInput, DButton, DBadge, DSelect, Pill } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
+import { useT } from "@/i18n/locale";
 import { toast } from "sonner";
 import {
   Snowflake, Palette, Ban, ShieldCheck, Trash2, ChevronDown,
@@ -23,25 +24,24 @@ function formatDate(iso: string) {
   });
 }
 
-const typeLabel: Record<string, string> = {
-  TOPUP: "Пополнение", PURCHASE: "Покупка", REFUND: "Возврат",
-  TRANSFER: "Перевод", ALLOWANCE: "Карманные деньги",
+const typeLabelKey: Record<string, string> = {
+  TOPUP: "cdm.typeTopup", PURCHASE: "cdm.typePurchase", REFUND: "cdm.typeRefund",
+  TRANSFER: "cdm.typeTransfer", ALLOWANCE: "cdm.typeAllowance",
 };
 
-const DISPUTE_REASONS: { value: DisputeReason; label: string }[] = [
-  { value: "UNRECOGNIZED", label: "Не узнаю покупку" },
-  { value: "WRONG_AMOUNT", label: "Неверная сумма" },
-  { value: "NOT_RECEIVED", label: "Товар/услуга не получены" },
-  { value: "DUPLICATE", label: "Двойное списание" },
-  { value: "OTHER", label: "Другое" },
+const DISPUTE_REASONS: { value: DisputeReason; labelKey: string }[] = [
+  { value: "UNRECOGNIZED", labelKey: "cdm.reasonUnrecognized" },
+  { value: "WRONG_AMOUNT", labelKey: "cdm.reasonWrongAmount" },
+  { value: "NOT_RECEIVED", labelKey: "cdm.reasonNotReceived" },
+  { value: "DUPLICATE", labelKey: "cdm.reasonDuplicate" },
+  { value: "OTHER", labelKey: "cdm.reasonOther" },
 ];
-const reasonLabel = (r: string) => DISPUTE_REASONS.find((x) => x.value === r)?.label ?? r;
 
-const DISPUTE_STATUS: Record<string, { label: string; tone: "warn" | "success" | "danger" | "muted" }> = {
-  OPEN: { label: "Спор открыт", tone: "warn" },
-  UNDER_REVIEW: { label: "На рассмотрении", tone: "warn" },
-  RESOLVED: { label: "Возврат одобрен", tone: "success" },
-  REJECTED: { label: "Спор отклонён", tone: "muted" },
+const DISPUTE_STATUS: Record<string, { labelKey: string; tone: "warn" | "success" | "danger" | "muted" }> = {
+  OPEN: { labelKey: "cdm.statusOpen", tone: "warn" },
+  UNDER_REVIEW: { labelKey: "cdm.statusReview", tone: "warn" },
+  RESOLVED: { labelKey: "cdm.statusResolved", tone: "success" },
+  REJECTED: { labelKey: "cdm.statusRejected", tone: "muted" },
 };
 
 /** Modal with a card's balance, top-up, operations and settings. */
@@ -52,6 +52,11 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const t = useT();
+  const reasonLabel = (r: string) => {
+    const k = DISPUTE_REASONS.find((x) => x.value === r)?.labelKey;
+    return k ? t(k) : r;
+  };
   const cardId = card.id;
   const [showTopUp, setShowTopUp] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -91,17 +96,17 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["disputes", familyId] });
       setDisputeTxId(null); setDisputeDesc(""); setDisputeReason("UNRECOGNIZED");
-      toast.success("Спор открыт. Мы рассмотрим обращение.");
+      toast.success(t("cdm.toastDisputeOpen"));
     },
     onError: (err: unknown) => {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data?.error?.code;
-      toast.error(code === "DISPUTE_ALREADY_OPEN" ? "По этой операции уже открыт спор" : "Не удалось открыть спор");
+      toast.error(code === "DISPUTE_ALREADY_OPEN" ? t("cdm.toastDisputeExists") : t("cdm.toastDisputeError"));
     },
   });
   const withdrawDispute = useMutation({
     mutationFn: (disputeId: string) => disputeService.withdraw(disputeId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["disputes", familyId] }); toast("Спор отозван"); },
-    onError: () => toast.error("Не удалось отозвать спор"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["disputes", familyId] }); toast(t("cdm.toastDisputeWithdrawn")); },
+    onError: () => toast.error(t("cdm.toastDisputeWithdrawError")),
   });
 
   // Transfer (card→card / card→account)
@@ -140,11 +145,11 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
       qc.invalidateQueries({ queryKey: ["transactions", cardId] });
       qc.invalidateQueries({ queryKey: ["transactions", transferTarget] });
       setTransferAmount(""); setTransferTarget(""); setShowTransfer(false);
-      toast.success("Перевод выполнен");
+      toast.success(t("cdm.toastTransferOk"));
     },
     onError: (err: unknown) => {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data?.error?.code;
-      toast.error(code === "INSUFFICIENT_FUNDS" ? "Недостаточно средств на карте" : "Не удалось выполнить перевод");
+      toast.error(code === "INSUFFICIENT_FUNDS" ? t("cdm.toastInsufficient") : t("cdm.toastTransferError"));
     },
   });
 
@@ -160,11 +165,11 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
       qc.invalidateQueries({ queryKey: ["transactions", cardId] });
       qc.invalidateQueries({ queryKey: ["bank-accounts"] });
       setTransferAmount(""); setTransferTarget(""); setShowTransfer(false);
-      toast.success("Деньги выведены на счёт");
+      toast.success(t("cdm.toastPayoutOk"));
     },
     onError: (err: unknown) => {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data?.error?.code;
-      toast.error(code === "INSUFFICIENT_FUNDS" ? "Недостаточно средств на карте" : "Не удалось вывести деньги");
+      toast.error(code === "INSUFFICIENT_FUNDS" ? t("cdm.toastInsufficient") : t("cdm.toastPayoutError"));
     },
   });
 
@@ -187,29 +192,29 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
       qc.invalidateQueries({ queryKey: ["balance", cardId] });
       qc.invalidateQueries({ queryKey: ["transactions", cardId] });
       setTopUpAmount(""); setTopUpDesc(""); setShowTopUp(false);
-      toast.success("Карта пополнена");
+      toast.success(t("cdm.toastTopupOk"));
     },
-    onError: () => toast.error("Ошибка пополнения. Проверьте сумму."),
+    onError: () => toast.error(t("cdm.toastTopupError")),
   });
 
   const freeze = useMutation({
     mutationFn: () => (isFrozen ? cardService.unfreeze : cardService.freeze)(familyId, cardId),
-    onSuccess: () => { refreshCards(); toast(isFrozen ? "Карта разморожена" : "Карта заморожена"); },
+    onSuccess: () => { refreshCards(); toast(isFrozen ? t("cdm.toastUnfrozen") : t("cdm.toastFrozen")); },
   });
   const block = useMutation({
     mutationFn: () => cardService.block(familyId, cardId),
-    onSuccess: () => { refreshCards(); toast("Карта заблокирована"); },
-    onError: () => toast.error("Не удалось заблокировать карту"),
+    onSuccess: () => { refreshCards(); toast(t("cdm.toastBlocked")); },
+    onError: () => toast.error(t("cdm.toastBlockError")),
   });
   const unblock = useMutation({
     mutationFn: () => cardService.unblock(familyId, cardId),
-    onSuccess: () => { refreshCards(); toast.success("Карта разблокирована"); },
-    onError: () => toast.error("Не удалось разблокировать карту"),
+    onSuccess: () => { refreshCards(); toast.success(t("cdm.toastUnblocked")); },
+    onError: () => toast.error(t("cdm.toastUnblockError")),
   });
   const close = useMutation({
     mutationFn: () => cardService.close(familyId, cardId),
-    onSuccess: () => { refreshCards(); toast("Карта удалена"); onClose(); },
-    onError: () => toast.error("Не удалось удалить карту"),
+    onSuccess: () => { refreshCards(); toast(t("cdm.toastDeleted")); onClose(); },
+    onError: () => toast.error(t("cdm.toastDeleteError")),
   });
   const setDesign = useMutation({
     mutationFn: (p: { theme: string; pattern: string }) => cardService.setDesign(familyId, cardId, p.theme, p.pattern),
@@ -220,7 +225,7 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg my-auto rounded-3xl bg-[#15151f] border border-white/10 shadow-2xl">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.07] sticky top-0 bg-[#15151f] rounded-t-3xl">
-          <p className="font-semibold tracking-tight">Карта · {childName}</p>
+          <p className="font-semibold tracking-tight">{t("cdm.title", { name: childName })}</p>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.05] border border-white/10 text-white/50 hover:text-white transition-colors">
             <X className="h-4 w-4" />
           </button>
@@ -250,15 +255,15 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
           {!isBlocked && (
             <Panel className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="font-medium tracking-tight flex items-center gap-2"><Wallet className="h-4 w-4 text-fuchsia-300" /> Пополнение</p>
+                <p className="font-medium tracking-tight flex items-center gap-2"><Wallet className="h-4 w-4 text-fuchsia-300" /> {t("cdm.typeTopup")}</p>
                 <button onClick={() => setShowTopUp(!showTopUp)} className="text-sm text-fuchsia-300 font-medium">
-                  {showTopUp ? "Скрыть" : "Пополнить"}
+                  {showTopUp ? t("cdm.hide") : t("common.topUp")}
                 </button>
               </div>
               {showTopUp && (
                 <div className="space-y-3">
                   <div>
-                    <DInput type="number" placeholder="Сумма (сум)" min="100" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} />
+                    <DInput type="number" placeholder={t("banks.amount")} min="100" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} />
                     <div className="flex gap-2 flex-wrap mt-2">
                       {[10000, 25000, 50000, 100000].map((amt) => (
                         <button key={amt} onClick={() => setTopUpAmount(String(amt))}
@@ -268,9 +273,9 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                       ))}
                     </div>
                   </div>
-                  <DInput placeholder="Комментарий (необязательно)" value={topUpDesc} onChange={(e) => setTopUpDesc(e.target.value)} />
+                  <DInput placeholder={t("cdm.comment")} value={topUpDesc} onChange={(e) => setTopUpDesc(e.target.value)} />
                   <DButton onClick={() => topUp.mutate()} disabled={!topUpAmount || parseFloat(topUpAmount) < 100 || topUp.isPending} className="w-full">
-                    {topUp.isPending ? "Обработка…" : `Пополнить на ${topUpAmount ? formatSum(parseFloat(topUpAmount)) : "…"}`}
+                    {topUp.isPending ? t("cdm.processing") : t("cdm.topUpFor", { sum: topUpAmount ? formatSum(parseFloat(topUpAmount)) : "…" })}
                   </DButton>
                 </div>
               )}
@@ -281,28 +286,28 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
           {!isBlocked && (
             <Panel className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="font-medium tracking-tight flex items-center gap-2"><ArrowLeftRight className="h-4 w-4 text-fuchsia-300" /> Перевод</p>
+                <p className="font-medium tracking-tight flex items-center gap-2"><ArrowLeftRight className="h-4 w-4 text-fuchsia-300" /> {t("cdm.typeTransfer")}</p>
                 <button onClick={() => setShowTransfer(!showTransfer)} className="text-sm text-fuchsia-300 font-medium">
-                  {showTransfer ? "Скрыть" : "Перевести"}
+                  {showTransfer ? t("cdm.hide") : t("cdm.transferBtn")}
                 </button>
               </div>
               {showTransfer && (
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <Pill active={transferMode === "card"} onClick={() => { setTransferMode("card"); setTransferTarget(""); }}>
-                      <span className="inline-flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> На карту</span>
+                      <span className="inline-flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> {t("cdm.toCard")}</span>
                     </Pill>
                     <Pill active={transferMode === "account"} onClick={() => { setTransferMode("account"); setTransferTarget(""); }}>
-                      <span className="inline-flex items-center gap-1.5"><Landmark className="h-3.5 w-3.5" /> На счёт</span>
+                      <span className="inline-flex items-center gap-1.5"><Landmark className="h-3.5 w-3.5" /> {t("cdm.toAccount")}</span>
                     </Pill>
                   </div>
 
                   {transferMode === "card" ? (
                     otherCards.length === 0 ? (
-                      <p className="text-xs text-white/40">Нет других активных карт для перевода.</p>
+                      <p className="text-xs text-white/40">{t("cdm.noOtherCards")}</p>
                     ) : (
                       <DSelect value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)}>
-                        <option value="">Карта получателя</option>
+                        <option value="">{t("cdm.targetCard")}</option>
                         {otherCards.map((c) => (
                           <option key={c.id} value={c.id}>
                             {childName2(c.childId)} · {c.maskedPan}
@@ -312,28 +317,28 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                     )
                   ) : (
                     (accounts ?? []).length === 0 ? (
-                      <p className="text-xs text-white/40">Нет привязанных счетов. Привяжите счёт в разделе «Банк».</p>
+                      <p className="text-xs text-white/40">{t("cdm.noAccounts")}</p>
                     ) : (
                       <DSelect value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)}>
-                        <option value="">Банковский счёт</option>
+                        <option value="">{t("cdm.bankAccount")}</option>
                         {accounts!.map((a) => (
                           <option key={a.id} value={a.id}>
-                            {a.bankCode} · {a.maskedNumber ?? "счёт"}
+                            {a.bankCode} · {a.maskedNumber ?? t("banks.account")}
                           </option>
                         ))}
                       </DSelect>
                     )
                   )}
 
-                  <DInput type="number" placeholder="Сумма (сум)" min="100" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
+                  <DInput type="number" placeholder={t("banks.amount")} min="100" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
                   <DButton
                     className="w-full"
                     disabled={!targetValid || transferCard.isPending || payout.isPending}
                     onClick={() => (transferMode === "card" ? transferCard : payout).mutate()}
                   >
                     {transferCard.isPending || payout.isPending
-                      ? "Перевод…"
-                      : `Перевести ${transferAmount ? formatSum(parseFloat(transferAmount)) : "…"}`}
+                      ? t("banks.transferring")
+                      : t("banks.transfer", { sum: transferAmount ? formatSum(parseFloat(transferAmount)) : "…" })}
                   </DButton>
                 </div>
               )}
@@ -342,9 +347,9 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
 
           {/* Operations */}
           <Panel className="p-4">
-            <p className="font-medium tracking-tight mb-3">Операции</p>
-            {!txPage && <p className="text-white/50 text-sm">Загрузка…</p>}
-            {txPage?.content.length === 0 && <p className="text-white/40 text-sm">Операций по этой карте ещё нет.</p>}
+            <p className="font-medium tracking-tight mb-3">{t("cdm.operations")}</p>
+            {!txPage && <p className="text-white/50 text-sm">{t("common.loading")}</p>}
+            {txPage?.content.length === 0 && <p className="text-white/40 text-sm">{t("cdm.noOps")}</p>}
             <div className="space-y-1 max-h-80 overflow-y-auto">
               {txPage?.content.map((tx) => {
                 const isCredit = tx.direction === "CREDIT";
@@ -361,7 +366,7 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                           {isCredit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                         </span>
                         <div>
-                          <p className="text-sm font-medium">{tx.merchantName ?? typeLabel[tx.type] ?? tx.type}</p>
+                          <p className="text-sm font-medium">{tx.merchantName ?? (typeLabelKey[tx.type] ? t(typeLabelKey[tx.type]) : tx.type)}</p>
                           <p className="text-xs text-white/40">{formatDate(tx.createdAt)}</p>
                         </div>
                       </div>
@@ -377,18 +382,18 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                       <div className="flex items-center justify-end gap-2 mt-1.5">
                         {dispute && st && (
                           <>
-                            <DBadge tone={st.tone}>{st.label}</DBadge>
+                            <DBadge tone={st.tone}>{t(st.labelKey)}</DBadge>
                             <span className="text-[11px] text-white/40 mr-auto">{reasonLabel(dispute.reason)}</span>
                             {isOpen && (
                               <button onClick={() => withdrawDispute.mutate(dispute.id)} disabled={withdrawDispute.isPending}
-                                className="text-[11px] font-medium text-white/50 hover:text-white">Отозвать</button>
+                                className="text-[11px] font-medium text-white/50 hover:text-white">{t("cdm.withdraw")}</button>
                             )}
                           </>
                         )}
                         {canDispute && !raising && (
                           <button onClick={() => setDisputeTxId(tx.id)}
                             className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-300/90 hover:text-rose-300">
-                            <ShieldAlert className="h-3.5 w-3.5" /> Оспорить
+                            <ShieldAlert className="h-3.5 w-3.5" /> {t("cdm.dispute")}
                           </button>
                         )}
                       </div>
@@ -396,22 +401,22 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
 
                     {raising && (
                       <div className="mt-2 rounded-xl bg-white/[0.04] border border-white/10 p-3 space-y-2">
-                        <p className="text-xs font-medium text-white/70">Причина спора</p>
+                        <p className="text-xs font-medium text-white/70">{t("cdm.disputeReason")}</p>
                         <div className="grid grid-cols-1 gap-1.5">
                           {DISPUTE_REASONS.map((r) => (
                             <button key={r.value} onClick={() => setDisputeReason(r.value)}
                               className={`text-left rounded-lg border px-3 py-1.5 text-xs transition-colors ${
                                 disputeReason === r.value ? "border-fuchsia-400/50 bg-fuchsia-500/15 text-fuchsia-100" : "border-white/10 text-white/70 hover:bg-white/[0.05]"
                               }`}>
-                              {r.label}
+                              {t(r.labelKey)}
                             </button>
                           ))}
                         </div>
-                        <DInput placeholder="Комментарий (необязательно)" value={disputeDesc} onChange={(e) => setDisputeDesc(e.target.value)} />
+                        <DInput placeholder={t("cdm.comment")} value={disputeDesc} onChange={(e) => setDisputeDesc(e.target.value)} />
                         <div className="flex gap-2">
-                          <DButton variant="ghost" className="flex-1 py-1.5" onClick={() => { setDisputeTxId(null); setDisputeDesc(""); }}>Отмена</DButton>
+                          <DButton variant="ghost" className="flex-1 py-1.5" onClick={() => { setDisputeTxId(null); setDisputeDesc(""); }}>{t("common.cancel")}</DButton>
                           <DButton className="flex-1 py-1.5" onClick={() => raiseDispute.mutate()} disabled={raiseDispute.isPending}>
-                            {raiseDispute.isPending ? "Отправка…" : "Открыть спор"}
+                            {raiseDispute.isPending ? t("cdm.sending") : t("cdm.openDispute")}
                           </DButton>
                         </div>
                       </div>
@@ -425,7 +430,7 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
           {/* Settings */}
           <Panel className="p-4">
             <button onClick={() => setSettingsOpen(!settingsOpen)} className="flex items-center justify-between w-full">
-              <span className="font-medium tracking-tight flex items-center gap-2"><Settings2 className="h-4 w-4 text-fuchsia-300" /> Настройки карты</span>
+              <span className="font-medium tracking-tight flex items-center gap-2"><Settings2 className="h-4 w-4 text-fuchsia-300" /> {t("cdm.cardSettings")}</span>
               <ChevronDown className={`h-4 w-4 text-white/50 transition-transform ${settingsOpen ? "rotate-180" : ""}`} />
             </button>
 
@@ -435,48 +440,48 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                   {!isBlocked && (
                     <>
                       <DButton variant="outline" className="py-2" onClick={() => freeze.mutate()} disabled={freeze.isPending}>
-                        <Snowflake className="h-4 w-4" /> {isFrozen ? "Разморозить" : "Заморозить"}
+                        <Snowflake className="h-4 w-4" /> {isFrozen ? t("cdm.unfreeze") : t("cdm.freeze")}
                       </DButton>
                       <DButton variant="outline" className="py-2" onClick={() => block.mutate()} disabled={block.isPending}>
-                        <Ban className="h-4 w-4" /> Заблокировать
+                        <Ban className="h-4 w-4" /> {t("cdm.block")}
                       </DButton>
                       <DButton variant="outline" className="py-2" onClick={() => setDesignOpen(!designOpen)}>
-                        <Palette className="h-4 w-4" /> Оформление
+                        <Palette className="h-4 w-4" /> {t("cdm.design")}
                       </DButton>
                     </>
                   )}
                   {isBlocked && (
                     <DButton variant="outline" className="py-2" onClick={() => unblock.mutate()} disabled={unblock.isPending}>
-                      <ShieldCheck className="h-4 w-4" /> Разблокировать
+                      <ShieldCheck className="h-4 w-4" /> {t("cdm.unblock")}
                     </DButton>
                   )}
                   {confirmClose ? (
                     <>
                       <DButton variant="outline" className="py-2 border-rose-400/40 text-rose-300"
                         onClick={() => { close.mutate(); setConfirmClose(false); }} disabled={close.isPending}>
-                        <Trash2 className="h-4 w-4" /> Точно удалить?
+                        <Trash2 className="h-4 w-4" /> {t("cdm.confirmDelete")}
                       </DButton>
-                      <DButton variant="ghost" className="py-2" onClick={() => setConfirmClose(false)}>Отмена</DButton>
+                      <DButton variant="ghost" className="py-2" onClick={() => setConfirmClose(false)}>{t("common.cancel")}</DButton>
                     </>
                   ) : (
                     <DButton variant="ghost" className="py-2 text-rose-300/80 hover:text-rose-300" onClick={() => setConfirmClose(true)}>
-                      <Trash2 className="h-4 w-4" /> Удалить
+                      <Trash2 className="h-4 w-4" /> {t("cdm.delete")}
                     </DButton>
                   )}
                 </div>
 
                 {designOpen && !isBlocked && (
                   <div className="space-y-3 pt-1">
-                    <p className="text-sm font-medium">Цвет карты</p>
+                    <p className="text-sm font-medium">{t("kidh.cardColor")}</p>
                     <div className="grid grid-cols-8 gap-2">
-                      {CARD_THEMES.map((t) => (
-                        <button key={t.key}
-                          onClick={() => setDesign.mutate({ theme: t.key, pattern: card.pattern })}
-                          className={`h-9 rounded-lg bg-gradient-to-br ${t.grad} ${card.theme === t.key ? "ring-2 ring-offset-2 ring-offset-[#15151f] ring-white" : ""}`}
-                          title={t.label} />
+                      {CARD_THEMES.map((th) => (
+                        <button key={th.key}
+                          onClick={() => setDesign.mutate({ theme: th.key, pattern: card.pattern })}
+                          className={`h-9 rounded-lg bg-gradient-to-br ${th.grad} ${card.theme === th.key ? "ring-2 ring-offset-2 ring-offset-[#15151f] ring-white" : ""}`}
+                          title={th.label} />
                       ))}
                     </div>
-                    <p className="text-sm font-medium pt-1">Узор</p>
+                    <p className="text-sm font-medium pt-1">{t("kidh.pattern")}</p>
                     <div className="flex gap-2 flex-wrap">
                       {CARD_PATTERNS.map((p) => (
                         <Pill key={p.key} active={card.pattern === p.key}
