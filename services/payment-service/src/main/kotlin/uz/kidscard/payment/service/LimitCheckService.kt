@@ -8,8 +8,8 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestTemplate
 import uz.kidscard.common.exception.BusinessException
+import uz.kidscard.common.http.internalRestTemplate
 import uz.kidscard.payment.repository.LedgerEntryRepository
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -45,7 +45,7 @@ class LimitCheckService(
     @Value("\${app.family-service.url:http://localhost:8082}") private val familyServiceUrl: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val restTemplate = RestTemplate()
+    private val restTemplate = internalRestTemplate()
 
     /**
      * Fetch active limits for a child from family-service (no auth needed — internal call).

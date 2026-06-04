@@ -8,7 +8,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestTemplate
+import uz.kidscard.common.http.internalRestTemplate
 import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -20,7 +20,7 @@ class AuthClient(
     @Value("\${app.auth-service.url:http://localhost:8081}") private val authUrl: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val restTemplate = RestTemplate()
+    private val restTemplate = internalRestTemplate()
 
     /** Returns the userId for a phone, or null if no such registered user. */
     fun findUserIdByPhone(phone: String, token: String): UUID? {

@@ -7,8 +7,8 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestTemplate
 import uz.kidscard.common.exception.BusinessException
+import uz.kidscard.common.http.internalRestTemplate
 import java.util.UUID
 
 /** Moves money between a child's card and a goal's savings pot in payment-service. */
@@ -17,7 +17,7 @@ class SavingsClient(
     @Value("\${app.payment-service.url:http://localhost:8084}") private val paymentUrl: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val restTemplate = RestTemplate()
+    private val restTemplate = internalRestTemplate()
 
     fun deposit(cardId: UUID, childId: UUID, familyId: UUID, goalId: UUID, amountUzs: Long, token: String) =
         call("deposit", cardId, childId, familyId, goalId, amountUzs, token)
