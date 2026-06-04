@@ -49,6 +49,9 @@ management:
     web:
       exposure:
         include: health,info,prometheus,metrics
+  health:
+    circuitbreakers:
+      enabled: true
   metrics:
     export:
       prometheus:
@@ -56,6 +59,45 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+# Resilience for synchronous calls into payment-service (wallet holds, top-ups,
+# savings) and auth-service (user lookup). 4xx are deterministic business
+# outcomes, so they are excluded from retry-/record-exceptions: never retried,
+# never count toward the breaker — they go straight to the client's fallback.
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      payment:
+        base-config: default
+      auth:
+        base-config: default
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      payment:
+        base-config: default
+      auth:
+        base-config: default
 
 springdoc:
   api-docs:

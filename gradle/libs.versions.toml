@@ -10,6 +10,7 @@ jackson-module-kotlin = "2.18.2"
 kafka = "3.8.1"
 logback-json = "0.1.5"
 otel = "2.10.0"
+resilience4j = "2.3.0"
 
 [libraries]
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
@@ -22,6 +23,8 @@ spring-boot-starter-oauth2-authorization-server = { module = "org.springframewor
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-kafka = { module = "org.springframework.kafka:spring-kafka" }
+spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
+resilience4j-spring-boot3 = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }
 spring-cloud-starter-gateway = { module = "org.springframework.cloud:spring-cloud-starter-gateway" }
 spring-cloud-starter-circuitbreaker-reactor-resilience4j = { module = "org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j" }
 spring-boot-devtools = { module = "org.springframework.boot:spring-boot-devtools" }

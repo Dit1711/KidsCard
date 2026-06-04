@@ -1,5 +1,7 @@
 package uz.kidscard.family.service
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
+import io.github.resilience4j.retry.annotation.Retry
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
@@ -18,6 +20,8 @@ class TopUpClient(
     private val log = LoggerFactory.getLogger(javaClass)
     private val restTemplate = internalRestTemplate()
 
+    @Retry(name = "payment", fallbackMethod = "topUpFallback")
+    @CircuitBreaker(name = "payment")
     fun topUp(cardId: UUID, childId: UUID, familyId: UUID, amountUzs: Long, requestId: UUID, token: String) {
         val headers = HttpHeaders().apply {
             set("Authorization", "Bearer $token")
@@ -31,19 +35,20 @@ class TopUpClient(
             "description" to "Пополнение по запросу ребёнка",
             "idempotencyKey" to "request-topup-$requestId",
         )
-        try {
-            restTemplate.postForEntity(
-                "$paymentUrl/api/v1/transactions/top-up",
-                HttpEntity(body, headers),
-                String::class.java,
-            )
-        } catch (ex: Exception) {
-            log.error("Top-up on request approval failed: card={} amount={} error={}", cardId, amountUzs, ex.message)
-            throw BusinessException(
-                "TOPUP_FAILED",
-                "Не удалось пополнить карту. Попробуйте позже.",
-                HttpStatus.SERVICE_UNAVAILABLE,
-            )
-        }
+        restTemplate.postForEntity(
+            "$paymentUrl/api/v1/transactions/top-up",
+            HttpEntity(body, headers),
+            String::class.java,
+        )
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun topUpFallback(cardId: UUID, childId: UUID, familyId: UUID, amountUzs: Long, requestId: UUID, token: String, ex: Throwable) {
+        log.error("Top-up on request approval failed: card={} amount={} error={}", cardId, amountUzs, ex.message)
+        throw BusinessException(
+            "TOPUP_FAILED",
+            "Не удалось пополнить карту. Попробуйте позже.",
+            HttpStatus.SERVICE_UNAVAILABLE,
+        )
     }
 }

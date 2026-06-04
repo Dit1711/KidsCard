@@ -51,6 +51,9 @@ management:
     web:
       exposure:
         include: health,info,prometheus,metrics
+  health:
+    circuitbreakers:
+      enabled: true
   metrics:
     export:
       prometheus:
@@ -58,6 +61,40 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+# Resilience for the synchronous limits lookup against family-service.
+# 4xx (e.g. 404) are intentionally NOT listed: they are deterministic, so we
+# never retry them and they never count toward the breaker's failure rate.
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      family:
+        base-config: default
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      family:
+        base-config: default
 
 springdoc:
   api-docs:

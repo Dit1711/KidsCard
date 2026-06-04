@@ -125,7 +125,7 @@
 | Идемпотентность платёжных операций | ✅ | idempotency key |
 | Outbox + событийная доставка | ✅ | Kafka outbox |
 | Saga для многошаговых процессов | ❌ | — |
-| Circuit breaker + retry с backoff | 🟡 | таймауты на межсервисных вызовах сделаны; retry/CB — в работе |
+| Circuit breaker + retry с backoff | ✅ | Resilience4j retry (экспон. backoff) + circuit breaker на все синхронные межсервисные вызовы (payment/family/auth); 4xx-бизнес-исходы не ретраятся и не открывают breaker; CB в actuator health |
 | Graceful degradation | 🟡 | частично (read-пути отдают пусто при сбое) |
 | Reconciliation-джобы | ❌ | — |
 | Бэкапы + проверяемое восстановление | ❌ | — |
