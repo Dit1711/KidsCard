@@ -8,6 +8,7 @@ import { familyService, cardService, parentSavingsService } from "@/lib/api";
 import { useCardBalances } from "@/hooks/useCardBalances";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { CardSurface } from "@/components/CardSurface";
+import { useT } from "@/i18n/locale";
 import Link from "next/link";
 import {
   IdCard, Plus, ShieldCheck, ListChecks, BarChart3, Users, CreditCard,
@@ -31,6 +32,7 @@ function HeroAction({ href, icon: Icon, label }: { href: string; icon: React.Ele
 }
 
 export default function DashboardPage() {
+  const t = useT();
   const { user } = useAuthStore();
   const { family, setFamily } = useFamilyStore();
 
@@ -79,7 +81,7 @@ export default function DashboardPage() {
 
   const myParent = fam?.parents.find((p) => p.userId === user?.id);
   const needsKyc = myParent != null && myParent.kycStatus !== "APPROVED";
-  const childName = (id: string) => childrenData?.find((c) => c.id === id)?.fullName ?? "Ребёнок";
+  const childName = (id: string) => childrenData?.find((c) => c.id === id)?.fullName ?? t("common.child");
   const activeGoals = (goals ?? []).filter((g) => g.status !== "CANCELLED").slice(0, 3);
 
   if (!fam) {
@@ -89,10 +91,10 @@ export default function DashboardPage() {
           <Users className="h-8 w-8" />
         </span>
         <div>
-          <p className="font-semibold text-lg">У вас ещё нет семьи</p>
-          <p className="text-white/50 text-sm mt-1">Создайте семью, чтобы выпускать карты детям</p>
+          <p className="font-semibold text-lg">{t("dashboard.noFamilyTitle")}</p>
+          <p className="text-white/50 text-sm mt-1">{t("dashboard.noFamilySubtitle")}</p>
         </div>
-        <Link href="/family" className="rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-medium">Создать семью</Link>
+        <Link href="/family" className="rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-medium">{t("dashboard.createFamily")}</Link>
       </div>
     );
   }
@@ -106,8 +108,8 @@ export default function DashboardPage() {
               <IdCard className="h-6 w-6" />
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-amber-100">Подтвердите личность</p>
-              <p className="text-sm text-amber-200/70">Нужно для полного доступа. Это займёт минуту.</p>
+              <p className="font-medium text-amber-100">{t("dashboard.kycTitle")}</p>
+              <p className="text-sm text-amber-200/70">{t("dashboard.kycSubtitle")}</p>
             </div>
             <ChevronRight className="h-5 w-5 text-amber-300/70 group-hover:translate-x-0.5 transition-transform" />
           </Link>
@@ -120,17 +122,17 @@ export default function DashboardPage() {
           <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-2 text-white/70 text-sm">
-              <Sparkles className="h-4 w-4" /> Общий баланс детей
+              <Sparkles className="h-4 w-4" /> {t("dashboard.totalBalance")}
             </div>
             <p className="mt-2 text-5xl sm:text-6xl font-bold tracking-tight tabular-nums">{formatSum(totalBalance)}</p>
             <p className="text-white/70 mt-1">
-              {fam.name} · {childrenData?.length ?? 0} детей · {activeCards} активных карт
+              {t("dashboard.familyStats", { name: fam.name, children: childrenData?.length ?? 0, cards: activeCards })}
             </p>
             <div className="flex flex-wrap gap-2.5 mt-6">
-              <HeroAction href="/banks" icon={Plus} label="Пополнить" />
-              <HeroAction href="/limits" icon={ShieldCheck} label="Лимиты" />
-              <HeroAction href="/chores" icon={ListChecks} label="Задания" />
-              <HeroAction href="/analytics" icon={BarChart3} label="Аналитика" />
+              <HeroAction href="/banks" icon={Plus} label={t("common.topUp")} />
+              <HeroAction href="/limits" icon={ShieldCheck} label={t("nav.limits")} />
+              <HeroAction href="/chores" icon={ListChecks} label={t("nav.chores")} />
+              <HeroAction href="/analytics" icon={BarChart3} label={t("nav.analytics")} />
             </div>
           </div>
         </div>
@@ -140,8 +142,8 @@ export default function DashboardPage() {
       {cardsData && cardsData.length > 0 && (
         <MotionItem>
           <div className="flex items-center justify-between mb-3">
-            <p className="font-semibold tracking-tight">Карты детей</p>
-            <Link href="/cards" className="text-sm text-fuchsia-300/80 hover:text-fuchsia-300">Все карты</Link>
+            <p className="font-semibold tracking-tight">{t("dashboard.kidsCards")}</p>
+            <Link href="/cards" className="text-sm text-fuchsia-300/80 hover:text-fuchsia-300">{t("dashboard.allCards")}</Link>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-1 -mx-1 px-1">
             {cardsData.map((card) => (
@@ -167,8 +169,8 @@ export default function DashboardPage() {
         <MotionItem>
           <div className="flex flex-col items-center justify-center rounded-3xl border border-white/[0.06] bg-white/[0.03] py-10 gap-3">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-white/50"><CreditCard className="h-6 w-6" /></span>
-            <p className="text-white/50">Карты ещё не выданы</p>
-            <Link href="/cards" className="rounded-2xl bg-white/10 hover:bg-white/15 px-4 py-2 text-sm font-medium">Выдать первую карту</Link>
+            <p className="text-white/50">{t("dashboard.noCards")}</p>
+            <Link href="/cards" className="rounded-2xl bg-white/10 hover:bg-white/15 px-4 py-2 text-sm font-medium">{t("dashboard.issueFirstCard")}</Link>
           </div>
         </MotionItem>
       )}
@@ -178,17 +180,17 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           <div className="lg:col-span-2 grid grid-cols-2 gap-4">
             <div className="rounded-3xl bg-white/[0.04] border border-white/[0.06] p-5">
-              <p className="text-xs text-white/40">Детей</p>
+              <p className="text-xs text-white/40">{t("dashboard.statChildren")}</p>
               <p className="mt-1 text-3xl font-bold tabular-nums">{childrenData?.length ?? "—"}</p>
             </div>
             <div className="rounded-3xl bg-white/[0.04] border border-white/[0.06] p-5">
-              <p className="text-xs text-white/40">Активных карт</p>
+              <p className="text-xs text-white/40">{t("dashboard.statActiveCards")}</p>
               <p className="mt-1 text-3xl font-bold tabular-nums">{activeCards}</p>
             </div>
             <div className="col-span-2 rounded-3xl bg-white/[0.04] border border-white/[0.06] p-5 flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-full bg-white/10"><Home className="h-5 w-5 text-fuchsia-300" /></span>
               <div>
-                <p className="text-xs text-white/40">Семья</p>
+                <p className="text-xs text-white/40">{t("nav.family")}</p>
                 <p className="font-semibold">{fam.name}</p>
               </div>
             </div>
@@ -197,10 +199,10 @@ export default function DashboardPage() {
           <div className="lg:col-span-3 rounded-3xl bg-white/[0.04] border border-white/[0.06] p-6">
             <div className="flex items-center gap-2 mb-4">
               <Target className="h-4 w-4 text-fuchsia-300" />
-              <p className="font-medium tracking-tight">Цели накопления</p>
+              <p className="font-medium tracking-tight">{t("dashboard.savingsGoals")}</p>
             </div>
             {activeGoals.length === 0 ? (
-              <p className="text-sm text-white/40">Целей пока нет</p>
+              <p className="text-sm text-white/40">{t("dashboard.noGoals")}</p>
             ) : (
               <div className="space-y-4">
                 {activeGoals.map((g, i) => {
@@ -214,7 +216,7 @@ export default function DashboardPage() {
                       <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                         <div className={`h-full rounded-full bg-gradient-to-r ${GRADS[i % GRADS.length]}`} style={{ width: `${pct}%` }} />
                       </div>
-                      <p className="text-xs text-white/40 mt-1 tabular-nums">{formatSum(g.currentAmount)} из {formatSum(g.targetAmount)}</p>
+                      <p className="text-xs text-white/40 mt-1 tabular-nums">{t("dashboard.goalProgress", { current: formatSum(g.currentAmount), target: formatSum(g.targetAmount) })}</p>
                     </div>
                   );
                 })}

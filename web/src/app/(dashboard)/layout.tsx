@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth";
 import { useFamilyStore } from "@/store/family";
 import { authService, familyService } from "@/lib/api";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useT } from "@/i18n/locale";
 import {
   LayoutGrid, Users, CreditCard, ListChecks, Inbox,
   BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut,
@@ -16,15 +17,15 @@ import {
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 const navItems = [
-  { href: "/dashboard", label: "Обзор", icon: LayoutGrid },
-  { href: "/family", label: "Семья", icon: Users },
-  { href: "/cards", label: "Карты", icon: CreditCard },
-  { href: "/chores", label: "Задания", icon: ListChecks },
-  { href: "/requests", label: "Запросы", icon: Inbox },
-  { href: "/analytics", label: "Аналитика", icon: BarChart3 },
-  { href: "/banks", label: "Банк", icon: Landmark },
-  { href: "/limits", label: "Лимиты", icon: ShieldCheck },
-  { href: "/allowance", label: "Карманные", icon: Wallet },
+  { href: "/dashboard", labelKey: "nav.overview", icon: LayoutGrid },
+  { href: "/family", labelKey: "nav.family", icon: Users },
+  { href: "/cards", labelKey: "nav.cards", icon: CreditCard },
+  { href: "/chores", labelKey: "nav.chores", icon: ListChecks },
+  { href: "/requests", labelKey: "nav.requests", icon: Inbox },
+  { href: "/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+  { href: "/banks", labelKey: "nav.banks", icon: Landmark },
+  { href: "/limits", labelKey: "nav.limits", icon: ShieldCheck },
+  { href: "/allowance", labelKey: "nav.allowance", icon: Wallet },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { isAuthenticated, hasHydrated, setUser, logout, user } = useAuthStore();
   const { family, setFamily, clearFamily } = useFamilyStore();
+  const t = useT();
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -63,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!hasHydrated) {
     return (
       <div className={`fixed inset-0 flex items-center justify-center bg-[#08080f] ${golos.className}`}>
-        <div className="text-white/40 text-sm animate-pulse">Загрузка…</div>
+        <div className="text-white/40 text-sm animate-pulse">{t("common.loading")}</div>
       </div>
     );
   }
@@ -95,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   }`}
                 >
                   <item.icon className="h-[18px] w-[18px] shrink-0" style={isActive ? { color: "#e879f9" } : undefined} />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -104,9 +106,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-xs font-semibold">ДК</span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate tabular-nums">{user?.phone ?? "—"}</p>
-              <p className="text-xs text-white/40 truncate">Владелец</p>
+              <p className="text-xs text-white/40 truncate">{t("common.owner")}</p>
             </div>
-            <button onClick={handleLogout} className="text-white/40 hover:text-white transition-colors" title="Выйти">
+            <button onClick={handleLogout} className="text-white/40 hover:text-white transition-colors" title={t("common.logout")}>
               <LogOut className="h-[18px] w-[18px]" />
             </button>
           </div>
@@ -115,10 +117,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main column */}
         <div className="flex-1 min-w-0">
           <header className="sticky top-0 z-20 flex items-center justify-between gap-4 px-5 sm:px-8 h-16 bg-[#08080f]/70 backdrop-blur border-b border-white/[0.04]">
-            <p className="text-sm text-white/50">Семья {family?.name ?? "—"}</p>
+            <p className="text-sm text-white/50">{t("dashboard.familyHeader", { name: family?.name ?? "—" })}</p>
             <div className="flex items-center gap-2">
               <div className="hidden sm:flex items-center gap-2 rounded-full bg-white/[0.05] px-3.5 h-10 text-sm text-white/40 w-48">
-                <Search className="h-4 w-4" /> Поиск
+                <Search className="h-4 w-4" /> {t("common.search")}
               </div>
               <NotificationBell />
             </div>
@@ -141,7 +143,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               }`}
             >
               <item.icon className="h-[18px] w-[18px]" style={isActive ? { color: "#e879f9" } : undefined} />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
