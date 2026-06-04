@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { useT } from "@/i18n/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ type Step = "phone" | "otp";
 export default function RegisterPage() {
   const router = useRouter();
   const { setTokens } = useAuthStore();
+  const t = useT();
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("+998");
@@ -37,7 +39,7 @@ export default function RegisterPage() {
       setStep("otp");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosErr.response?.data?.error?.message || "Ошибка. Проверьте формат номера (+998XXXXXXXXX)");
+      setError(axiosErr.response?.data?.error?.message || t("register.formatError"));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function RegisterPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosErr.response?.data?.error?.message || "Неверный OTP-код");
+      setError(axiosErr.response?.data?.error?.message || t("common.wrongOtp"));
     } finally {
       setLoading(false);
     }
@@ -62,18 +64,18 @@ export default function RegisterPage() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Регистрация</CardTitle>
+        <CardTitle>{t("register.title")}</CardTitle>
         <CardDescription>
           {step === "phone"
-            ? "Создайте аккаунт родителя"
-            : `Введите код из SMS на ${phone}`}
+            ? t("register.subtitle")
+            : t("register.otpSentToFull", { phone })}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {step === "phone" ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Номер телефона</Label>
+              <Label htmlFor="phone">{t("register.phoneLabel")}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -82,23 +84,23 @@ export default function RegisterPage() {
                 onChange={(e) => setPhone(e.target.value)}
                 required
               />
-              <p className="text-xs text-gray-400">Формат: +998XXXXXXXXX</p>
+              <p className="text-xs text-gray-400">{t("register.formatHint")}</p>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Отправка..." : "Получить код"}
+              {loading ? t("common.sending") : t("login.getCode")}
             </Button>
             <p className="text-sm text-center text-gray-500">
-              Уже есть аккаунт?{" "}
+              {t("register.haveAccount")}{" "}
               <Link href="/login" className="text-indigo-600 hover:underline">
-                Войти
+                {t("common.signIn")}
               </Link>
             </p>
           </form>
         ) : (
           <form onSubmit={handleVerify} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="otp">Код подтверждения</Label>
+              <Label htmlFor="otp">{t("register.otpLabel")}</Label>
               <Input
                 id="otp"
                 type="text"
@@ -111,12 +113,12 @@ export default function RegisterPage() {
                 required
               />
               <p className="text-xs text-gray-400">
-                Код отправлен на {phone}. В dev-режиме смотрите в логах сервиса.
+                {t("register.devHint", { phone })}
               </p>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-              {loading ? "Проверка..." : "Зарегистрироваться"}
+              {loading ? t("common.checking") : t("common.register")}
             </Button>
             <Button
               type="button"
@@ -124,7 +126,7 @@ export default function RegisterPage() {
               className="w-full"
               onClick={() => { setStep("phone"); setOtp(""); setError(""); }}
             >
-              ← Изменить номер
+              {t("common.changeNumber")}
             </Button>
           </form>
         )}

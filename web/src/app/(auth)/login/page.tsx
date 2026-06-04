@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { useT } from "@/i18n/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ type Step = "phone" | "otp";
 export default function LoginPage() {
   const router = useRouter();
   const { setTokens } = useAuthStore();
+  const t = useT();
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("+998");
@@ -37,7 +39,7 @@ export default function LoginPage() {
       setStep("otp");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosErr.response?.data?.error?.message || "Номер не найден. Сначала зарегистрируйтесь.");
+      setError(axiosErr.response?.data?.error?.message || t("login.notFound"));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosErr.response?.data?.error?.message || "Неверный OTP-код");
+      setError(axiosErr.response?.data?.error?.message || t("common.wrongOtp"));
     } finally {
       setLoading(false);
     }
@@ -62,18 +64,18 @@ export default function LoginPage() {
   return (
     <Card className="border-0 shadow-soft rounded-2xl">
       <CardHeader className="space-y-1.5">
-        <CardTitle className="text-2xl tracking-tight">С возвращением</CardTitle>
+        <CardTitle className="text-2xl tracking-tight">{t("login.title")}</CardTitle>
         <CardDescription className="text-sm">
           {step === "phone"
-            ? "Войдите по номеру телефона"
-            : `Код отправлен на ${phone}`}
+            ? t("login.subtitle")
+            : t("login.otpSentTo", { phone })}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {step === "phone" ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">{t("login.phoneLabel")}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -87,12 +89,12 @@ export default function LoginPage() {
               <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
             )}
             <Button type="submit" className="w-full h-11" disabled={loading}>
-              {loading ? "Отправка..." : "Получить код"}
+              {loading ? t("common.sending") : t("login.getCode")}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Нет аккаунта?{" "}
+              {t("login.noAccount")}{" "}
               <Link href="/register" className="text-primary font-medium hover:underline">
-                Зарегистрироваться
+                {t("common.register")}
               </Link>
             </p>
             <div className="pt-2 mt-2 border-t border-border/70">
@@ -100,14 +102,14 @@ export default function LoginPage() {
                 href="/child-login"
                 className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
               >
-                Вход для детей
+                {t("common.childLogin")}
               </Link>
             </div>
           </form>
         ) : (
           <form onSubmit={handleVerify} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="otp">Код из SMS</Label>
+              <Label htmlFor="otp">{t("login.otpLabel")}</Label>
               <Input
                 id="otp"
                 type="text"
@@ -124,7 +126,7 @@ export default function LoginPage() {
               <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
             )}
             <Button type="submit" className="w-full h-11" disabled={loading || otp.length !== 6}>
-              {loading ? "Проверка..." : "Войти"}
+              {loading ? t("common.checking") : t("common.signIn")}
             </Button>
             <Button
               type="button"
@@ -132,7 +134,7 @@ export default function LoginPage() {
               className="w-full"
               onClick={() => { setStep("phone"); setOtp(""); setError(""); }}
             >
-              ← Изменить номер
+              {t("common.changeNumber")}
             </Button>
           </form>
         )}

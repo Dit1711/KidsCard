@@ -7,12 +7,15 @@ import { Golos_Text } from "next/font/google";
 import { Wallet, ArrowRight } from "lucide-react";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
+import { useT } from "@/i18n/locale";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 export default function ChildLoginPage() {
   const router = useRouter();
   const { setSession } = useChildStore();
+  const t = useT();
 
   const [code, setCode] = useState("");
   const [pin, setPin] = useState("");
@@ -29,7 +32,7 @@ export default function ChildLoginPage() {
       setSession(d.accessToken, d.childId, d.familyId, d.displayName);
       router.push("/kid");
     } catch {
-      setError("Неверный код или PIN. Попроси родителя проверить.");
+      setError(t("child.error"));
     } finally {
       setLoading(false);
     }
@@ -43,19 +46,23 @@ export default function ChildLoginPage() {
         <div className="absolute -bottom-28 -right-20 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
       </div>
 
+      <div className="fixed top-4 right-4 z-20">
+        <LanguageSwitcher variant="dark" />
+      </div>
+
       <div className="relative w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/20">
             <Wallet className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Привет!</h1>
-          <p className="text-white/50 text-sm mt-1">Вход в твой кошелёк</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("child.greeting")}</h1>
+          <p className="text-white/50 text-sm mt-1">{t("child.subtitle")}</p>
         </div>
 
         <div className="rounded-3xl bg-white/[0.04] border border-white/[0.07] p-6">
           <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
             <div className="space-y-1.5">
-              <label htmlFor="code" className="block text-sm text-white/60">Твой код</label>
+              <label htmlFor="code" className="block text-sm text-white/60">{t("child.codeLabel")}</label>
               <input
                 id="code"
                 name="kid-code"
@@ -69,7 +76,7 @@ export default function ChildLoginPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="pin" className="block text-sm text-white/60">PIN</label>
+              <label htmlFor="pin" className="block text-sm text-white/60">{t("child.pinLabel")}</label>
               <input
                 id="pin"
                 name="kid-pin"
@@ -89,15 +96,15 @@ export default function ChildLoginPage() {
               className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080f]"
               disabled={loading || !code || pin.length < 4}
             >
-              {loading ? "Входим…" : <>Войти <ArrowRight className="h-4 w-4" /></>}
+              {loading ? t("child.signingIn") : <>{t("common.signIn")} <ArrowRight className="h-4 w-4" /></>}
             </button>
           </form>
         </div>
 
         <p className="text-center text-xs text-white/40 mt-6">
-          Родитель?{" "}
+          {t("child.parent")}{" "}
           <Link href="/login" className="text-fuchsia-300 hover:underline">
-            Вход для родителей
+            {t("child.parentLogin")}
           </Link>
         </p>
       </div>

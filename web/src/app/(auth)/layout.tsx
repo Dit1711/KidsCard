@@ -1,10 +1,14 @@
+"use client";
+
 import { ShieldCheck, ListChecks, PiggyBank, Bell } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useT } from "@/i18n/locale";
 
 const VALUE_PROPS = [
-  { Icon: ShieldCheck, text: "Лимиты по дням, неделям и категориям" },
-  { Icon: ListChecks, text: "Поручения с реальной наградой на карту" },
-  { Icon: PiggyBank, text: "Накопления с начислением процентов" },
-  { Icon: Bell, text: "Уведомления в реальном времени" },
+  { Icon: ShieldCheck, key: "auth.brand.prop1" },
+  { Icon: ListChecks, key: "auth.brand.prop2" },
+  { Icon: PiggyBank, key: "auth.brand.prop3" },
+  { Icon: Bell, key: "auth.brand.prop4" },
 ];
 
 export default function AuthLayout({
@@ -12,6 +16,7 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="min-h-screen flex">
       {/* Brand panel — desktop */}
@@ -29,34 +34,37 @@ export default function AuthLayout({
 
         <div className="relative max-w-md">
           <h2 className="text-3xl xl:text-5xl font-bold leading-[1.1] tracking-tight">
-            Карманные деньги — под контролем родителей
+            {t("auth.brand.headline")}
           </h2>
           <p className="mt-5 text-white/80 text-lg leading-relaxed">
-            Карты для детей, лимиты, накопления и финансовая грамотность — в одном приложении.
+            {t("auth.brand.subtitle")}
           </p>
           <ul className="mt-9 space-y-3.5">
-            {VALUE_PROPS.map(({ Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-white/90">
+            {VALUE_PROPS.map(({ Icon, key }) => (
+              <li key={key} className="flex items-center gap-3 text-white/90">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15">
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
-                <span>{text}</span>
+                <span>{t(key)}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="relative text-white/55 text-sm">© KidsCard · Семейные финансы · Узбекистан</p>
+        <p className="relative text-white/55 text-sm">{t("auth.brand.footer")}</p>
       </div>
 
       {/* Form panel */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-background">
         <div className="w-full max-w-sm">
-          <div className="md:hidden flex flex-col items-center gap-2 mb-8">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-gradient text-white text-xl font-bold shadow-soft">
-              K
-            </span>
-            <span className="text-lg font-bold tracking-tight">KidsCard</span>
+          <div className="flex items-center justify-between mb-8">
+            <div className="md:hidden flex items-center gap-2">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-brand-gradient text-white text-lg font-bold shadow-soft">
+                K
+              </span>
+              <span className="text-lg font-bold tracking-tight">KidsCard</span>
+            </div>
+            <LanguageSwitcher className="ml-auto" />
           </div>
           {children}
         </div>
