@@ -8,8 +8,8 @@ import { useChildStore } from "@/store/child";
 import { categoryLabel, periodRemainingLabel } from "@/lib/categories";
 import { useT } from "@/i18n/locale";
 import { CardSurface } from "@/components/CardSurface";
-import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
-import { KCard, XpBar, LEAGUE_META, leagueLabel } from "@/components/kidkit";
+import { CARD_THEMES, CARD_PATTERNS, themeLabel, patternLabel } from "@/lib/cardThemes";
+import { KCard, XpBar, LEAGUE_META, leagueLabel, badgeTitle, badgeDesc } from "@/components/kidkit";
 import {
   Palette, Snowflake, TrendingUp, ShieldCheck, Wallet, Send,
   PiggyBank, Award, Target, GraduationCap, Crown, Trophy, Lock, type LucideIcon,
@@ -186,7 +186,7 @@ export default function KidHomePage() {
                     key={th.key}
                     onClick={() => setDesign.mutate({ theme: th.key, pattern: card.pattern })}
                     className={`h-12 rounded-xl bg-gradient-to-br ${th.grad} ${card.theme === th.key ? "ring-2 ring-offset-2 ring-offset-[#08080f] ring-fuchsia-400" : ""}`}
-                    title={th.label}
+                    title={themeLabel(th.key)}
                   />
                 ))}
               </div>
@@ -200,7 +200,7 @@ export default function KidHomePage() {
                       card.pattern === p.key ? "border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-200" : "border-white/10 text-white/60"
                     }`}
                   >
-                    {p.label}
+                    {patternLabel(p.key)}
                   </button>
                 ))}
               </div>
@@ -222,7 +222,7 @@ export default function KidHomePage() {
               return (
                 <div
                   key={b.key}
-                  title={`${b.title} — ${b.description}`}
+                  title={`${badgeTitle(b.key)} — ${badgeDesc(b.key)}`}
                   className={`flex flex-col items-center gap-1 rounded-2xl p-2.5 border ${
                     b.earned ? "border-white/15 bg-white/[0.06]" : "border-white/5 bg-white/[0.02]"
                   }`}
@@ -232,7 +232,7 @@ export default function KidHomePage() {
                   ) : (
                     <Lock className="h-5 w-5 text-white/25" />
                   )}
-                  <span className={`text-[9px] text-center leading-tight ${b.earned ? "text-white/70" : "text-white/30"}`}>{b.title}</span>
+                  <span className={`text-[9px] text-center leading-tight ${b.earned ? "text-white/70" : "text-white/30"}`}>{badgeTitle(b.key)}</span>
                 </div>
               );
             })}

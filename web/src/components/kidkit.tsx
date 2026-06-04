@@ -26,6 +26,61 @@ export function leagueLabel(key: string): string {
   return (LEAGUE_LABELS[getRuntimeLocale()] ?? LEAGUE_LABELS.ru)[key] ?? key;
 }
 
+// Level tier titles — mirrors GamificationService.LEVEL_TITLES (one per 5 levels).
+const LEVEL_TITLES: Record<string, string[]> = {
+  ru: ["Новичок", "Копитель", "Стратег", "Инвестор", "Магнат"],
+  uz: ["Yangi boshlovchi", "Jamg'aruvchi", "Strateg", "Investor", "Magnat"],
+  en: ["Beginner", "Saver", "Strategist", "Investor", "Magnate"],
+};
+
+/** Localized level title derived from the level number (backend uses the same tiers). */
+export function levelTitle(level: number): string {
+  const arr = LEVEL_TITLES[getRuntimeLocale()] ?? LEVEL_TITLES.ru;
+  const idx = Math.min(Math.max(Math.floor((level - 1) / 5), 0), arr.length - 1);
+  return arr[idx];
+}
+
+// Badge metadata keyed by the stable badge key returned by GamificationService.
+const BADGE_LABELS: Record<string, Record<string, { title: string; desc: string }>> = {
+  ru: {
+    first_chore: { title: "Первое задание", desc: "Выполни первое задание" },
+    chore_10: { title: "Трудяга", desc: "Выполни 10 заданий" },
+    first_lesson: { title: "Финансовая грамотность", desc: "Пройди первый урок" },
+    lesson_5: { title: "Отличник", desc: "Пройди 5 уроков" },
+    first_goal: { title: "Мечта сбылась", desc: "Достигни первой цели" },
+    streak_7: { title: "На волне", desc: "7 дней активности подряд" },
+    saver_1m: { title: "Миллион не предел", desc: "Накопи 1 000 000 в целях" },
+  },
+  uz: {
+    first_chore: { title: "Birinchi topshiriq", desc: "Birinchi topshiriqni bajar" },
+    chore_10: { title: "Mehnatkash", desc: "10 ta topshiriqni bajar" },
+    first_lesson: { title: "Moliyaviy savodxonlik", desc: "Birinchi darsni o't" },
+    lesson_5: { title: "A'lochi", desc: "5 ta darsni o't" },
+    first_goal: { title: "Orzu ushaldi", desc: "Birinchi maqsadga yet" },
+    streak_7: { title: "To'lqinda", desc: "Ketma-ket 7 kun faollik" },
+    saver_1m: { title: "Million chegara emas", desc: "Maqsadlarda 1 000 000 jamg'ar" },
+  },
+  en: {
+    first_chore: { title: "First task", desc: "Complete your first task" },
+    chore_10: { title: "Hard worker", desc: "Complete 10 tasks" },
+    first_lesson: { title: "Financial literacy", desc: "Finish your first lesson" },
+    lesson_5: { title: "Top student", desc: "Finish 5 lessons" },
+    first_goal: { title: "Dream come true", desc: "Reach your first goal" },
+    streak_7: { title: "On a roll", desc: "7 days of activity in a row" },
+    saver_1m: { title: "Sky's the limit", desc: "Save 1,000,000 in goals" },
+  },
+};
+
+/** Localized badge title by badge key. */
+export function badgeTitle(key: string): string {
+  return (BADGE_LABELS[getRuntimeLocale()] ?? BADGE_LABELS.ru)[key]?.title ?? key;
+}
+
+/** Localized badge description by badge key. */
+export function badgeDesc(key: string): string {
+  return (BADGE_LABELS[getRuntimeLocale()] ?? BADGE_LABELS.ru)[key]?.desc ?? "";
+}
+
 /** Dark rounded panel. */
 export function KCard({ className, children }: { className?: string; children: React.ReactNode }) {
   return (

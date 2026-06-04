@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Home, ShoppingBag, Target, PiggyBank, GraduationCap, LogOut } from "lucide-react";
 import { useChildStore } from "@/store/child";
 import { childAuthService } from "@/lib/api";
-import { XpRing, StreakChip } from "@/components/kidkit";
+import { XpRing, StreakChip, levelTitle } from "@/components/kidkit";
 import { GamificationCelebration } from "@/components/GamificationCelebration";
 import { useT } from "@/i18n/locale";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -70,7 +70,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
             <div>
               <p className="text-sm font-semibold leading-tight">{name}</p>
               <p className="text-[11px] text-fuchsia-300/90">
-                {gami ? t("kid.level", { level: gami.level, title: gami.title }) : t("common.loading")}
+                {gami ? t("kid.level", { level: gami.level, title: levelTitle(gami.level) }) : t("common.loading")}
               </p>
             </div>
           </div>

@@ -11,6 +11,7 @@ import { Trophy, Sparkles, Star } from "lucide-react";
 import { childAuthService, type GamificationResponse } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { useT } from "@/i18n/locale";
+import { levelTitle, badgeTitle } from "@/components/kidkit";
 
 type Celebration = { kind: "level" | "badge"; title: string; subtitle: string };
 
@@ -80,12 +81,12 @@ export function GamificationCelebration() {
 
     const events: Celebration[] = [];
     if (gami.level > prev.level) {
-      events.push({ kind: "level", title: t("gc.level", { level: gami.level }), subtitle: gami.title });
+      events.push({ kind: "level", title: t("gc.level", { level: gami.level }), subtitle: levelTitle(gami.level) });
     }
     const prevSet = new Set(prev.badges);
     for (const b of gami.badges) {
       if (b.earned && !prevSet.has(b.key)) {
-        events.push({ kind: "badge", title: t("gc.newBadge"), subtitle: b.title });
+        events.push({ kind: "badge", title: t("gc.newBadge"), subtitle: badgeTitle(b.key) });
       }
     }
 

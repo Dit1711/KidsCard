@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react";
+import { getRuntimeLocale } from "@/i18n/runtime";
 
 export interface CardTheme {
   key: string;
-  label: string;
+  label: string; // RU fallback; use themeLabel(key) for the localized name
   grad: string; // tailwind gradient stops (used with bg-gradient-to-br)
 }
 
@@ -17,13 +18,24 @@ export const CARD_THEMES: CardTheme[] = [
   { key: "midnight", label: "Ночь", grad: "from-slate-700 to-slate-900" },
 ];
 
+const THEME_LABELS: Record<string, Record<string, string>> = {
+  ru: { violet: "Фиолет", ocean: "Океан", sunset: "Закат", forest: "Лес", gold: "Золото", aurora: "Аврора", candy: "Карамель", midnight: "Ночь" },
+  uz: { violet: "Binafsha", ocean: "Okean", sunset: "Shafaq", forest: "O'rmon", gold: "Oltin", aurora: "Aurora", candy: "Karamel", midnight: "Tun" },
+  en: { violet: "Violet", ocean: "Ocean", sunset: "Sunset", forest: "Forest", gold: "Gold", aurora: "Aurora", candy: "Candy", midnight: "Midnight" },
+};
+
+/** Localized card-theme name. */
+export function themeLabel(key: string): string {
+  return (THEME_LABELS[getRuntimeLocale()] ?? THEME_LABELS.ru)[key] ?? key;
+}
+
 export function cardGradient(key: string | null | undefined): string {
   return (CARD_THEMES.find((t) => t.key === key) ?? CARD_THEMES[0]).grad;
 }
 
 export interface CardPattern {
   key: string;
-  label: string;
+  label: string; // RU fallback; use patternLabel(key) for the localized name
 }
 
 export const CARD_PATTERNS: CardPattern[] = [
@@ -33,6 +45,17 @@ export const CARD_PATTERNS: CardPattern[] = [
   { key: "diagonal", label: "Полосы" },
   { key: "rings", label: "Круги" },
 ];
+
+const PATTERN_LABELS: Record<string, Record<string, string>> = {
+  ru: { none: "Без узора", dots: "Точки", grid: "Сетка", diagonal: "Полосы", rings: "Круги" },
+  uz: { none: "Naqshsiz", dots: "Nuqtalar", grid: "To'r", diagonal: "Chiziqlar", rings: "Doiralar" },
+  en: { none: "No pattern", dots: "Dots", grid: "Grid", diagonal: "Stripes", rings: "Rings" },
+};
+
+/** Localized card-pattern name. */
+export function patternLabel(key: string): string {
+  return (PATTERN_LABELS[getRuntimeLocale()] ?? PATTERN_LABELS.ru)[key] ?? key;
+}
 
 export function patternStyle(key: string | null | undefined): CSSProperties {
   switch (key) {

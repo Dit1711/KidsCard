@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-import { LESSONS, BADGES, type Lesson } from "@/lib/lessons";
+import { getLessons, getReadingBadges, type Lesson } from "@/lib/lessons";
 import { KCard } from "@/components/kidkit";
 import { GraduationCap, Star, ArrowLeft, CheckCircle2, Zap } from "lucide-react";
 import { useT } from "@/i18n/locale";
@@ -13,6 +13,8 @@ export default function KidLearnPage() {
   const { isChildAuthed } = useChildStore();
   const t = useT();
   const qc = useQueryClient();
+  const LESSONS = getLessons();
+  const BADGES = getReadingBadges();
 
   const { data: progress } = useQuery({
     queryKey: ["child-lessons"],

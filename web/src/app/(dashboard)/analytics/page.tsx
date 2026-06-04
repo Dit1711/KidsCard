@@ -15,7 +15,7 @@ import { categoryByMcc, catLabel } from "@/lib/categories";
 import { useT } from "@/i18n/locale";
 import { SpendChart } from "@/components/SpendChart";
 import { MotionStagger, MotionItem } from "@/components/motion";
-import { LEAGUE_META, leagueLabel } from "@/components/kidkit";
+import { LEAGUE_META, leagueLabel, levelTitle, badgeTitle, badgeDesc } from "@/components/kidkit";
 import {
   Flame, Trophy, Zap, Award, Lock, Target, GraduationCap, PiggyBank,
   TrendingUp, Crown, type LucideIcon,
@@ -184,7 +184,7 @@ export default function AnalyticsPage() {
               <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
                 <p className="text-xs text-white/40">{t("analytics.level")}</p>
                 <p className="text-2xl font-bold tabular-nums">{gami.level}</p>
-                <p className="text-[11px] text-white/40 mt-0.5">{gami.title}</p>
+                <p className="text-[11px] text-white/40 mt-0.5">{levelTitle(gami.level)}</p>
               </div>
               <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
                 <p className="text-xs text-white/40">{t("analytics.xpTotal")}</p>
@@ -222,13 +222,13 @@ export default function AnalyticsPage() {
                   return (
                     <div
                       key={b.key}
-                      title={`${b.title} — ${b.description}`}
+                      title={`${badgeTitle(b.key)} — ${badgeDesc(b.key)}`}
                       className={`flex flex-col items-center gap-1 rounded-2xl p-2.5 border ${
                         b.earned ? "border-white/15 bg-white/[0.06]" : "border-white/5 bg-white/[0.02]"
                       }`}
                     >
                       {b.earned ? <Icon className="h-5 w-5 text-fuchsia-300" /> : <Lock className="h-5 w-5 text-white/25" />}
-                      <span className={`text-[9px] text-center leading-tight ${b.earned ? "text-white/70" : "text-white/30"}`}>{b.title}</span>
+                      <span className={`text-[9px] text-center leading-tight ${b.earned ? "text-white/70" : "text-white/30"}`}>{badgeTitle(b.key)}</span>
                     </div>
                   );
                 })}

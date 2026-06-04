@@ -9,7 +9,7 @@ import {
 } from "@/lib/api";
 import { Panel, DInput, DButton, DBadge, DSelect, Pill } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
-import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
+import { CARD_THEMES, CARD_PATTERNS, themeLabel, patternLabel } from "@/lib/cardThemes";
 import { useT } from "@/i18n/locale";
 import { toast } from "sonner";
 import {
@@ -478,7 +478,7 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                         <button key={th.key}
                           onClick={() => setDesign.mutate({ theme: th.key, pattern: card.pattern })}
                           className={`h-9 rounded-lg bg-gradient-to-br ${th.grad} ${card.theme === th.key ? "ring-2 ring-offset-2 ring-offset-[#15151f] ring-white" : ""}`}
-                          title={th.label} />
+                          title={themeLabel(th.key)} />
                       ))}
                     </div>
                     <p className="text-sm font-medium pt-1">{t("kidh.pattern")}</p>
@@ -486,7 +486,7 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                       {CARD_PATTERNS.map((p) => (
                         <Pill key={p.key} active={card.pattern === p.key}
                           onClick={() => setDesign.mutate({ theme: card.theme, pattern: p.key })}>
-                          {p.label}
+                          {patternLabel(p.key)}
                         </Pill>
                       ))}
                     </div>
