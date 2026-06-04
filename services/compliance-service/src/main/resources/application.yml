@@ -57,3 +57,10 @@ logging:
 app:
   jwt:
     secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
+  # AML rule thresholds — tunable without code changes (compliance can adjust).
+  aml:
+    large-transaction-uzs: ${AML_LARGE_TX_UZS:5000000}
+    daily-total-uzs: ${AML_DAILY_TOTAL_UZS:10000000}
+    velocity-count: ${AML_VELOCITY_COUNT:15}
+    velocity-window-minutes: ${AML_VELOCITY_WINDOW_MIN:60}
+    structuring-count: ${AML_STRUCTURING_COUNT:3}

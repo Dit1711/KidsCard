@@ -7,6 +7,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.util.UUID
 
 /**
@@ -17,6 +18,7 @@ import java.util.UUID
 @Service
 class ComplianceEventConsumer(
     private val auditService: AuditService,
+    private val amlRuleEngine: AmlRuleEngine,
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -47,6 +49,22 @@ class ComplianceEventConsumer(
         val aggregateId = node.firstUuid("aggregateId", "transactionId", "cardId", "holdId", "disputeId", "id")
         val familyId = node.uuid("familyId")
         auditService.record(eventType, topic, aggregateId, familyId, node.toString())
+
+        // Feed completed transactions to the AML engine. Use the event's own
+        // timestamp so windowed rules stay correct when backfilling from Kafka.
+        if (eventType == "payment.transaction.completed") {
+            runCatching {
+                amlRuleEngine.evaluateTransaction(
+                    familyId = familyId,
+                    childId = node.uuid("childId"),
+                    cardId = node.uuid("cardId"),
+                    amountUzs = node.get("amountUzs")?.takeIf { !it.isNull }?.asLong() ?: 0L,
+                    direction = node.get("direction")?.takeIf { !it.isNull }?.asText() ?: "",
+                    type = node.get("type")?.takeIf { !it.isNull }?.asText(),
+                    occurredAt = node.instant("createdAt") ?: Instant.now(),
+                )
+            }.onFailure { log.error("AML evaluation failed for {}: {}", aggregateId, it.message) }
+        }
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -71,6 +89,9 @@ class ComplianceEventConsumer(
 
     private fun JsonNode.uuid(field: String): UUID? =
         get(field)?.takeIf { !it.isNull }?.asText()?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+
+    private fun JsonNode.instant(field: String): Instant? =
+        get(field)?.takeIf { !it.isNull }?.asText()?.let { runCatching { Instant.parse(it) }.getOrNull() }
 
     private fun JsonNode.firstUuid(vararg fields: String): UUID? =
         fields.firstNotNullOfOrNull { uuid(it) }
