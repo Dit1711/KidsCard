@@ -5,18 +5,13 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { familyService, limitService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import { CATEGORIES, categoryByMcc, PERIOD_LABELS } from "@/lib/categories";
+import { CATEGORIES, categoryByMcc, catLabel, periodLabel } from "@/lib/categories";
 import { Panel, DInput, DLabel, DButton, DBadge, Pill } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
 import { useT } from "@/i18n/locale";
 
-const PERIOD_TYPES = [
-  { value: "DAILY", label: PERIOD_LABELS.DAILY },
-  { value: "WEEKLY", label: PERIOD_LABELS.WEEKLY },
-  { value: "MONTHLY", label: PERIOD_LABELS.MONTHLY },
-];
-const periodLabel = (type: string) => PERIOD_TYPES.find((t) => t.value === type)?.label ?? type;
+const PERIOD_TYPES = ["DAILY", "WEEKLY", "MONTHLY"];
 
 const Hr = () => <div className="h-px bg-white/[0.06]" />;
 
@@ -121,7 +116,7 @@ export default function LimitsPage() {
                   <DLabel>{t("limits.period")}</DLabel>
                   <div className="flex gap-2 flex-wrap">
                     {PERIOD_TYPES.map((pt) => (
-                      <Pill key={pt.value} active={periodType === pt.value} onClick={() => setPeriodType(pt.value)}>{pt.label}</Pill>
+                      <Pill key={pt} active={periodType === pt} onClick={() => setPeriodType(pt)}>{periodLabel(pt)}</Pill>
                     ))}
                   </div>
                 </div>
@@ -148,7 +143,7 @@ export default function LimitsPage() {
                   <div key={limit.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.05]">
                     <div className="flex items-center gap-2">
                       {(() => { const m = categoryByMcc(limit.category); return (
-                        <DBadge tone="muted"><span className="flex items-center gap-1.5"><m.Icon className="h-3.5 w-3.5" /> {m.label}</span></DBadge>
+                        <DBadge tone="muted"><span className="flex items-center gap-1.5"><m.Icon className="h-3.5 w-3.5" /> {catLabel(m.mcc)}</span></DBadge>
                       ); })()}
                       <span className="text-sm font-medium tabular-nums">{formatSum(limit.amountUzs)} <span className="text-xs text-white/40">{t("limits.perMonth")}</span></span>
                     </div>
@@ -167,7 +162,7 @@ export default function LimitsPage() {
                           catMcc === c.mcc ? "bg-white/15 ring-1 ring-fuchsia-400/50" : "bg-white/[0.04] hover:bg-white/[0.08]"
                         }`}>
                         <c.Icon className="h-5 w-5 text-white/70" />
-                        <span className="text-[11px] text-white/50">{c.label}</span>
+                        <span className="text-[11px] text-white/50">{catLabel(c.mcc)}</span>
                       </button>
                     ))}
                   </div>

@@ -15,6 +15,7 @@ import {
   type Locale,
 } from "./config";
 import { dictionaries } from "./dictionaries";
+import { setRuntimeLocale } from "./runtime";
 
 type TranslateParams = Record<string, string | number>;
 
@@ -35,6 +36,10 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
  */
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  // Keep the module-level locale in sync for non-React helpers (formatSum,
+  // category/period labels). Idempotent assignment during render so children
+  // that render after this provider see the active language immediately.
+  setRuntimeLocale(locale);
 
   useEffect(() => {
     try {

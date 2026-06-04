@@ -5,7 +5,7 @@ import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-import { categoryLabel, PERIOD_REMAINING_LABELS } from "@/lib/categories";
+import { categoryLabel, periodRemainingLabel } from "@/lib/categories";
 import { CardSurface } from "@/components/CardSurface";
 import { CARD_THEMES, CARD_PATTERNS } from "@/lib/cardThemes";
 import { KCard, XpBar, LEAGUE_META } from "@/components/kidkit";
@@ -340,7 +340,7 @@ export default function KidHomePage() {
               const label =
                 u.limitType === "CATEGORY"
                   ? `${categoryLabel(u.category)} (в месяц)`
-                  : PERIOD_REMAINING_LABELS[u.limitType] ?? u.limitType;
+                  : periodRemainingLabel(u.limitType);
               const pct = u.limitUzs > 0 ? Math.min(100, Math.round((u.spentUzs / u.limitUzs) * 100)) : 0;
               const low = u.remainingUzs <= u.limitUzs * 0.15;
               return (
