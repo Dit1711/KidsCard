@@ -139,6 +139,14 @@ services:
     environment: { <<: *service-env }
     depends_on: *depends-infra
 
+  # Compliance: consumes every service's events into an immutable audit log
+  # and (later) runs AML rules. Pure consumer + read API, no host port.
+  compliance-service:
+    build: { <<: *jvm-build, args: { SERVICE: compliance-service } }
+    restart: unless-stopped
+    environment: { <<: *service-env }
+    depends_on: *depends-infra
+
   web:
     build:
       context: web

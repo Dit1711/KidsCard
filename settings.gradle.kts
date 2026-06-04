@@ -23,4 +23,5 @@ include(
     "services:open-banking-service",
     "services:notification-service",
     "services:kyc-service",
+    "services:compliance-service",
 )
