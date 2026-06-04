@@ -9,6 +9,14 @@ on:
 env:
   JAVA_VERSION: '21'
 
+# The "Publish test results" step creates a check-run via the GitHub API, which
+# needs checks:write. Without this block the default GITHUB_TOKEN is read-only
+# and the publish step 403s, failing the whole job even when build & tests pass.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   build-and-test:
     name: Build & Test
@@ -63,6 +71,7 @@ jobs:
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
+        continue-on-error: true   # never let result-publishing fail the build
         with:
           files: '**/build/test-results/test/*.xml'
 
