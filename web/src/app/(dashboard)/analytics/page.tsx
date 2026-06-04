@@ -15,7 +15,7 @@ import { categoryByMcc, catLabel } from "@/lib/categories";
 import { useT } from "@/i18n/locale";
 import { SpendChart } from "@/components/SpendChart";
 import { MotionStagger, MotionItem } from "@/components/motion";
-import { LEAGUE_META } from "@/components/kidkit";
+import { LEAGUE_META, leagueLabel } from "@/components/kidkit";
 import {
   Flame, Trophy, Zap, Award, Lock, Target, GraduationCap, PiggyBank,
   TrendingUp, Crown, type LucideIcon,
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
                     className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border"
                     style={{ color: lg.color, borderColor: `${lg.color}40`, backgroundColor: `${lg.color}1a` }}
                   >
-                    <Trophy className="h-3.5 w-3.5" /> {lg.label}
+                    <Trophy className="h-3.5 w-3.5" /> {leagueLabel(gami.league)}
                   </span>
                 );
               })()}

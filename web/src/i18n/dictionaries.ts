@@ -323,6 +323,29 @@ const ru: Dictionary = {
   "kyc.doneTitle": "Верификация пройдена!",
   "kyc.doneSub": "Личность подтверждена. Теперь доступны все возможности платформы.",
   "kyc.rejected": "Предыдущая попытка отклонена: {reason}. Начните заново.",
+
+  // kid: quests
+  "kidc.subtitle": "Выполняй задания — получай деньги и XP",
+  "kidc.empty": "Пока квестов нет. Загляни позже 🙂",
+  "kidc.statusDo": "Выполнить",
+  "kidc.statusReview": "На проверке",
+  "kidc.statusDone": "Готово",
+  "kidc.didIt": "Выполнил!",
+
+  // kid: goals
+  "kidg.noCard": "У тебя пока нет карты 🙃",
+  "kidg.title": "Мои цели",
+  "kidg.newGoal": "Новая цель",
+  "kidg.interestHint": "На накопления капает процент 🌱 · завершённая цель = +200 XP",
+  "kidg.titlePlaceholder": "На что копишь? (Велосипед)",
+  "kidg.targetPlaceholder": "Сколько нужно (100000)",
+  "kidg.creating": "Создаём…",
+  "kidg.create": "Создать цель",
+  "kidg.empty": "Создай цель и начни копить!",
+  "kidg.annualRate": "{rate}% годовых",
+  "kidg.earned": "заработано {sum}",
+  "kidg.perMonthEst": "≈ +{sum}/мес",
+  "kidg.achieved": "Цель достигнута!",
 };
 
 const uz: Dictionary = {
@@ -627,6 +650,27 @@ const uz: Dictionary = {
   "kyc.doneTitle": "Verifikatsiya o'tildi!",
   "kyc.doneSub": "Shaxs tasdiqlandi. Endi platformaning barcha imkoniyatlari mavjud.",
   "kyc.rejected": "Oldingi urinish rad etildi: {reason}. Qaytadan boshlang.",
+
+  "kidc.subtitle": "Topshiriqlarni baja — pul va XP ol",
+  "kidc.empty": "Hozircha kvestlar yo'q. Keyinroq kir 🙂",
+  "kidc.statusDo": "Bajarish",
+  "kidc.statusReview": "Tekshiruvda",
+  "kidc.statusDone": "Tayyor",
+  "kidc.didIt": "Bajardim!",
+
+  "kidg.noCard": "Sizda hali karta yo'q 🙃",
+  "kidg.title": "Mening maqsadlarim",
+  "kidg.newGoal": "Yangi maqsad",
+  "kidg.interestHint": "Jamg'armaga foiz tushadi 🌱 · tugagan maqsad = +200 XP",
+  "kidg.titlePlaceholder": "Nimaga yig'yapsan? (Velosiped)",
+  "kidg.targetPlaceholder": "Qancha kerak (100000)",
+  "kidg.creating": "Yaratilmoqda…",
+  "kidg.create": "Maqsad yaratish",
+  "kidg.empty": "Maqsad yarat va yig'a boshla!",
+  "kidg.annualRate": "yillik {rate}%",
+  "kidg.earned": "ishlandi {sum}",
+  "kidg.perMonthEst": "≈ +{sum}/oy",
+  "kidg.achieved": "Maqsadga erishildi!",
 };
 
 const en: Dictionary = {
@@ -931,6 +975,27 @@ const en: Dictionary = {
   "kyc.doneTitle": "Verification passed!",
   "kyc.doneSub": "Your identity is verified. All platform features are now available.",
   "kyc.rejected": "The previous attempt was rejected: {reason}. Start over.",
+
+  "kidc.subtitle": "Do tasks — earn money and XP",
+  "kidc.empty": "No quests yet. Check back later 🙂",
+  "kidc.statusDo": "Do it",
+  "kidc.statusReview": "In review",
+  "kidc.statusDone": "Done",
+  "kidc.didIt": "Done it!",
+
+  "kidg.noCard": "You don't have a card yet 🙃",
+  "kidg.title": "My goals",
+  "kidg.newGoal": "New goal",
+  "kidg.interestHint": "Your savings earn interest 🌱 · completed goal = +200 XP",
+  "kidg.titlePlaceholder": "What are you saving for? (Bike)",
+  "kidg.targetPlaceholder": "How much you need (100000)",
+  "kidg.creating": "Creating…",
+  "kidg.create": "Create goal",
+  "kidg.empty": "Create a goal and start saving!",
+  "kidg.annualRate": "{rate}% a year",
+  "kidg.earned": "earned {sum}",
+  "kidg.perMonthEst": "≈ +{sum}/mo",
+  "kidg.achieved": "Goal reached!",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = { ru, uz, en };

@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { Flame } from "lucide-react";
+import { getRuntimeLocale } from "@/i18n/runtime";
 
 export const LEAGUE_META: Record<string, { label: string; color: string; ring: string }> = {
   BRONZE: { label: "Бронза", color: "#d39b6a", ring: "ring-amber-700/40" },
@@ -12,6 +13,17 @@ export const LEAGUE_META: Record<string, { label: string; color: string; ring: s
   GOLD: { label: "Золото", color: "#fbbf24", ring: "ring-amber-400/50" },
   PLATINUM: { label: "Платина", color: "#67e8f9", ring: "ring-cyan-300/50" },
 };
+
+const LEAGUE_LABELS: Record<string, Record<string, string>> = {
+  ru: { BRONZE: "Бронза", SILVER: "Серебро", GOLD: "Золото", PLATINUM: "Платина" },
+  uz: { BRONZE: "Bronza", SILVER: "Kumush", GOLD: "Oltin", PLATINUM: "Platina" },
+  en: { BRONZE: "Bronze", SILVER: "Silver", GOLD: "Gold", PLATINUM: "Platinum" },
+};
+
+/** Localized league name. */
+export function leagueLabel(key: string): string {
+  return (LEAGUE_LABELS[getRuntimeLocale()] ?? LEAGUE_LABELS.ru)[key] ?? key;
+}
 
 /** Dark rounded panel. */
 export function KCard({ className, children }: { className?: string; children: React.ReactNode }) {

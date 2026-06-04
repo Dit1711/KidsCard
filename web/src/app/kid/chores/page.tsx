@@ -6,9 +6,11 @@ import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { KCard } from "@/components/kidkit";
 import { Target, Zap, CheckCircle2 } from "lucide-react";
+import { useT } from "@/i18n/locale";
 
 export default function KidChoresPage() {
   const { isChildAuthed } = useChildStore();
+  const t = useT();
   const qc = useQueryClient();
 
   const { data: chores } = useQuery({
@@ -33,17 +35,17 @@ export default function KidChoresPage() {
 
   return (
     <div>
-      <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><Target className="h-4 w-4 text-fuchsia-300" /> Квесты</h2>
-      <p className="text-xs text-white/40 mb-3 px-1">Выполняй задания — получай деньги и XP</p>
+      <h2 className="text-base font-bold mb-1 px-1 flex items-center gap-1.5"><Target className="h-4 w-4 text-fuchsia-300" /> {t("kid.nav.quests")}</h2>
+      <p className="text-xs text-white/40 mb-3 px-1">{t("kidc.subtitle")}</p>
       {active.length === 0 && (
-        <p className="text-white/40 text-sm px-1">Пока квестов нет. Загляни позже 🙂</p>
+        <p className="text-white/40 text-sm px-1">{t("kidc.empty")}</p>
       )}
       <div className="space-y-2">
         {active.map((c) => {
           const meta: Record<string, { label: string; cls: string }> = {
-            PENDING: { label: "Выполнить", cls: "" },
-            DONE: { label: "На проверке", cls: "text-amber-300" },
-            APPROVED: { label: "Готово", cls: "text-emerald-300" },
+            PENDING: { label: "kidc.statusDo", cls: "" },
+            DONE: { label: "kidc.statusReview", cls: "text-amber-300" },
+            APPROVED: { label: "kidc.statusDone", cls: "text-emerald-300" },
           };
           const m = meta[c.status] ?? { label: c.status, cls: "" };
           return (
@@ -66,10 +68,10 @@ export default function KidChoresPage() {
                   disabled={completeChore.isPending}
                   className="shrink-0 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white text-sm font-semibold rounded-full px-4 py-2 disabled:opacity-50"
                 >
-                  Выполнил!
+                  {t("kidc.didIt")}
                 </button>
               ) : (
-                <span className={`shrink-0 text-sm font-medium ${m.cls}`}>{m.label}</span>
+                <span className={`shrink-0 text-sm font-medium ${m.cls}`}>{t(m.label)}</span>
               )}
             </KCard>
           );
