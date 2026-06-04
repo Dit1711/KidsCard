@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import { Panel, DInput, DLabel, DButton, DBadge, DSelect } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { Plus, Wallet, Check, Repeat } from "lucide-react";
+import { useT } from "@/i18n/locale";
 
 export default function ChoresPage() {
   const qc = useQueryClient();
   const { family } = useFamilyStore();
+  const t = useT();
 
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
@@ -53,11 +55,11 @@ export default function ChoresPage() {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
       qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
       setTitle(""); setReward(""); setChildId(""); setRecurrence("NONE"); setCreateError(""); setShowCreate(false);
-      toast.success("Задание создано");
+      toast.success(t("chores.toastCreated"));
     },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: { message?: string } } } };
-      const msg = e.response?.data?.error?.message ?? "Не удалось создать задание";
+      const msg = e.response?.data?.error?.message ?? t("chores.toastCreateError");
       setCreateError(msg); toast.error(msg);
     },
   });
@@ -67,9 +69,9 @@ export default function ChoresPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
       qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
-      toast.success("Задание подтверждено — награда выдана");
+      toast.success(t("chores.toastApproved"));
     },
-    onError: () => toast.error("Не удалось подтвердить задание"),
+    onError: () => toast.error(t("chores.toastApproveError")),
   });
 
   const { data: goals } = useQuery({
@@ -85,18 +87,18 @@ export default function ChoresPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["family-goals", family!.id] });
       qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
-      toast.success("Зачислено на цель");
+      toast.success(t("chores.toastGifted"));
     },
   });
 
-  const childName = (id: string) => children?.find((c) => c.id === id)?.fullName ?? "Ребёнок";
-  const recurBadge = (r: string) => (r === "DAILY" ? "каждый день" : r === "WEEKLY" ? "каждую неделю" : null);
+  const childName = (id: string) => children?.find((c) => c.id === id)?.fullName ?? t("common.child");
+  const recurBadge = (r: string) => (r === "DAILY" ? t("chores.recurDaily") : r === "WEEKLY" ? t("chores.recurWeekly") : null);
 
   if (!family) {
     return (
       <div className="space-y-3">
-        <h1 className="text-2xl font-bold">Задания</h1>
-        <p className="text-white/50">Сначала создайте семью.</p>
+        <h1 className="text-2xl font-bold">{t("nav.chores")}</h1>
+        <p className="text-white/50">{t("cards.needFamily")}</p>
       </div>
     );
   }
@@ -110,11 +112,11 @@ export default function ChoresPage() {
       <MotionItem>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Задания</h1>
-            <p className="text-white/50 text-sm mt-1">За выполнение деньги падают на карту ребёнка</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t("nav.chores")}</h1>
+            <p className="text-white/50 text-sm mt-1">{t("chores.subtitle")}</p>
           </div>
           <DButton variant={showCreate ? "outline" : "primary"} onClick={() => setShowCreate(!showCreate)} className="shrink-0">
-            {showCreate ? "Отмена" : <><Plus className="h-4 w-4" /> Новое</>}
+            {showCreate ? t("common.cancel") : <><Plus className="h-4 w-4" /> {t("chores.new")}</>}
           </DButton>
         </div>
       </MotionItem>
@@ -124,10 +126,10 @@ export default function ChoresPage() {
         <div className="rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white">
           <div className="flex items-start justify-between">
             <div>
-              <div className="flex items-center gap-2 text-emerald-50/80 text-xs"><Wallet className="h-4 w-4" /> Кошелёк семьи</div>
+              <div className="flex items-center gap-2 text-emerald-50/80 text-xs"><Wallet className="h-4 w-4" /> {t("chores.wallet")}</div>
               <p className="text-3xl font-bold tabular-nums mt-1">{formatSum(wallet?.availableUzs ?? 0)}</p>
               <p className="text-emerald-50/70 text-xs mt-1">
-                доступно{wallet && wallet.heldUzs > 0 && ` · заморожено ${formatSum(wallet.heldUzs)}`}
+                {t("chores.available")}{wallet && wallet.heldUzs > 0 && ` ${t("chores.held", { sum: formatSum(wallet.heldUzs) })}`}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -140,7 +142,7 @@ export default function ChoresPage() {
             </div>
           </div>
           <p className="text-emerald-50/70 text-[11px] mt-3">
-            Награда замораживается при создании задания — деньги гарантированно будут при выполнении.
+            {t("chores.walletHint")}
           </p>
         </div>
       </MotionItem>
@@ -148,20 +150,20 @@ export default function ChoresPage() {
       {showCreate && (
         <MotionItem>
           <Panel className="p-5 space-y-3">
-            <p className="font-medium tracking-tight">Новое задание</p>
+            <p className="font-medium tracking-tight">{t("chores.newChore")}</p>
             <div>
-              <DLabel>Кому</DLabel>
+              <DLabel>{t("chores.assignee")}</DLabel>
               <DSelect value={childId} onChange={(e) => setChildId(e.target.value)}>
-                <option value="">Выберите ребёнка</option>
+                <option value="">{t("cards.selectChild")}</option>
                 {children?.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
               </DSelect>
             </div>
             <div>
-              <DLabel>Задание</DLabel>
-              <DInput placeholder="Убрать комнату" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <DLabel>{t("chores.choreLabel")}</DLabel>
+              <DInput placeholder={t("chores.chorePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div>
-              <DLabel>Награда (сум)</DLabel>
+              <DLabel>{t("chores.reward")}</DLabel>
               <DInput type="number" placeholder="15000" value={reward} onChange={(e) => setReward(e.target.value)} />
               <div className="flex gap-2 flex-wrap mt-2">
                 {[5000, 10000, 15000, 25000].map((a) => (
@@ -173,26 +175,26 @@ export default function ChoresPage() {
               </div>
             </div>
             <div>
-              <DLabel>Повтор</DLabel>
+              <DLabel>{t("chores.repeat")}</DLabel>
               <div className="flex gap-2">
-                {[{ v: "NONE", l: "Разовое" }, { v: "DAILY", l: "Каждый день" }, { v: "WEEKLY", l: "Каждую неделю" }].map((r) => (
+                {[{ v: "NONE", l: "chores.once" }, { v: "DAILY", l: "chores.daily" }, { v: "WEEKLY", l: "chores.weekly" }].map((r) => (
                   <button key={r.v} onClick={() => setRecurrence(r.v as "NONE" | "DAILY" | "WEEKLY")}
                     className={`flex-1 rounded-xl px-2 py-2 text-xs font-medium transition-colors ${
                       recurrence === r.v ? "bg-white/15 text-white" : "bg-white/[0.04] text-white/50 hover:text-white"
                     }`}>
-                    {r.l}
+                    {t(r.l)}
                   </button>
                 ))}
               </div>
               {recurrence !== "NONE" && (
-                <p className="text-[11px] text-white/40 mt-1.5">После подтверждения задание появится снова — награда резервируется каждый раз.</p>
+                <p className="text-[11px] text-white/40 mt-1.5">{t("chores.recurHint")}</p>
               )}
             </div>
             {createError && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{createError}</p>}
             <DButton onClick={() => create.mutate()} disabled={!childId || !title || !reward || create.isPending} className="w-full">
-              {create.isPending ? "Резервируем награду…" : "Создать задание"}
+              {create.isPending ? t("chores.reserving") : t("chores.create")}
             </DButton>
-            <p className="text-xs text-white/40 text-center">Доступно в кошельке: {formatSum(wallet?.availableUzs ?? 0)}</p>
+            <p className="text-xs text-white/40 text-center">{t("chores.availableInWallet", { sum: formatSum(wallet?.availableUzs ?? 0) })}</p>
           </Panel>
         </MotionItem>
       )}
@@ -200,7 +202,7 @@ export default function ChoresPage() {
       {/* Awaiting approval */}
       {done.length > 0 && (
         <MotionItem>
-          <h2 className="text-sm font-semibold text-amber-300 mb-2">Ждут подтверждения</h2>
+          <h2 className="text-sm font-semibold text-amber-300 mb-2">{t("chores.awaiting")}</h2>
           <div className="space-y-2.5">
             {done.map((c) => (
               <Panel key={c.id} className="p-4 border-amber-500/20 bg-amber-500/[0.06] flex items-center justify-between gap-3">
@@ -209,10 +211,10 @@ export default function ChoresPage() {
                     {c.title}
                     {c.recurrence !== "NONE" && <span className="ml-2 text-[11px] font-normal text-fuchsia-300 inline-flex items-center gap-1"><Repeat className="h-3 w-3" /> {recurBadge(c.recurrence)}</span>}
                   </p>
-                  <p className="text-xs text-white/40">{childName(c.childId)} · награда {formatSum(c.rewardAmount)}</p>
+                  <p className="text-xs text-white/40">{childName(c.childId)} · {t("chores.rewardWord")} {formatSum(c.rewardAmount)}</p>
                 </div>
                 <DButton onClick={() => approve.mutate(c.id)} disabled={approve.isPending} className="shrink-0 py-2">
-                  Подтвердить
+                  {t("chores.confirm")}
                 </DButton>
               </Panel>
             ))}
@@ -222,8 +224,8 @@ export default function ChoresPage() {
 
       {/* Active */}
       <MotionItem>
-        <h2 className="text-sm font-semibold text-white/50 mb-2">Активные</h2>
-        {pending.length === 0 && <p className="text-white/40 text-sm">Нет активных заданий</p>}
+        <h2 className="text-sm font-semibold text-white/50 mb-2">{t("chores.active")}</h2>
+        {pending.length === 0 && <p className="text-white/40 text-sm">{t("chores.noActive")}</p>}
         <div className="space-y-2.5">
           {pending.map((c) => (
             <Panel key={c.id} className="p-4 flex items-center justify-between gap-3">
@@ -243,13 +245,13 @@ export default function ChoresPage() {
       {/* Done */}
       {approved.length > 0 && (
         <MotionItem>
-          <h2 className="text-sm font-semibold text-emerald-300 mb-2">Выполнены</h2>
+          <h2 className="text-sm font-semibold text-emerald-300 mb-2">{t("chores.completed")}</h2>
           <div className="space-y-2.5">
             {approved.map((c) => (
               <Panel key={c.id} className="p-4 opacity-70 flex items-center justify-between gap-3">
                 <div>
                   <p className="font-medium">{c.title}</p>
-                  <p className="text-xs text-white/40">{childName(c.childId)} · награждено {formatSum(c.rewardAmount)}</p>
+                  <p className="text-xs text-white/40">{childName(c.childId)} · {t("chores.rewardedWord")} {formatSum(c.rewardAmount)}</p>
                 </div>
                 <Check className="h-5 w-5 text-emerald-400" />
               </Panel>
@@ -261,7 +263,7 @@ export default function ChoresPage() {
       {/* Children's goals */}
       {goals && goals.length > 0 && (
         <MotionItem>
-          <h2 className="text-sm font-semibold text-fuchsia-300 mb-2">Цели детей</h2>
+          <h2 className="text-sm font-semibold text-fuchsia-300 mb-2">{t("chores.kidsGoals")}</h2>
           <div className="space-y-2.5">
             {goals.map((g) => {
               const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
@@ -280,7 +282,7 @@ export default function ChoresPage() {
                   </div>
                   {!isDone && (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-white/40 mr-auto">Подкинуть из кошелька:</span>
+                      <span className="text-xs text-white/40 mr-auto">{t("chores.topUpFromWallet")}</span>
                       {[10000, 25000, 50000].map((amt) => (
                         <button key={amt} onClick={() => gift.mutate({ goalId: g.id, amount: amt })}
                           disabled={gift.isPending || (wallet?.availableUzs ?? 0) < amt}
