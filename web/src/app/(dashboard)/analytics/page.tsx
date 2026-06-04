@@ -11,7 +11,8 @@ import {
   parentSavingsService,
 } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
-import { categoryByMcc } from "@/lib/categories";
+import { categoryByMcc, catLabel } from "@/lib/categories";
+import { useT } from "@/i18n/locale";
 import { SpendChart } from "@/components/SpendChart";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { LEAGUE_META } from "@/components/kidkit";
@@ -31,9 +32,9 @@ const BADGE_ICON: Record<string, LucideIcon> = {
 };
 
 const PERIODS = [
-  { days: 7, label: "Неделя" },
-  { days: 30, label: "Месяц" },
-  { days: 90, label: "3 месяца" },
+  { days: 7, label: "analytics.periodWeek" },
+  { days: 30, label: "analytics.periodMonth" },
+  { days: 90, label: "analytics.period3mo" },
 ];
 
 function Pill({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
@@ -53,6 +54,7 @@ const panel = "rounded-3xl bg-white/[0.04] border border-white/[0.06] p-6";
 
 export default function AnalyticsPage() {
   const { family } = useFamilyStore();
+  const t = useT();
   const [selectedChild, setSelectedChild] = useState<string>("");
   const [days, setDays] = useState(30);
 
@@ -121,8 +123,8 @@ export default function AnalyticsPage() {
   if (!family) {
     return (
       <div className="space-y-3">
-        <h1 className="text-2xl font-bold">Аналитика</h1>
-        <p className="text-white/50">Сначала создайте семью.</p>
+        <h1 className="text-2xl font-bold">{t("nav.analytics")}</h1>
+        <p className="text-white/50">{t("cards.needFamily")}</p>
       </div>
     );
   }
@@ -137,8 +139,8 @@ export default function AnalyticsPage() {
   return (
     <MotionStagger className="space-y-6">
       <MotionItem>
-        <h1 className="text-2xl font-bold tracking-tight">Аналитика</h1>
-        <p className="text-white/50 mt-1 text-sm">Траты, накопления и задания ребёнка</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("nav.analytics")}</h1>
+        <p className="text-white/50 mt-1 text-sm">{t("analytics.subtitle")}</p>
       </MotionItem>
 
       {/* Child selector */}
@@ -153,7 +155,7 @@ export default function AnalyticsPage() {
           </div>
         </MotionItem>
       ) : (
-        <p className="text-white/50 text-sm">Сначала добавьте детей в разделе «Семья».</p>
+        <p className="text-white/50 text-sm">{t("limits.needChildren")}</p>
       )}
 
       {/* Gamification progress */}
@@ -162,8 +164,8 @@ export default function AnalyticsPage() {
           <div className={panel}>
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <p className="font-medium tracking-tight">Прогресс и вовлечённость</p>
-                <p className="text-xs text-white/40">Геймификация: уровень, серия, достижения</p>
+                <p className="font-medium tracking-tight">{t("analytics.progress")}</p>
+                <p className="text-xs text-white/40">{t("analytics.gamiHint")}</p>
               </div>
               {(() => {
                 const lg = LEAGUE_META[gami.league] ?? LEAGUE_META.BRONZE;
@@ -180,23 +182,23 @@ export default function AnalyticsPage() {
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
-                <p className="text-xs text-white/40">Уровень</p>
+                <p className="text-xs text-white/40">{t("analytics.level")}</p>
                 <p className="text-2xl font-bold tabular-nums">{gami.level}</p>
                 <p className="text-[11px] text-white/40 mt-0.5">{gami.title}</p>
               </div>
               <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
-                <p className="text-xs text-white/40">XP всего</p>
+                <p className="text-xs text-white/40">{t("analytics.xpTotal")}</p>
                 <p className="text-2xl font-bold tabular-nums flex items-center gap-1.5">
                   <Zap className="h-5 w-5 text-cyan-300" />{gami.xp}
                 </p>
-                <p className="text-[11px] text-white/40 mt-0.5">{gami.xpIntoLevel} / {gami.xpForNext} до ур. {gami.level + 1}</p>
+                <p className="text-[11px] text-white/40 mt-0.5">{t("analytics.xpToNext", { into: gami.xpIntoLevel, need: gami.xpForNext, next: gami.level + 1 })}</p>
               </div>
               <div className="rounded-2xl bg-white/[0.05] py-4 px-4">
-                <p className="text-xs text-white/40">Серия</p>
+                <p className="text-xs text-white/40">{t("analytics.streak")}</p>
                 <p className={`text-2xl font-bold tabular-nums flex items-center gap-1.5 ${gami.streakDays > 0 ? "text-orange-300" : "text-white"}`}>
                   <Flame className={`h-5 w-5 ${gami.streakDays > 0 ? "text-orange-400" : "text-white/30"}`} />{gami.streakDays}
                 </p>
-                <p className="text-[11px] text-white/40 mt-0.5">рекорд: {gami.longestStreak} дн.</p>
+                <p className="text-[11px] text-white/40 mt-0.5">{t("analytics.record", { n: gami.longestStreak })}</p>
               </div>
             </div>
 
@@ -211,8 +213,8 @@ export default function AnalyticsPage() {
             {/* Badges */}
             <div className="mt-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium flex items-center gap-1.5"><Award className="h-4 w-4 text-fuchsia-300" /> Достижения</p>
-                <span className="text-[11px] text-white/40">{gami.badges.filter((b) => b.earned).length} из {gami.badges.length}</span>
+                <p className="text-sm font-medium flex items-center gap-1.5"><Award className="h-4 w-4 text-fuchsia-300" /> {t("analytics.badges")}</p>
+                <span className="text-[11px] text-white/40">{t("analytics.ofCount", { earned: gami.badges.filter((b) => b.earned).length, total: gami.badges.length })}</span>
               </div>
               <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                 {gami.badges.map((b) => {
@@ -236,7 +238,7 @@ export default function AnalyticsPage() {
         </MotionItem>
       )}
 
-      {!card && selectedChild && <p className="text-white/50 text-sm">У ребёнка пока нет карты.</p>}
+      {!card && selectedChild && <p className="text-white/50 text-sm">{t("analytics.noCard")}</p>}
 
       {card && (
         <>
@@ -244,7 +246,7 @@ export default function AnalyticsPage() {
             <div className="flex gap-2">
               {PERIODS.map((p) => (
                 <Pill key={p.days} active={days === p.days} onClick={() => setDays(p.days)}>
-                  {p.label}
+                  {t(p.label)}
                 </Pill>
               ))}
             </div>
@@ -254,10 +256,10 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Spend by category */}
               <div className={panel}>
-                <p className="font-medium tracking-tight">Траты по категориям</p>
-                <p className="text-xs text-white/40 mb-4">Всего за период: {formatSum(total)}</p>
+                <p className="font-medium tracking-tight">{t("analytics.spendByCategory")}</p>
+                <p className="text-xs text-white/40 mb-4">{t("analytics.totalPeriod", { sum: formatSum(total) })}</p>
                 {total === 0 ? (
-                  <p className="text-sm text-white/40">Покупок за период не было</p>
+                  <p className="text-sm text-white/40">{t("analytics.noPurchases")}</p>
                 ) : (
                   <div className="space-y-3.5">
                     {analytics?.byCategory.map((c) => {
@@ -267,7 +269,7 @@ export default function AnalyticsPage() {
                         <div key={c.mcc}>
                           <div className="flex items-center justify-between text-sm mb-1.5">
                             <span className="font-medium flex items-center gap-2">
-                              <meta.Icon className="h-4 w-4" style={{ color: meta.color }} /> {meta.label}
+                              <meta.Icon className="h-4 w-4" style={{ color: meta.color }} /> {catLabel(c.mcc)}
                             </span>
                             <span className="text-white/50 tabular-nums">{formatSum(c.amountUzs)} · {pct}%</span>
                           </div>
@@ -283,10 +285,10 @@ export default function AnalyticsPage() {
 
               {/* Daily chart */}
               <div className={panel}>
-                <p className="font-medium tracking-tight">Динамика трат</p>
-                <p className="text-xs text-white/40 mb-3">По дням за выбранный период</p>
+                <p className="font-medium tracking-tight">{t("analytics.spendTrend")}</p>
+                <p className="text-xs text-white/40 mb-3">{t("analytics.byDayHint")}</p>
                 {total === 0 ? (
-                  <p className="text-sm text-white/40">Нет данных</p>
+                  <p className="text-sm text-white/40">{t("analytics.noData")}</p>
                 ) : (
                   <SpendChart data={analytics?.byDay ?? []} />
                 )}
@@ -294,9 +296,9 @@ export default function AnalyticsPage() {
 
               {/* Goals */}
               <div className={panel}>
-                <p className="font-medium tracking-tight mb-4">Накопления</p>
+                <p className="font-medium tracking-tight mb-4">{t("analytics.savings")}</p>
                 {childGoals.length === 0 ? (
-                  <p className="text-sm text-white/40">Целей пока нет</p>
+                  <p className="text-sm text-white/40">{t("dashboard.noGoals")}</p>
                 ) : (
                   <div className="space-y-4">
                     {childGoals.map((g) => {
@@ -312,7 +314,7 @@ export default function AnalyticsPage() {
                             <div className={`h-full rounded-full bg-gradient-to-r ${done ? "from-emerald-400 to-teal-400" : "from-violet-500 to-fuchsia-500"}`} style={{ width: `${pct}%` }} />
                           </div>
                           {g.interestEarned > 0 && (
-                            <p className="text-[11px] text-emerald-400 mt-1">заработано на процентах: {formatSum(g.interestEarned)}</p>
+                            <p className="text-[11px] text-emerald-400 mt-1">{t("analytics.interestEarned", { sum: formatSum(g.interestEarned) })}</p>
                           )}
                         </div>
                       );
@@ -323,25 +325,24 @@ export default function AnalyticsPage() {
 
               {/* Chores summary */}
               <div className={panel}>
-                <p className="font-medium tracking-tight mb-4">Задания</p>
+                <p className="font-medium tracking-tight mb-4">{t("nav.chores")}</p>
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="rounded-2xl bg-white/[0.05] py-4">
                     <p className="text-2xl font-bold tabular-nums">{choresOpen}</p>
-                    <p className="text-xs text-white/40 mt-1">К выполнению</p>
+                    <p className="text-xs text-white/40 mt-1">{t("analytics.toDo")}</p>
                   </div>
                   <div className="rounded-2xl bg-amber-500/15 py-4">
                     <p className="text-2xl font-bold text-amber-300 tabular-nums">{choresPending}</p>
-                    <p className="text-xs text-white/40 mt-1">На проверке</p>
+                    <p className="text-xs text-white/40 mt-1">{t("analytics.inReview")}</p>
                   </div>
                   <div className="rounded-2xl bg-emerald-500/15 py-4">
                     <p className="text-2xl font-bold text-emerald-300 tabular-nums">{choresDone}</p>
-                    <p className="text-xs text-white/40 mt-1">Выполнено</p>
+                    <p className="text-xs text-white/40 mt-1">{t("analytics.done")}</p>
                   </div>
                 </div>
                 {childChores.length > 0 && (
                   <p className="text-xs text-white/40 mt-4 text-center">
-                    Заработано на заданиях:{" "}
-                    {formatSum(childChores.filter((c) => c.status === "APPROVED").reduce((s, c) => s + c.rewardAmount, 0))}
+                    {t("analytics.choreEarnings", { sum: formatSum(childChores.filter((c) => c.status === "APPROVED").reduce((s, c) => s + c.rewardAmount, 0)) })}
                   </p>
                 )}
               </div>
