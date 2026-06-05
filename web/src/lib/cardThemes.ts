@@ -14,12 +14,12 @@ export interface CardTheme {
 }
 
 // ── Categories (for the grouped theme picker) ──
-export const CARD_CATEGORIES = ["classic", "creatures", "worlds"] as const;
+export const CARD_CATEGORIES = ["classic", "creatures", "worlds", "adventure"] as const;
 
 const CATEGORY_LABELS: Record<string, Record<string, string>> = {
-  ru: { classic: "Классика", creatures: "Существа", worlds: "Миры" },
-  uz: { classic: "Klassika", creatures: "Mavjudotlar", worlds: "Olamlar" },
-  en: { classic: "Classic", creatures: "Creatures", worlds: "Worlds" },
+  ru: { classic: "Классика", creatures: "Существа", worlds: "Миры", adventure: "Приключения" },
+  uz: { classic: "Klassika", creatures: "Mavjudotlar", worlds: "Olamlar", adventure: "Sarguzashtlar" },
+  en: { classic: "Classic", creatures: "Creatures", worlds: "Worlds", adventure: "Adventure" },
 };
 
 /** Localized category name. */
@@ -46,12 +46,20 @@ export const CARD_THEMES: CardTheme[] = [
   { key: "monsters", label: "Монстрики", grad: "from-fuchsia-500 to-violet-600", category: "creatures", image: "/card-themes/monsters.jpg" },
   { key: "dragon", label: "Драконы", grad: "from-amber-500 to-red-600", category: "creatures", image: "/card-themes/dragon.jpg" },
   { key: "unicorn", label: "Единороги", grad: "from-pink-400 via-purple-400 to-indigo-500", category: "creatures", image: "/card-themes/unicorn.jpg" },
+  { key: "cats", label: "Котики", grad: "from-orange-400 to-pink-500", category: "creatures", image: "/card-themes/cats.jpg" },
+  { key: "safari", label: "Сафари", grad: "from-yellow-500 to-orange-600", category: "creatures", image: "/card-themes/safari.jpg" },
 
   // Illustrated — worlds
   { key: "space", label: "Космос", grad: "from-indigo-600 to-purple-700", category: "worlds", image: "/card-themes/space.jpg" },
   { key: "underwater", label: "Подводный мир", grad: "from-cyan-500 to-blue-600", category: "worlds", image: "/card-themes/underwater.jpg" },
   { key: "robots", label: "Роботы", grad: "from-slate-600 to-cyan-600", category: "worlds", image: "/card-themes/robots.jpg" },
   { key: "racing", label: "Гонки", grad: "from-red-500 to-orange-500", category: "worlds", image: "/card-themes/racing.jpg" },
+
+  // Illustrated — adventure
+  { key: "pirates", label: "Пираты", grad: "from-slate-700 to-amber-600", category: "adventure", image: "/card-themes/pirates.jpg" },
+  { key: "heroes", label: "Супергерои", grad: "from-blue-600 to-red-600", category: "adventure", image: "/card-themes/heroes.jpg" },
+  { key: "sports", label: "Спорт", grad: "from-green-500 to-emerald-700", category: "adventure", image: "/card-themes/sports.jpg" },
+  { key: "fairytale", label: "Сказочный замок", grad: "from-pink-400 to-purple-500", category: "adventure", image: "/card-themes/fairytale.jpg" },
 ];
 
 const THEME_BY_KEY: Record<string, CardTheme> = Object.fromEntries(CARD_THEMES.map((t) => [t.key, t]));
@@ -60,14 +68,17 @@ const THEME_LABELS: Record<string, Record<string, string>> = {
   ru: {
     violet: "Фиолет", ocean: "Океан", sunset: "Закат", forest: "Лес", gold: "Золото", aurora: "Аврора", candy: "Карамель", midnight: "Ночь",
     dino: "Динозавры", monsters: "Монстрики", dragon: "Драконы", unicorn: "Единороги", space: "Космос", underwater: "Подводный мир", robots: "Роботы", racing: "Гонки",
+    cats: "Котики", safari: "Сафари", pirates: "Пираты", heroes: "Супергерои", sports: "Спорт", fairytale: "Сказочный замок",
   },
   uz: {
     violet: "Binafsha", ocean: "Okean", sunset: "Shafaq", forest: "O'rmon", gold: "Oltin", aurora: "Aurora", candy: "Karamel", midnight: "Tun",
     dino: "Dinozavrlar", monsters: "Monstrlar", dragon: "Ajdarlar", unicorn: "Yakkashox", space: "Koinot", underwater: "Suv osti", robots: "Robotlar", racing: "Poyga",
+    cats: "Mushuklar", safari: "Safari", pirates: "Qaroqchilar", heroes: "Superqahramonlar", sports: "Sport", fairytale: "Ertak qasri",
   },
   en: {
     violet: "Violet", ocean: "Ocean", sunset: "Sunset", forest: "Forest", gold: "Gold", aurora: "Aurora", candy: "Candy", midnight: "Midnight",
     dino: "Dinosaurs", monsters: "Monsters", dragon: "Dragons", unicorn: "Unicorns", space: "Space", underwater: "Underwater", robots: "Robots", racing: "Racing",
+    cats: "Cats", safari: "Safari", pirates: "Pirates", heroes: "Superheroes", sports: "Sports", fairytale: "Fairytale Castle",
   },
 };
 

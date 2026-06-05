@@ -15,6 +15,12 @@ Expected files (one per illustrated theme):
 | `underwater` | `underwater.jpg`  | Подводный мир      |
 | `robots`     | `robots.jpg`      | Роботы             |
 | `racing`     | `racing.jpg`      | Гонки              |
+| `cats`       | `cats.jpg`        | Котики             |
+| `safari`     | `safari.jpg`      | Сафари             |
+| `pirates`    | `pirates.jpg`     | Пираты             |
+| `heroes`     | `heroes.jpg`      | Супергерои         |
+| `sports`     | `sports.jpg`      | Спорт              |
+| `fairytale`  | `fairytale.jpg`   | Сказочный замок    |
 
 ## Asset spec
 - **Format:** `.jpg` (or `.png`), landscape ~**1792×1024** (16:9).
