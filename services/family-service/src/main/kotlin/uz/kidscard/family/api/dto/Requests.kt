@@ -60,3 +60,9 @@ data class LocationPingRequest(
     val label: String? = null,
     val amountUzs: Long? = null,
 )
+
+data class FulfillLocationRequest(
+    val lat: Double,
+    val lng: Double,
+    val accuracyM: Double? = null,
+)

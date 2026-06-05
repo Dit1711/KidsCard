@@ -11,6 +11,7 @@ import { childAuthService } from "@/lib/api";
 import { XpRing, StreakChip, levelTitle } from "@/components/kidkit";
 import { GamificationCelebration } from "@/components/GamificationCelebration";
 import { GeoConsentBanner } from "@/components/GeoConsentBanner";
+import { LocationResponder } from "@/components/LocationResponder";
 import { useT } from "@/i18n/locale";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -57,6 +58,7 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`fixed inset-0 overflow-y-auto bg-[#08080f] text-white ${golos.className}`}>
       <GamificationCelebration />
+      <LocationResponder />
       {/* glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-600/15 blur-3xl" />

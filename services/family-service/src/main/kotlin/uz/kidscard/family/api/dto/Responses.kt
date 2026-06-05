@@ -2,6 +2,7 @@ package uz.kidscard.family.api.dto
 
 import uz.kidscard.family.domain.Child
 import uz.kidscard.family.domain.ChildLocation
+import uz.kidscard.family.domain.LocationRequest
 import uz.kidscard.family.domain.Chore
 import uz.kidscard.family.domain.Family
 import uz.kidscard.family.domain.LimitRule
@@ -192,6 +193,26 @@ fun ChildLocation.toDto() = ChildLocationDto(
     label = label,
     amountUzs = amountUzs,
     capturedAt = capturedAt,
+)
+
+data class LocationRequestDto(
+    val id: UUID,
+    val status: String,      // PENDING / FULFILLED / EXPIRED
+    val createdAt: Instant,
+    val fulfilledAt: Instant?,
+    val resultLat: Double?,
+    val resultLng: Double?,
+    val resultAccuracyM: Double?,
+)
+
+fun LocationRequest.toDto() = LocationRequestDto(
+    id = id,
+    status = status.name,
+    createdAt = createdAt,
+    fulfilledAt = fulfilledAt,
+    resultLat = resultLat,
+    resultLng = resultLng,
+    resultAccuracyM = resultAccuracyM,
 )
 
 fun SavingsGoal.toDto() = SavingsGoalDto(

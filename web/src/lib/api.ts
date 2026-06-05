@@ -184,6 +184,19 @@ export const childAuthService = {
   }) =>
     childFamilyApi.post<ApiResponse<ChildLocationResponse>>("/api/v1/child/location", payload),
 
+  /** Child app: is there a pending "where are you?" request from a parent? */
+  pendingLocationRequest: () =>
+    childFamilyApi.get<ApiResponse<LocationRequestResponse | null>>(
+      "/api/v1/child/location/requests/pending"
+    ),
+
+  /** Child app: answer a request with the current location. */
+  fulfillLocationRequest: (requestId: string, lat: number, lng: number, accuracyM?: number) =>
+    childFamilyApi.post<ApiResponse<LocationRequestResponse>>(
+      `/api/v1/child/location/requests/${requestId}/fulfill`,
+      { lat, lng, accuracyM }
+    ),
+
   myChores: () =>
     childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
 
@@ -389,6 +402,18 @@ export const choreService = {
   childLocations: (familyId: string, childId: string, days = 30) =>
     familyApi.get<ApiResponse<ChildLocationResponse[]>>(
       `/api/v1/families/${familyId}/children/${childId}/locations?days=${days}`
+    ),
+
+  /** Parent: ask the child's app to report its current location. */
+  requestLocation: (familyId: string, childId: string) =>
+    familyApi.post<ApiResponse<LocationRequestResponse>>(
+      `/api/v1/families/${familyId}/children/${childId}/location-requests`
+    ),
+
+  /** Parent: poll a location request's status/result. */
+  pollLocationRequest: (familyId: string, childId: string, requestId: string) =>
+    familyApi.get<ApiResponse<LocationRequestResponse>>(
+      `/api/v1/families/${familyId}/children/${childId}/location-requests/${requestId}`
     ),
 
   /** Fetch a chore's proof photo as a Blob (parent). */
@@ -937,10 +962,20 @@ export interface ChildLocationResponse {
   lat: number;
   lng: number;
   accuracyM: number | null;
-  kind: string; // APP_OPEN | PURCHASE
+  kind: string; // APP_OPEN | PURCHASE | REQUESTED
   label: string | null;
   amountUzs: number | null;
   capturedAt: string;
+}
+
+export interface LocationRequestResponse {
+  id: string;
+  status: string; // PENDING | FULFILLED | EXPIRED
+  createdAt: string;
+  fulfilledAt: string | null;
+  resultLat: number | null;
+  resultLng: number | null;
+  resultAccuracyM: number | null;
 }
 
 export interface SavingsGoalResponse {

@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { familyService, choreService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { formatSum } from "@/lib/format";
-import { Panel, DSelect } from "@/components/dark";
+import { Panel, DSelect, DButton } from "@/components/dark";
 import { ChildMap } from "@/components/ChildMap";
-import { MapPin, ShoppingBag } from "lucide-react";
+import { MapPin, ShoppingBag, LocateFixed } from "lucide-react";
 import { useT } from "@/i18n/locale";
+
+type ReqState = "idle" | "pending" | "fulfilled" | "expired";
 
 export default function WherePage() {
   const { family } = useFamilyStore();
@@ -23,12 +25,49 @@ export default function WherePage() {
 
   const childId = picked || children?.[0]?.id || "";
 
-  const { data: locations } = useQuery({
+  const { data: locations, refetch: refetchLocations } = useQuery({
     queryKey: ["child-locations", childId],
     queryFn: async () => (await choreService.childLocations(family!.id, childId)).data.data,
     enabled: !!family?.id && !!childId,
     refetchInterval: 30_000,
   });
+
+  // On-demand "where are you now?" request (pull): create → poll until answered.
+  const [reqState, setReqState] = useState<ReqState>("idle");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
+  useEffect(() => stopPolling, []);
+  // Reset request UI when switching child.
+  useEffect(() => { stopPolling(); setReqState("idle"); }, [childId]);
+
+  const requestNow = async () => {
+    if (!family || !childId) return;
+    setReqState("pending");
+    try {
+      const { data } = await choreService.requestLocation(family.id, childId);
+      const reqId = data.data.id;
+      let tries = 0;
+      stopPolling();
+      pollRef.current = setInterval(async () => {
+        tries += 1;
+        try {
+          const r = (await choreService.pollLocationRequest(family.id, childId, reqId)).data.data;
+          if (r.status === "FULFILLED") {
+            stopPolling(); setReqState("fulfilled"); refetchLocations();
+          } else if (r.status === "EXPIRED" || tries > 16) {
+            stopPolling(); setReqState("expired");
+          }
+        } catch {
+          stopPolling(); setReqState("expired");
+        }
+      }, 3000);
+    } catch {
+      setReqState("expired");
+    }
+  };
 
   if (!family) {
     return (
@@ -57,6 +96,21 @@ export default function WherePage() {
           {children.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
         </DSelect>
       )}
+
+      <Panel className="p-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium flex items-center gap-1.5"><LocateFixed className="h-4 w-4 text-cyan-300 shrink-0" /> {t("where.requestTitle")}</p>
+          <p className={`text-xs mt-0.5 ${reqState === "fulfilled" ? "text-emerald-300" : reqState === "expired" ? "text-amber-300" : "text-white/40"}`}>
+            {reqState === "pending" ? t("where.requestPending")
+              : reqState === "fulfilled" ? t("where.requestFulfilled")
+              : reqState === "expired" ? t("where.requestExpired")
+              : t("where.requestHint")}
+          </p>
+        </div>
+        <DButton onClick={requestNow} disabled={reqState === "pending" || !childId} className="shrink-0 py-2">
+          {reqState === "pending" ? t("where.requesting") : t("where.requestBtn")}
+        </DButton>
+      </Panel>
 
       {pings.length === 0 ? (
         <Panel className="p-6 text-center">
