@@ -10,7 +10,7 @@ jackson-module-kotlin = "2.18.2"
 kafka = "3.8.1"
 logback-json = "0.1.5"
 otel = "2.10.0"
-resilience4j = "2.3.0"
+resilience4j = "2.2.0"
 
 [libraries]
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
