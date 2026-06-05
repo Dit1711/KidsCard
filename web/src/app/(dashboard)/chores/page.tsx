@@ -8,7 +8,7 @@ import { useFamilyStore } from "@/store/family";
 import { toast } from "sonner";
 import { Panel, DInput, DLabel, DButton, DBadge, DSelect } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
-import { Plus, Wallet, Check, Repeat } from "lucide-react";
+import { Plus, Wallet, Check, Repeat, Camera, X, Download } from "lucide-react";
 import { useT } from "@/i18n/locale";
 
 export default function ChoresPage() {
@@ -21,7 +21,26 @@ export default function ChoresPage() {
   const [reward, setReward] = useState("");
   const [childId, setChildId] = useState("");
   const [recurrence, setRecurrence] = useState<"NONE" | "DAILY" | "WEEKLY">("NONE");
+  const [requiresPhoto, setRequiresPhoto] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [photoView, setPhotoView] = useState<string | null>(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+
+  const openPhoto = async (choreId: string) => {
+    setPhotoLoading(true);
+    try {
+      const res = await choreService.proofPhoto(family!.id, choreId);
+      setPhotoView(URL.createObjectURL(res.data));
+    } catch {
+      toast.error(t("chores.photoLoadError"));
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+  const closePhoto = () => {
+    if (photoView) URL.revokeObjectURL(photoView);
+    setPhotoView(null);
+  };
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet", family?.id],
@@ -50,11 +69,11 @@ export default function ChoresPage() {
 
   const create = useMutation({
     mutationFn: () =>
-      choreService.create(family!.id, { title, childId, rewardAmount: Math.round(parseFloat(reward)), recurrence }),
+      choreService.create(family!.id, { title, childId, rewardAmount: Math.round(parseFloat(reward)), recurrence, requiresPhoto }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["chores", family!.id] });
       qc.invalidateQueries({ queryKey: ["wallet", family!.id] });
-      setTitle(""); setReward(""); setChildId(""); setRecurrence("NONE"); setCreateError(""); setShowCreate(false);
+      setTitle(""); setReward(""); setChildId(""); setRecurrence("NONE"); setRequiresPhoto(false); setCreateError(""); setShowCreate(false);
       toast.success(t("chores.toastCreated"));
     },
     onError: (err: unknown) => {
@@ -190,6 +209,16 @@ export default function ChoresPage() {
                 <p className="text-[11px] text-white/40 mt-1.5">{t("chores.recurHint")}</p>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => setRequiresPhoto(!requiresPhoto)}
+              className="flex w-full items-center gap-2.5 rounded-xl bg-white/[0.04] px-3 py-2.5 text-left hover:bg-white/[0.06] transition-colors"
+            >
+              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors ${requiresPhoto ? "bg-fuchsia-500 border-fuchsia-500" : "border-white/20"}`}>
+                {requiresPhoto && <Check className="h-3.5 w-3.5 text-white" />}
+              </span>
+              <span className="text-sm flex items-center gap-1.5"><Camera className="h-4 w-4 text-fuchsia-300" /> {t("chores.requirePhoto")}</span>
+            </button>
             {createError && <p className="text-sm text-rose-300 bg-rose-500/10 rounded-lg px-3 py-2">{createError}</p>}
             <DButton onClick={() => create.mutate()} disabled={!childId || !title || !reward || create.isPending} className="w-full">
               {create.isPending ? t("chores.reserving") : t("chores.create")}
@@ -213,9 +242,17 @@ export default function ChoresPage() {
                   </p>
                   <p className="text-xs text-white/40">{childName(c.childId)} · {t("chores.rewardWord")} {formatSum(c.rewardAmount)}</p>
                 </div>
-                <DButton onClick={() => approve.mutate(c.id)} disabled={approve.isPending} className="shrink-0 py-2">
-                  {t("chores.confirm")}
-                </DButton>
+                <div className="flex items-center gap-2 shrink-0">
+                  {c.hasPhoto && (
+                    <button onClick={() => openPhoto(c.id)} disabled={photoLoading}
+                      className="inline-flex items-center gap-1 rounded-xl border border-white/15 px-3 py-2 text-xs font-medium text-white/70 hover:bg-white/[0.06] disabled:opacity-50">
+                      <Camera className="h-4 w-4" /> {t("chores.viewPhoto")}
+                    </button>
+                  )}
+                  <DButton onClick={() => approve.mutate(c.id)} disabled={approve.isPending} className="py-2">
+                    {t("chores.confirm")}
+                  </DButton>
+                </div>
               </Panel>
             ))}
           </div>
@@ -297,6 +334,24 @@ export default function ChoresPage() {
             })}
           </div>
         </MotionItem>
+      )}
+
+      {photoView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={closePhoto}>
+          <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photoView} alt={t("chores.photoTitle")} className="w-full rounded-2xl" />
+            <div className="mt-3 flex items-center justify-between">
+              <a href={photoView} download="chore-photo.jpg"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 text-sm font-medium text-white hover:bg-white/25">
+                <Download className="h-4 w-4" /> {t("chores.savePhoto")}
+              </a>
+              <button onClick={closePhoto} className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </MotionStagger>
   );

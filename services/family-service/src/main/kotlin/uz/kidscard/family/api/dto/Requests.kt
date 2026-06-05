@@ -48,4 +48,5 @@ data class CreateChoreRequest(
     val rewardAmount: Long = 0,
     val dueDate: LocalDate? = null,
     val recurrence: Recurrence = Recurrence.NONE,
+    val requiresPhoto: Boolean = false,
 )

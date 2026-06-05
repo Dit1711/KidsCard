@@ -106,6 +106,8 @@ services:
       <<: *service-env
       APP_AUTH_SERVICE_URL: http://auth-service:8081
       APP_PAYMENT_SERVICE_URL: http://payment-service:8084
+    volumes:
+      - family_proofs:/data/proofs
     depends_on: *depends-infra
 
   card-service:
@@ -184,5 +186,6 @@ volumes:
   zookeeper_data:
   zookeeper_datalog:
   kafka_data:
+  family_proofs:
   caddy_data:
   caddy_config:

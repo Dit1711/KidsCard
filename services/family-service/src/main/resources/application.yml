@@ -1,6 +1,10 @@
 spring:
   application:
     name: family-service
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kidscard}?currentSchema=family
     username: ${DB_USER:kidscard}
@@ -113,3 +117,6 @@ logging:
 app:
   jwt:
     secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
+  storage:
+    # Local directory (mounted as a Docker volume) for chore proof photos.
+    proof-dir: ${PROOF_DIR:/data/proofs}

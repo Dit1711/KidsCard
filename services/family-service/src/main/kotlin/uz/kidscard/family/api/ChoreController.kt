@@ -2,6 +2,7 @@ package uz.kidscard.family.api
 
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
@@ -68,5 +69,17 @@ class ChoreController(
         val userId = UUID.fromString(jwt.subject)
         val result = choreService.approveChore(choreId, familyId, userId, jwt.tokenValue)
         return ResponseEntity.ok(ApiResponse.ok(result))
+    }
+
+    /** Parent views the child's proof photo for a chore. */
+    @GetMapping("/{choreId}/photo")
+    fun proofPhoto(
+        @PathVariable familyId: UUID,
+        @PathVariable choreId: UUID,
+        @AuthenticationPrincipal jwt: Jwt,
+    ): ResponseEntity<ByteArray> {
+        val userId = UUID.fromString(jwt.subject)
+        val img = choreService.getProofPhoto(choreId, familyId, userId) ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(img.contentType)).body(img.bytes)
     }
 }

@@ -177,10 +177,20 @@ export const childAuthService = {
   myChores: () =>
     childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
 
-  completeChore: (choreId: string) =>
-    childFamilyApi.post<ApiResponse<ChoreResponse>>(
-      `/api/v1/child/chores/${choreId}/complete`
-    ),
+  completeChore: (choreId: string, photo?: File | null) => {
+    const fd = new FormData();
+    if (photo) fd.append("photo", photo);
+    return childFamilyApi.post<ApiResponse<ChoreResponse>>(
+      `/api/v1/child/chores/${choreId}/complete`,
+      fd
+    );
+  },
+
+  /** Fetch the proof photo this child submitted, as a Blob. */
+  choreProofPhoto: (choreId: string) =>
+    childFamilyApi.get<Blob>(`/api/v1/child/chores/${choreId}/photo`, {
+      responseType: "blob",
+    }),
 
   myGoals: () =>
     childFamilyApi.get<ApiResponse<SavingsGoalResponse[]>>(
@@ -347,6 +357,7 @@ export const choreService = {
       rewardAmount: number;
       dueDate?: string;
       recurrence?: "NONE" | "DAILY" | "WEEKLY";
+      requiresPhoto?: boolean;
     }
   ) =>
     familyApi.post<ApiResponse<ChoreResponse>>(
@@ -363,6 +374,12 @@ export const choreService = {
     familyApi.post<ApiResponse<ChoreResponse>>(
       `/api/v1/families/${familyId}/chores/${choreId}/approve`
     ),
+
+  /** Fetch a chore's proof photo as a Blob (parent). */
+  proofPhoto: (familyId: string, choreId: string) =>
+    familyApi.get<Blob>(`/api/v1/families/${familyId}/chores/${choreId}/photo`, {
+      responseType: "blob",
+    }),
 };
 
 // ── Savings goals (parent view + gifting) ──────────────────────────────────────
@@ -896,6 +913,8 @@ export interface ChoreResponse {
   dueDate: string | null;
   completedAt: string | null;
   approvedAt: string | null;
+  requiresPhoto: boolean;
+  hasPhoto: boolean;
 }
 
 export interface SavingsGoalResponse {

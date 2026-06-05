@@ -59,6 +59,8 @@ data class ChoreDto(
     val dueDate: LocalDate?,
     val completedAt: Instant?,
     val approvedAt: Instant?,
+    val requiresPhoto: Boolean,
+    val hasPhoto: Boolean,
 )
 
 data class SavingsGoalDto(
@@ -167,6 +169,8 @@ fun Chore.toDto() = ChoreDto(
     dueDate = dueDate,
     completedAt = completedAt,
     approvedAt = approvedAt,
+    requiresPhoto = requiresPhoto,
+    hasPhoto = proofPhotoKey != null,
 )
 
 fun SavingsGoal.toDto() = SavingsGoalDto(

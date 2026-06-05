@@ -57,6 +57,18 @@ class Chore(
 
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now(),
+
+    /** If true, the child must attach a photo when marking the chore done. */
+    @Column(name = "requires_photo", nullable = false)
+    var requiresPhoto: Boolean = false,
+
+    /** Storage key of the proof photo (null until uploaded / after cleanup). */
+    @Column(name = "proof_photo_key")
+    var proofPhotoKey: String? = null,
+
+    /** When the proof photo was uploaded — drives the 30-day cleanup. */
+    @Column(name = "proof_photo_at")
+    var proofPhotoAt: Instant? = null,
 )
 
 enum class Recurrence { NONE, DAILY, WEEKLY }
