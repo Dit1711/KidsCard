@@ -30,7 +30,7 @@ class ChildAiController(
     ): ResponseEntity<ApiResponse<ChatReplyDto>> {
         val childId = UUID.fromString(jwt.getClaimAsString("childId"))
         val r = tutorService.chat(childId, request.threadId, request.message, request.imageBase64, request.imageMediaType)
-        return ResponseEntity.ok(ApiResponse.ok(ChatReplyDto(r.reply, r.limited, r.threadId, r.threadTitle)))
+        return ResponseEntity.ok(ApiResponse.ok(ChatReplyDto(r.reply, r.limited, r.threadId, r.threadTitle, r.disabled)))
     }
 
     /** List the child's conversations (most recent first). */

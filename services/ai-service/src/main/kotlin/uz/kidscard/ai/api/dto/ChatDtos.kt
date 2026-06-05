@@ -16,6 +16,23 @@ data class ChatReplyDto(
     val limited: Boolean,
     val threadId: UUID?,
     val threadTitle: String?,
+    /** Parent has switched the tutor off for this child. */
+    val disabled: Boolean = false,
+)
+
+/** Parent view/update of a child's AI controls. */
+data class AiSettingsDto(
+    val enabled: Boolean,
+    val dailyLimit: Int,
+    val dailyLimitCustom: Boolean,
+)
+
+data class UpdateAiSettingsRequest(
+    val familyId: UUID,
+    val childId: UUID,
+    val enabled: Boolean = true,
+    /** null clears any override and reverts to the global default. */
+    val dailyLimit: Int? = null,
 )
 
 data class ThreadDto(

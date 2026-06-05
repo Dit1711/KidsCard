@@ -46,8 +46,9 @@ class SecurityConfig(
                 auth.requestMatchers("/actuator/health").permitAll()
                 auth.requestMatchers("/actuator/info").permitAll()
                 auth.requestMatchers("/actuator/prometheus").permitAll()
-                // Child chats with the tutor; parents read history of their own family.
+                // Child chats with the tutor; parents manage controls & read history.
                 auth.requestMatchers("/api/v1/child/ai/**").hasRole("CHILD")
+                auth.requestMatchers("/api/v1/parent/ai/**").hasRole("PARENT_OWNER")
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->

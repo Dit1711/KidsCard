@@ -73,7 +73,8 @@ export default function KidAiPage() {
       const r = (await childAuthService.aiChat(msgToSend, tid ?? undefined, image)).data.data;
       if (r.threadId) setActiveThreadId(r.threadId);
       if (r.threadTitle) setActiveTitle(r.threadTitle);
-      if (r.limited) setLimited(true);
+      if (r.disabled) setMessages((m) => [...m, { role: "ASSISTANT", content: t("ai.disabled") }]);
+      else if (r.limited) setLimited(true);
       else setMessages((m) => [...m, { role: "ASSISTANT", content: r.reply }]);
     } catch {
       setMessages((m) => [...m, { role: "ASSISTANT", content: t("ai.error") }]);

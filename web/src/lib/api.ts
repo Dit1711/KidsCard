@@ -90,6 +90,7 @@ export const paymentApi = makeClient(PAYMENT_URL);
 export const kycApi = makeClient(KYC_URL);
 export const notificationApi = makeClient(NOTIFICATION_URL);
 export const openBankingApi = makeClient(OPENBANKING_URL);
+export const aiApi = makeClient(AI_URL);
 export const childCardApi = makeChildClient(CARD_URL);
 export const childPaymentApi = makeChildClient(PAYMENT_URL);
 export const childFamilyApi = makeChildClient(FAMILY_URL);
@@ -493,6 +494,36 @@ export const limitService = {
   remove: (familyId: string, childId: string, limitId: string) =>
     familyApi.delete(
       `/api/v1/families/${familyId}/children/${childId}/limits/${limitId}`
+    ),
+};
+
+// ── AI tutor (parent controls + visibility) ───────────────────────────────────
+
+export const parentAiService = {
+  getSettings: (familyId: string, childId: string) =>
+    aiApi.get<ApiResponse<AiSettingsResponse>>(
+      `/api/v1/parent/ai/settings?familyId=${familyId}&childId=${childId}`
+    ),
+
+  updateSettings: (
+    familyId: string,
+    childId: string,
+    payload: { enabled: boolean; dailyLimit: number | null }
+  ) =>
+    aiApi.put<ApiResponse<AiSettingsResponse>>(`/api/v1/parent/ai/settings`, {
+      familyId,
+      childId,
+      ...payload,
+    }),
+
+  threads: (familyId: string, childId: string) =>
+    aiApi.get<ApiResponse<ThreadResponse[]>>(
+      `/api/v1/parent/ai/threads?familyId=${familyId}&childId=${childId}`
+    ),
+
+  threadMessages: (familyId: string, childId: string, threadId: string) =>
+    aiApi.get<ApiResponse<ChatMessageResponse[]>>(
+      `/api/v1/parent/ai/threads/${threadId}/messages?familyId=${familyId}&childId=${childId}`
     ),
 };
 
@@ -998,6 +1029,13 @@ export interface ChatReplyResponse {
   limited: boolean;
   threadId: string | null;
   threadTitle: string | null;
+  disabled?: boolean;
+}
+
+export interface AiSettingsResponse {
+  enabled: boolean;
+  dailyLimit: number;
+  dailyLimitCustom: boolean;
 }
 
 export interface ThreadResponse {

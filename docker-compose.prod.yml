@@ -157,6 +157,7 @@ services:
     environment:
       <<: *service-env
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      APP_FAMILY_SERVICE_URL: http://family-service:8082
     depends_on: *depends-infra
 
   web:

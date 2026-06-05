@@ -21,6 +21,8 @@ data class ChatReply(
     val limited: Boolean,
     val threadId: UUID?,
     val threadTitle: String?,
+    /** The parent has turned the tutor off for this child. */
+    val disabled: Boolean = false,
 )
 
 @Service
@@ -29,7 +31,7 @@ class AiTutorService(
     private val chatMessageRepository: ChatMessageRepository,
     private val chatThreadRepository: ChatThreadRepository,
     private val engine: LlmEngine,
-    @Value("\${app.ai.daily-message-limit}") private val dailyLimit: Int,
+    private val settingsService: AiSettingsService,
     @Value("\${app.ai.history-turns}") private val historyTurns: Int,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -48,10 +50,16 @@ class AiTutorService(
         val text = userText.trim().take(4000).ifBlank { if (image != null) "📷" else "" }
         if (text.isBlank()) return ChatReply("", limited = false, threadId = threadId, threadTitle = null)
 
+        // Parental consent gate + per-child daily cap.
+        val settings = settingsService.effective(childId)
+        if (!settings.enabled) {
+            return ChatReply("", limited = false, threadId = threadId, threadTitle = null, disabled = true)
+        }
+
         // Daily rate limit (cost guard; per child, across all threads).
         val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant()
         val usedToday = chatMessageRepository.countByChildIdAndRoleAndCreatedAtAfter(childId, ChatRole.USER, startOfDay)
-        if (usedToday >= dailyLimit) {
+        if (usedToday >= settings.dailyLimit) {
             return ChatReply("", limited = true, threadId = threadId, threadTitle = null)
         }
 

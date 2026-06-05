@@ -12,7 +12,7 @@ import { useT } from "@/i18n/locale";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   LayoutGrid, Users, CreditCard, ListChecks, Inbox,
-  BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut, MapPin,
+  BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut, MapPin, Sparkles,
 } from "lucide-react";
 
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
@@ -28,6 +28,7 @@ const navItems = [
   { href: "/banks", labelKey: "nav.banks", icon: Landmark },
   { href: "/limits", labelKey: "nav.limits", icon: ShieldCheck },
   { href: "/allowance", labelKey: "nav.allowance", icon: Wallet },
+  { href: "/ai-tutor", labelKey: "nav.aiTutor", icon: Sparkles },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
