@@ -10,7 +10,7 @@ import { ChildMap } from "@/components/ChildMap";
 import { MapPin, ShoppingBag, LocateFixed } from "lucide-react";
 import { useT } from "@/i18n/locale";
 
-type ReqState = "idle" | "pending" | "fulfilled" | "expired";
+type ReqState = "idle" | "pending" | "fulfilled" | "waiting" | "expired";
 
 export default function WherePage() {
   const { family } = useFamilyStore();
@@ -57,8 +57,12 @@ export default function WherePage() {
           const r = (await choreService.pollLocationRequest(family.id, childId, reqId)).data.data;
           if (r.status === "FULFILLED") {
             stopPolling(); setReqState("fulfilled"); refetchLocations();
-          } else if (r.status === "EXPIRED" || tries > 16) {
+          } else if (r.status === "EXPIRED") {
             stopPolling(); setReqState("expired");
+          } else if (tries > 16) {
+            // Still pending: child's app is closed. They'll answer on next open,
+            // and a push notification will arrive then — no need to keep waiting.
+            stopPolling(); setReqState("waiting");
           }
         } catch {
           stopPolling(); setReqState("expired");
@@ -100,9 +104,10 @@ export default function WherePage() {
       <Panel className="p-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium flex items-center gap-1.5"><LocateFixed className="h-4 w-4 text-cyan-300 shrink-0" /> {t("where.requestTitle")}</p>
-          <p className={`text-xs mt-0.5 ${reqState === "fulfilled" ? "text-emerald-300" : reqState === "expired" ? "text-amber-300" : "text-white/40"}`}>
+          <p className={`text-xs mt-0.5 ${reqState === "fulfilled" ? "text-emerald-300" : reqState === "waiting" || reqState === "expired" ? "text-amber-300" : "text-white/40"}`}>
             {reqState === "pending" ? t("where.requestPending")
               : reqState === "fulfilled" ? t("where.requestFulfilled")
+              : reqState === "waiting" ? t("where.requestWaiting")
               : reqState === "expired" ? t("where.requestExpired")
               : t("where.requestHint")}
           </p>

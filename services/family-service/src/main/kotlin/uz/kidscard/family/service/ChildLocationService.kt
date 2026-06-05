@@ -33,6 +33,7 @@ class ChildLocationService(
     private val locationRequestRepository: LocationRequestRepository,
     private val childRepository: ChildRepository,
     private val familyService: FamilyService,
+    private val outboxService: OutboxService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -118,6 +119,22 @@ class ChildLocationService(
                 familyId = req.familyId, childId = childId,
                 lat = body.lat, lng = body.lng, accuracyM = body.accuracyM,
                 kind = LocationKind.REQUESTED, capturedAt = Instant.now(),
+            ),
+        )
+
+        // Notify the parent that the request was answered (e.g. when the child
+        // opened the app later) — so they don't have to wait on the screen.
+        val childName = childRepository.findById(childId).map { it.fullName }.orElse(null)
+        outboxService.publish(
+            aggregateType = "LocationRequest",
+            aggregateId = req.id.toString(),
+            eventType = "family.location.fulfilled",
+            topic = "family.events",
+            payload = mapOf(
+                "eventType" to "family.location.fulfilled",
+                "familyId" to req.familyId,
+                "childId" to childId,
+                "childName" to childName,
             ),
         )
         return req.toDto()
