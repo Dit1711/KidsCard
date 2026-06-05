@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { Sparkles, Send } from "lucide-react";
+import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { useT } from "@/i18n/locale";
 
 type Msg = { role: string; content: string };
@@ -67,13 +68,13 @@ export default function KidAiPage() {
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === "USER" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${
+              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm ${
                 m.role === "USER"
-                  ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white"
+                  ? "whitespace-pre-wrap bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white"
                   : "bg-white/[0.06] border border-white/[0.07] text-white/90"
               }`}
             >
-              {m.content}
+              {m.role === "USER" ? m.content : <ChatMarkdown text={m.content} />}
             </div>
           </div>
         ))}
