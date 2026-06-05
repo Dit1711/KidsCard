@@ -29,7 +29,7 @@ export function CardSurface({
             style={{ backgroundImage: `url(${image})` }}
           />
           {/* legibility scrim: darker at top (labels) and bottom (balance) */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/60" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70" />
         </>
       ) : (
         pattern && pattern !== "none" && (
