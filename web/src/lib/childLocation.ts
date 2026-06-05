@@ -52,6 +52,35 @@ export function captureAndReport(kind: "APP_OPEN" | "PURCHASE", label?: string, 
 }
 
 /**
+ * Child-initiated one-off share ("I'm here"). Explicit action, independent of
+ * the auto-tracking consent — works even if the child declined that. Resolves
+ * true on success. The backend notifies the parent right away.
+ */
+export function shareLocation(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      resolve(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        childAuthService
+          .reportLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracyM: pos.coords.accuracy,
+            kind: "SHARED",
+          })
+          .then(() => resolve(true))
+          .catch(() => resolve(false));
+      },
+      () => resolve(false),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  });
+}
+
+/**
  * Ask for consent (the browser shows its own permission prompt). On success,
  * remember consent and send the first app-open ping; on failure, remember the
  * refusal so we don't nag again.

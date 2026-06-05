@@ -11,6 +11,7 @@ import { CardSurface } from "@/components/CardSurface";
 import { CARD_PATTERNS, patternLabel } from "@/lib/cardThemes";
 import { ThemePicker } from "@/components/ThemePicker";
 import { KCard, XpBar, LEAGUE_META, leagueLabel, badgeTitle, badgeDesc } from "@/components/kidkit";
+import { ShareLocationButton } from "@/components/ShareLocationButton";
 import {
   Palette, Snowflake, TrendingUp, ShieldCheck, Wallet, Send,
   PiggyBank, Award, Target, GraduationCap, Crown, Trophy, Lock, type LucideIcon,
@@ -150,6 +151,9 @@ export default function KidHomePage() {
           <p className="text-xs text-white/60 bg-white/[0.04] rounded-xl px-3 py-2 border border-white/[0.06]">{mascotMsg}</p>
         </KCard>
       )}
+
+      {/* Quick: share where I am with my parents */}
+      <ShareLocationButton />
 
       {/* Card / balance */}
       {!card && (

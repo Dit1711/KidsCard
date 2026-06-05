@@ -59,7 +59,8 @@ export function ChildMap({ points, fmt }: { points: Point[]; fmt: (n: number) =>
     pts.forEach((p, i) => {
       const isLast = i === 0; // newest first
       const isPurchase = p.kind === "PURCHASE";
-      const color = isLast ? "#22d3ee" : isPurchase ? "#e879f9" : "#a78bfa";
+      const isShared = p.kind === "SHARED";
+      const color = isLast ? "#22d3ee" : isPurchase ? "#e879f9" : isShared ? "#34d399" : "#a78bfa";
       const m = L.circleMarker([p.lat, p.lng], {
         radius: isLast ? 11 : 7,
         color: "#ffffff",
@@ -70,7 +71,7 @@ export function ChildMap({ points, fmt }: { points: Point[]; fmt: (n: number) =>
       const when = new Date(p.capturedAt).toLocaleString();
       const title = isPurchase && p.label
         ? `${p.label}${p.amountUzs ? " · " + fmt(p.amountUzs) : ""}`
-        : isLast ? "📍" : "•";
+        : isLast || isShared ? "📍" : "•";
       m.bindPopup(`<b>${title}</b><br/>${when}`);
       m.addTo(layer);
       latlngs.push([p.lat, p.lng]);

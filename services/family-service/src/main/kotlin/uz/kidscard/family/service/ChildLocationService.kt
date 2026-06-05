@@ -53,7 +53,24 @@ class ChildLocationService(
             amountUzs = request.amountUzs,
             capturedAt = Instant.now(),
         )
-        return childLocationRepository.save(ping).toDto()
+        val saved = childLocationRepository.save(ping)
+
+        // A child-initiated share notifies the parent right away.
+        if (request.kind == LocationKind.SHARED) {
+            outboxService.publish(
+                aggregateType = "ChildLocation",
+                aggregateId = saved.id.toString(),
+                eventType = "family.location.shared",
+                topic = "family.events",
+                payload = mapOf(
+                    "eventType" to "family.location.shared",
+                    "familyId" to child.family.id,
+                    "childId" to childId,
+                    "childName" to child.fullName,
+                ),
+            )
+        }
+        return saved.toDto()
     }
 
     /** Parent reads a child's recent pings (newest first). */

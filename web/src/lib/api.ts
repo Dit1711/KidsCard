@@ -178,7 +178,7 @@ export const childAuthService = {
     lat: number;
     lng: number;
     accuracyM?: number;
-    kind: "APP_OPEN" | "PURCHASE";
+    kind: "APP_OPEN" | "PURCHASE" | "SHARED";
     label?: string;
     amountUzs?: number;
   }) =>

@@ -53,4 +53,4 @@ class ChildLocation(
     val capturedAt: Instant = Instant.now(),
 )
 
-enum class LocationKind { APP_OPEN, PURCHASE, REQUESTED }
+enum class LocationKind { APP_OPEN, PURCHASE, REQUESTED, SHARED }

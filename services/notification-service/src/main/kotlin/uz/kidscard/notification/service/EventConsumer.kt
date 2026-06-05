@@ -103,6 +103,15 @@ class EventConsumer(
                     "📍",
                 )
             }
+            "family.location.shared" -> {
+                val childName = node.get("childName")?.takeIf { !it.isNull }?.asText() ?: "Ребёнок"
+                notificationService.create(
+                    familyId, NotificationCategory.FAMILY,
+                    "Ребёнок поделился местоположением",
+                    "$childName отправил своё местоположение. Посмотрите на карте.",
+                    "📍",
+                )
+            }
             "family.chore.submitted" -> {
                 val title = node.get("title")?.takeIf { !it.isNull }?.asText() ?: "задание"
                 val reward = node.get("rewardAmount")?.asLong()
