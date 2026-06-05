@@ -19,6 +19,7 @@ const SERVICES: Record<string, { host: string; port: number }> = {
   openbanking:  { host: DOCKER ? "open-banking-service" : "localhost", port: 8085 },
   notification: { host: DOCKER ? "notification-service" : "localhost", port: 8086 },
   kyc:          { host: DOCKER ? "kyc-service" : "localhost", port: 8087 },
+  ai:           { host: DOCKER ? "ai-service" : "localhost", port: 8089 },
 };
 
 const nextConfig: NextConfig = {

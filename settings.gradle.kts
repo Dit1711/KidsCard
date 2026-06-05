@@ -24,4 +24,5 @@ include(
     "services:notification-service",
     "services:kyc-service",
     "services:compliance-service",
+    "services:ai-service",
 )

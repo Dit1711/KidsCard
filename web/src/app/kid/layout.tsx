@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Golos_Text } from "next/font/google";
 import { useQuery } from "@tanstack/react-query";
-import { Home, ShoppingBag, Target, PiggyBank, GraduationCap, LogOut } from "lucide-react";
+import { Home, ShoppingBag, Target, PiggyBank, GraduationCap, LogOut, Sparkles } from "lucide-react";
 import { useChildStore } from "@/store/child";
 import { childAuthService } from "@/lib/api";
 import { XpRing, StreakChip, levelTitle } from "@/components/kidkit";
@@ -19,6 +19,7 @@ const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 const navItems = [
   { href: "/kid", labelKey: "kid.nav.home", Icon: Home },
+  { href: "/kid/ai", labelKey: "kid.nav.buddy", Icon: Sparkles },
   { href: "/kid/shop", labelKey: "kid.nav.spending", Icon: ShoppingBag },
   { href: "/kid/chores", labelKey: "kid.nav.quests", Icon: Target },
   { href: "/kid/goals", labelKey: "kid.nav.goals", Icon: PiggyBank },

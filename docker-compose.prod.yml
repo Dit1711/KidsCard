@@ -150,6 +150,15 @@ services:
     environment: { <<: *service-env }
     depends_on: *depends-infra
 
+  # AI study buddy — proxies to Claude (ANTHROPIC_API_KEY from .env.prod). No host port.
+  ai-service:
+    build: { <<: *jvm-build, args: { SERVICE: ai-service } }
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on: *depends-infra
+
   web:
     build:
       context: web

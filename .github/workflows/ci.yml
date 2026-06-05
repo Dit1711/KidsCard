@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Docker images (no push)
         run: |
-          for service in auth-service family-service card-service payment-service open-banking-service notification-service kyc-service compliance-service api-gateway; do
+          for service in auth-service family-service card-service payment-service open-banking-service notification-service kyc-service compliance-service ai-service api-gateway; do
             echo "Building $service..."
             docker build -f services/$service/Dockerfile -t kidscard/$service:ci . || echo "Dockerfile not yet created for $service"
           done

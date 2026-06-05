@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: ai-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kidscard}?currentSchema=ai
+    username: ${DB_USER:kidscard}
+    password: ${DB_PASSWORD:kidscard_dev}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: ai
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: ai
+    baseline-on-migrate: true
+
+server:
+  port: ${SERVER_PORT:8089}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    uz.kidscard: DEBUG
+    org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:kids-card-dev-secret-minimum-32-chars-long-key}
+  ai:
+    # Pluggable LLM engine. "claude" uses Anthropic; later: a self-hosted engine.
+    engine: ${AI_ENGINE:claude}
+    # Anthropic API key — read from the environment, never committed.
+    anthropic-api-key: ${ANTHROPIC_API_KEY:}
+    # Cost-efficient default; override per environment.
+    model: ${AI_MODEL:claude-haiku-4-5}
+    max-tokens: ${AI_MAX_TOKENS:800}
+    # Default daily message cap per child (parent-configurable later).
+    daily-message-limit: ${AI_DAILY_LIMIT:50}
+    # How many recent turns to send as context.
+    history-turns: ${AI_HISTORY_TURNS:12}

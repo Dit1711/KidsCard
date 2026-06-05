@@ -16,6 +16,7 @@ const NOTIFICATION_URL =
   process.env.NEXT_PUBLIC_NOTIFICATION_URL || "/proxy/notification";
 const OPENBANKING_URL =
   process.env.NEXT_PUBLIC_OPENBANKING_URL || "/proxy/openbanking";
+const AI_URL = process.env.NEXT_PUBLIC_AI_URL || "/proxy/ai";
 
 function makeClient(baseURL: string) {
   const client = axios.create({ baseURL });
@@ -92,6 +93,7 @@ export const openBankingApi = makeClient(OPENBANKING_URL);
 export const childCardApi = makeChildClient(CARD_URL);
 export const childPaymentApi = makeChildClient(PAYMENT_URL);
 export const childFamilyApi = makeChildClient(FAMILY_URL);
+export const childAiApi = makeChildClient(AI_URL);
 // Bare client for the public child login — no parent token, no refresh
 // interceptor (which would otherwise loop on a 401 using the parent's token).
 export const childAuthApi = axios.create({ baseURL: AUTH_URL });
@@ -196,6 +198,12 @@ export const childAuthService = {
       `/api/v1/child/location/requests/${requestId}/fulfill`,
       { lat, lng, accuracyM }
     ),
+
+  // ── AI study buddy ──
+  aiChat: (message: string) =>
+    childAiApi.post<ApiResponse<ChatReplyResponse>>("/api/v1/child/ai/chat", { message }),
+  aiHistory: () =>
+    childAiApi.get<ApiResponse<ChatMessageResponse[]>>("/api/v1/child/ai/history"),
 
   myChores: () =>
     childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
@@ -976,6 +984,17 @@ export interface LocationRequestResponse {
   resultLat: number | null;
   resultLng: number | null;
   resultAccuracyM: number | null;
+}
+
+export interface ChatReplyResponse {
+  reply: string;
+  limited: boolean;
+}
+
+export interface ChatMessageResponse {
+  role: string; // USER | ASSISTANT
+  content: string;
+  createdAt: string;
 }
 
 export interface SavingsGoalResponse {
