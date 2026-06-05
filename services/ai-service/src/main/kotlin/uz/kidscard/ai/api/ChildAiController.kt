@@ -15,6 +15,7 @@ import uz.kidscard.ai.api.dto.ChatReplyDto
 import uz.kidscard.ai.api.dto.ChatRequest
 import uz.kidscard.ai.api.dto.ThreadDto
 import uz.kidscard.ai.service.AiTutorService
+import uz.kidscard.ai.service.StudyActivityClient
 import java.util.UUID
 
 /** Child cabinet: chat with the AI study buddy, organized into conversations. */
@@ -22,6 +23,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/child/ai")
 class ChildAiController(
     private val tutorService: AiTutorService,
+    private val studyActivityClient: StudyActivityClient,
 ) {
     @PostMapping("/chat")
     fun chat(
@@ -30,6 +32,10 @@ class ChildAiController(
     ): ResponseEntity<ApiResponse<ChatReplyDto>> {
         val childId = UUID.fromString(jwt.getClaimAsString("childId"))
         val r = tutorService.chat(childId, request.threadId, request.message, request.imageBase64, request.imageMediaType)
+        // A real exchange counts as a study session (XP + streak). Best-effort, async.
+        if (!r.limited && !r.disabled && r.reply.isNotBlank()) {
+            studyActivityClient.recordStudyToday(jwt.tokenValue)
+        }
         return ResponseEntity.ok(ApiResponse.ok(ChatReplyDto(r.reply, r.limited, r.threadId, r.threadTitle, r.disabled)))
     }
 

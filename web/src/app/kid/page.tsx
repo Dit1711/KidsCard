@@ -14,7 +14,7 @@ import { KCard, XpBar, LEAGUE_META, leagueLabel, badgeTitle, badgeDesc } from "@
 import { ShareLocationButton } from "@/components/ShareLocationButton";
 import {
   Palette, Snowflake, TrendingUp, ShieldCheck, Wallet, Send,
-  PiggyBank, Award, Target, GraduationCap, Crown, Trophy, Lock, type LucideIcon,
+  PiggyBank, Award, Target, GraduationCap, Crown, Trophy, Lock, Sparkles, type LucideIcon,
 } from "lucide-react";
 
 function formatDate(iso: string) {
@@ -35,6 +35,7 @@ const BADGE_ICON: Record<string, LucideIcon> = {
   first_lesson: GraduationCap,
   lesson_5: Award,
   first_goal: PiggyBank,
+  study_5: Sparkles,
   streak_7: TrendingUp,
   saver_1m: Crown,
 };

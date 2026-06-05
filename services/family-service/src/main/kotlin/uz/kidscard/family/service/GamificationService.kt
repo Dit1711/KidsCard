@@ -11,6 +11,7 @@ import uz.kidscard.family.repository.ChildRepository
 import uz.kidscard.family.repository.ChoreRepository
 import uz.kidscard.family.repository.LessonProgressRepository
 import uz.kidscard.family.repository.SavingsGoalRepository
+import uz.kidscard.family.repository.StudySessionRepository
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -29,6 +30,7 @@ class GamificationService(
     private val choreRepository: ChoreRepository,
     private val lessonProgressRepository: LessonProgressRepository,
     private val savingsGoalRepository: SavingsGoalRepository,
+    private val studySessionRepository: StudySessionRepository,
     private val childRepository: ChildRepository,
     private val familyService: FamilyService,
 ) {
@@ -38,6 +40,7 @@ class GamificationService(
         const val XP_PER_CHORE = 50
         const val XP_PER_LESSON_BASE = 40
         const val XP_PER_GOAL = 200
+        const val XP_PER_STUDY_DAY = 25
         const val XP_PER_LEVEL = 400
 
         // Level titles by tier (every 5 levels). Reused, teen-appropriate.
@@ -60,12 +63,14 @@ class GamificationService(
         val lessons = lessonProgressRepository.findByChildId(childId)
         val goals = savingsGoalRepository.findByChildIdOrderByCreatedAtDesc(childId)
         val completedGoals = goals.filter { it.status == GoalStatus.COMPLETED }
+        val studySessions = studySessionRepository.findByChildId(childId)
 
         // ---- XP ----
         val choreXp = approvedChores.size * XP_PER_CHORE
         val lessonXp = lessons.sumOf { XP_PER_LESSON_BASE + it.starsEarned }
         val goalXp = completedGoals.size * XP_PER_GOAL
-        val xp = choreXp + lessonXp + goalXp
+        val studyXp = studySessions.size * XP_PER_STUDY_DAY
+        val xp = choreXp + lessonXp + goalXp + studyXp
 
         val level = xp / XP_PER_LEVEL + 1
         val xpIntoLevel = xp % XP_PER_LEVEL
@@ -75,6 +80,7 @@ class GamificationService(
         val activityDays: Set<LocalDate> = buildSet {
             approvedChores.forEach { c -> (c.approvedAt ?: c.completedAt)?.let { add(it.toLocalDate()) } }
             lessons.forEach { add(it.completedAt.toLocalDate()) }
+            studySessions.forEach { add(it.studyDate) }
         }
         val today = LocalDate.now(zone)
         val activeToday = activityDays.contains(today)
@@ -102,6 +108,8 @@ class GamificationService(
                 lessons.size >= 5, nthLessonInstant(lessons, 5)),
             badge("first_goal", "Мечта сбылась", "Достигни первой цели",
                 completedGoals.isNotEmpty(), completedGoals.minByOrNull { it.updatedAt }?.updatedAt),
+            badge("study_5", "Любознатель", "Учись с Каем 5 дней",
+                studySessions.size >= 5, nthStudyInstant(studySessions, 5)),
             badge("streak_7", "На волне", "7 дней активности подряд",
                 longestStreak >= 7, null),
             badge("saver_1m", "Миллион не предел", "Накопи 1 000 000 в целях",
@@ -160,6 +168,11 @@ class GamificationService(
     private fun nthLessonInstant(lessons: List<uz.kidscard.family.domain.LessonProgress>, n: Int): Instant? {
         if (lessons.size < n) return null
         return lessons.map { it.completedAt }.sorted().getOrNull(n - 1)
+    }
+
+    private fun nthStudyInstant(sessions: List<uz.kidscard.family.domain.StudySession>, n: Int): Instant? {
+        if (sessions.size < n) return null
+        return sessions.map { it.createdAt }.sorted().getOrNull(n - 1)
     }
 
     private fun badge(key: String, title: String, description: String, earned: Boolean, earnedAt: Instant?) =
