@@ -36,8 +36,16 @@ class AiTutorService(
     private val zone = ZoneId.of("Asia/Tashkent")
 
     /** Send a message within a thread (a new one is created when threadId is null). */
-    fun chat(childId: UUID, threadId: UUID?, userText: String): ChatReply {
-        val text = userText.trim().take(4000)
+    fun chat(
+        childId: UUID,
+        threadId: UUID?,
+        userText: String,
+        imageBase64: String? = null,
+        imageMediaType: String? = null,
+    ): ChatReply {
+        // Drop oversized images defensively (frontend already downscales).
+        val image = imageBase64?.takeIf { it.length in 1..8_000_000 }
+        val text = userText.trim().take(4000).ifBlank { if (image != null) "📷" else "" }
         if (text.isBlank()) return ChatReply("", limited = false, threadId = threadId, threadTitle = null)
 
         // Daily rate limit (cost guard; per child, across all threads).
@@ -53,10 +61,14 @@ class AiTutorService(
 
         chatMessageRepository.save(ChatMessage(childId = childId, threadId = thread.id, role = ChatRole.USER, content = text))
 
-        val recent = chatMessageRepository
+        val recentMsgs = chatMessageRepository
             .findByThreadIdOrderByCreatedAtDesc(thread.id, PageRequest.of(0, historyTurns * 2))
             .reversed()
             .map { LlmTurn(it.role, it.content) }
+        // The image (not persisted) rides only on the current (last) user turn.
+        val recent = if (image != null && recentMsgs.isNotEmpty())
+            recentMsgs.dropLast(1) + recentMsgs.last().copy(imageBase64 = image, imageMediaType = imageMediaType)
+        else recentMsgs
 
         val reply = try {
             engine.complete(SYSTEM_PROMPT, recent).ifBlank { FALLBACK }

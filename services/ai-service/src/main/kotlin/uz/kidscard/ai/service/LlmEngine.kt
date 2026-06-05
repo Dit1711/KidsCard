@@ -2,8 +2,13 @@ package uz.kidscard.ai.service
 
 import uz.kidscard.ai.domain.ChatRole
 
-/** One turn of conversation handed to the LLM. */
-data class LlmTurn(val role: ChatRole, val content: String)
+/** One turn of conversation handed to the LLM (optionally with an image). */
+data class LlmTurn(
+    val role: ChatRole,
+    val content: String,
+    val imageBase64: String? = null,
+    val imageMediaType: String? = null,
+)
 
 /**
  * Pluggable LLM backend. Today: Anthropic Claude. Later a self-hosted engine

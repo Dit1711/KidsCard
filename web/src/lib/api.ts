@@ -200,8 +200,13 @@ export const childAuthService = {
     ),
 
   // ── AI study buddy ──
-  aiChat: (message: string, threadId?: string) =>
-    childAiApi.post<ApiResponse<ChatReplyResponse>>("/api/v1/child/ai/chat", { message, threadId }),
+  aiChat: (message: string, threadId?: string, image?: { base64: string; mediaType: string }) =>
+    childAiApi.post<ApiResponse<ChatReplyResponse>>("/api/v1/child/ai/chat", {
+      message,
+      threadId,
+      imageBase64: image?.base64,
+      imageMediaType: image?.mediaType,
+    }),
   aiThreads: () =>
     childAiApi.get<ApiResponse<ThreadResponse[]>>("/api/v1/child/ai/threads"),
   aiThreadMessages: (threadId: string) =>

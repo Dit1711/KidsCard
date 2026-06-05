@@ -1,12 +1,14 @@
 package uz.kidscard.ai.api.dto
 
-import jakarta.validation.constraints.NotBlank
 import java.time.Instant
 import java.util.UUID
 
 data class ChatRequest(
-    @field:NotBlank val message: String,
+    val message: String = "",
     val threadId: UUID? = null,
+    /** Optional base64 image (no data: prefix) + its media type, e.g. "image/jpeg". */
+    val imageBase64: String? = null,
+    val imageMediaType: String? = null,
 )
 
 data class ChatReplyDto(

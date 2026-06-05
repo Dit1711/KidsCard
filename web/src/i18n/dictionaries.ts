@@ -138,6 +138,9 @@ const ru: Dictionary = {
   "ai.starterLessons": "Помоги мне с уроками 📚",
   "ai.starterMoney": "Расскажи про деньги и как копить 💰",
   "ai.starterChat": "Привет! Давай поболтаем 😊",
+  "ai.photo": "Фото задачи",
+  "ai.photoPrompt": "Помоги разобраться с этим заданием",
+  "ai.photoLabel": "Фото задачи",
   "kid.friend": "друг",
   "kid.level": "Ур. {level} · {title}",
 
@@ -672,6 +675,9 @@ const uz: Dictionary = {
   "ai.starterLessons": "Darslarimga yordam ber 📚",
   "ai.starterMoney": "Pul va jamg'arish haqida gapir 💰",
   "ai.starterChat": "Salom! Suhbatlashaylik 😊",
+  "ai.photo": "Topshiriq fotosi",
+  "ai.photoPrompt": "Bu topshiriqni tushunishga yordam ber",
+  "ai.photoLabel": "Topshiriq fotosi",
   "kid.friend": "do'st",
   "kid.level": "Dar. {level} · {title}",
 
@@ -1128,6 +1134,9 @@ const en: Dictionary = {
   "ai.starterLessons": "Help me with my homework 📚",
   "ai.starterMoney": "Tell me about money and saving 💰",
   "ai.starterChat": "Hi! Let's chat 😊",
+  "ai.photo": "Photo of the problem",
+  "ai.photoPrompt": "Help me understand this problem",
+  "ai.photoLabel": "Problem photo",
   "kid.friend": "friend",
   "kid.level": "Lv. {level} · {title}",
 

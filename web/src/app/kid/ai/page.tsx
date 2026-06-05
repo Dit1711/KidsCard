@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { childAuthService, type ThreadResponse } from "@/lib/api";
 import { useChildStore } from "@/store/child";
-import { Sparkles, Send, Plus, ChevronLeft, BookOpen, Wallet, MessageCircle, MessagesSquare } from "lucide-react";
+import { Sparkles, Send, Plus, ChevronLeft, BookOpen, Wallet, MessageCircle, MessagesSquare, ImagePlus } from "lucide-react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
+import { downscaleToJpegBase64 } from "@/lib/imageScale";
 import { useT } from "@/i18n/locale";
 
 type Msg = { role: string; content: string };
@@ -22,6 +23,7 @@ export default function KidAiPage() {
   const [sending, setSending] = useState(false);
   const [limited, setLimited] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
   const loadThreads = () => {
     childAuthService.aiThreads().then((r) => setThreads(r.data.data)).catch(() => {});
@@ -54,15 +56,21 @@ export default function KidAiPage() {
     loadThreads();
   };
 
-  const send = async (text: string, threadOverride?: string | null) => {
-    const msg = text.trim();
-    if (!msg || sending || limited) return;
+  const send = async (
+    text: string,
+    threadOverride?: string | null,
+    image?: { base64: string; mediaType: string },
+  ) => {
+    const typed = text.trim();
+    const msgToSend = typed || (image ? t("ai.photoPrompt") : "");
+    if (!msgToSend || sending || limited) return;
     const tid = threadOverride !== undefined ? threadOverride : activeThreadId;
+    const display = (image ? "📷 " : "") + (typed || (image ? t("ai.photoLabel") : ""));
     setInput("");
-    setMessages((m) => [...m, { role: "USER", content: msg }]);
+    setMessages((m) => [...m, { role: "USER", content: display }]);
     setSending(true);
     try {
-      const r = (await childAuthService.aiChat(msg, tid ?? undefined)).data.data;
+      const r = (await childAuthService.aiChat(msgToSend, tid ?? undefined, image)).data.data;
       if (r.threadId) setActiveThreadId(r.threadId);
       if (r.threadTitle) setActiveTitle(r.threadTitle);
       if (r.limited) setLimited(true);
@@ -71,6 +79,18 @@ export default function KidAiPage() {
       setMessages((m) => [...m, { role: "ASSISTANT", content: t("ai.error") }]);
     } finally {
       setSending(false);
+    }
+  };
+
+  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || sending || limited) return;
+    try {
+      const img = await downscaleToJpegBase64(file);
+      if (img.base64) send(input, undefined, img);
+    } catch {
+      setMessages((m) => [...m, { role: "ASSISTANT", content: t("ai.error") }]);
     }
   };
 
@@ -211,6 +231,15 @@ export default function KidAiPage() {
 
       <div className="sticky bottom-0 pt-2">
         <div className="flex items-end gap-2">
+          <input ref={photoRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPhoto} />
+          <button
+            onClick={() => photoRef.current?.click()}
+            disabled={sending || limited}
+            title={t("ai.photo")}
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.06] text-fuchsia-300 disabled:opacity-40"
+          >
+            <ImagePlus className="h-5 w-5" />
+          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

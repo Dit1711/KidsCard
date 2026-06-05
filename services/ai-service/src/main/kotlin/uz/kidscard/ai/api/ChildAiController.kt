@@ -1,6 +1,5 @@
 package uz.kidscard.ai.api
 
-import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
@@ -26,11 +25,11 @@ class ChildAiController(
 ) {
     @PostMapping("/chat")
     fun chat(
-        @Valid @RequestBody request: ChatRequest,
+        @RequestBody request: ChatRequest,
         @AuthenticationPrincipal jwt: Jwt,
     ): ResponseEntity<ApiResponse<ChatReplyDto>> {
         val childId = UUID.fromString(jwt.getClaimAsString("childId"))
-        val r = tutorService.chat(childId, request.threadId, request.message)
+        val r = tutorService.chat(childId, request.threadId, request.message, request.imageBase64, request.imageMediaType)
         return ResponseEntity.ok(ApiResponse.ok(ChatReplyDto(r.reply, r.limited, r.threadId, r.threadTitle)))
     }
 
