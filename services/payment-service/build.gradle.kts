@@ -25,6 +25,10 @@ dependencies {
     implementation(libs.opentelemetry.exporter.otlp)
     implementation(libs.spring.boot.starter.aop)
     implementation(libs.resilience4j.spring.boot3)
+    // Resilience4j's fallback auto-config introspects Reactor/RxJava3 decorator
+    // classes at startup; provide both reactive libs so they resolve (BOM-managed).
+    implementation("io.projectreactor:reactor-core")
+    implementation("io.reactivex.rxjava3:rxjava")
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     developmentOnly(libs.spring.boot.devtools)
 
