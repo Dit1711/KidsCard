@@ -27,7 +27,7 @@ class ClaudeEngine(
         val builder = MessageCreateParams.builder()
             .model(model)
             .maxTokens(maxTokens)
-            .addSystemMessage(systemPrompt)
+            .system(systemPrompt) // top-level system parameter (not a message)
         history.forEach { turn ->
             if (turn.role == ChatRole.USER) builder.addUserMessage(turn.content)
             else builder.addAssistantMessage(turn.content)
