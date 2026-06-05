@@ -9,12 +9,12 @@ import java.util.UUID
 
 interface ChatMessageRepository : JpaRepository<ChatMessage, UUID> {
 
-    /** Recent messages for context (newest first; caller reverses + limits). */
-    fun findByChildIdOrderByCreatedAtDesc(childId: UUID, pageable: Pageable): List<ChatMessage>
+    /** Recent messages in a thread for context (newest first; caller reverses + limits). */
+    fun findByThreadIdOrderByCreatedAtDesc(threadId: UUID, pageable: Pageable): List<ChatMessage>
 
-    /** Full history oldest-first (parent view). */
-    fun findByChildIdOrderByCreatedAtAsc(childId: UUID): List<ChatMessage>
+    /** Full thread history, oldest-first. */
+    fun findByThreadIdOrderByCreatedAtAsc(threadId: UUID): List<ChatMessage>
 
-    /** Daily rate-limit counter. */
+    /** Daily rate-limit counter (per child, across all threads). */
     fun countByChildIdAndRoleAndCreatedAtAfter(childId: UUID, role: ChatRole, after: Instant): Long
 }

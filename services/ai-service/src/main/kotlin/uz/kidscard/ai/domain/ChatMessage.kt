@@ -20,6 +20,9 @@ class ChatMessage(
     @Column(name = "child_id", nullable = false)
     val childId: UUID,
 
+    @Column(name = "thread_id")
+    val threadId: UUID? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     val role: ChatRole,

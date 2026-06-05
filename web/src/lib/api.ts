@@ -200,10 +200,12 @@ export const childAuthService = {
     ),
 
   // ── AI study buddy ──
-  aiChat: (message: string) =>
-    childAiApi.post<ApiResponse<ChatReplyResponse>>("/api/v1/child/ai/chat", { message }),
-  aiHistory: () =>
-    childAiApi.get<ApiResponse<ChatMessageResponse[]>>("/api/v1/child/ai/history"),
+  aiChat: (message: string, threadId?: string) =>
+    childAiApi.post<ApiResponse<ChatReplyResponse>>("/api/v1/child/ai/chat", { message, threadId }),
+  aiThreads: () =>
+    childAiApi.get<ApiResponse<ThreadResponse[]>>("/api/v1/child/ai/threads"),
+  aiThreadMessages: (threadId: string) =>
+    childAiApi.get<ApiResponse<ChatMessageResponse[]>>(`/api/v1/child/ai/threads/${threadId}/messages`),
 
   myChores: () =>
     childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
@@ -989,6 +991,14 @@ export interface LocationRequestResponse {
 export interface ChatReplyResponse {
   reply: string;
   limited: boolean;
+  threadId: string | null;
+  threadTitle: string | null;
+}
+
+export interface ThreadResponse {
+  id: string;
+  title: string | null;
+  updatedAt: string;
 }
 
 export interface ChatMessageResponse {
