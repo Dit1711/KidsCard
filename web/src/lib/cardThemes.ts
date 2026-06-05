@@ -5,23 +5,70 @@ export interface CardTheme {
   key: string;
   label: string; // RU fallback; use themeLabel(key) for the localized name
   grad: string; // tailwind gradient stops (used with bg-gradient-to-br)
+  category: string; // category key — see CARD_CATEGORIES
+  /**
+   * Optional raster background (kid illustration), served from /public.
+   * Until the asset exists the card gracefully falls back to `grad`.
+   */
+  image?: string;
 }
 
+// ── Categories (for the grouped theme picker) ──
+export const CARD_CATEGORIES = ["classic", "creatures", "worlds"] as const;
+
+const CATEGORY_LABELS: Record<string, Record<string, string>> = {
+  ru: { classic: "Классика", creatures: "Существа", worlds: "Миры" },
+  uz: { classic: "Klassika", creatures: "Mavjudotlar", worlds: "Olamlar" },
+  en: { classic: "Classic", creatures: "Creatures", worlds: "Worlds" },
+};
+
+/** Localized category name. */
+export function categoryLabel(key: string): string {
+  return (CATEGORY_LABELS[getRuntimeLocale()] ?? CATEGORY_LABELS.ru)[key] ?? key;
+}
+
+// ── Themes ──
+// `classic` = pure gradients (the original set; existing cards reference these keys).
+// The illustrated themes carry an `image` (kid art) with a themed gradient fallback.
 export const CARD_THEMES: CardTheme[] = [
-  { key: "violet", label: "Фиолет", grad: "from-violet-500 to-fuchsia-500" },
-  { key: "ocean", label: "Океан", grad: "from-sky-500 to-indigo-500" },
-  { key: "sunset", label: "Закат", grad: "from-rose-500 to-orange-400" },
-  { key: "forest", label: "Лес", grad: "from-emerald-500 to-teal-500" },
-  { key: "gold", label: "Золото", grad: "from-amber-400 to-pink-500" },
-  { key: "aurora", label: "Аврора", grad: "from-fuchsia-500 via-purple-500 to-indigo-500" },
-  { key: "candy", label: "Карамель", grad: "from-pink-400 to-rose-500" },
-  { key: "midnight", label: "Ночь", grad: "from-slate-700 to-slate-900" },
+  // Classic gradients
+  { key: "violet", label: "Фиолет", grad: "from-violet-500 to-fuchsia-500", category: "classic" },
+  { key: "ocean", label: "Океан", grad: "from-sky-500 to-indigo-500", category: "classic" },
+  { key: "sunset", label: "Закат", grad: "from-rose-500 to-orange-400", category: "classic" },
+  { key: "forest", label: "Лес", grad: "from-emerald-500 to-teal-500", category: "classic" },
+  { key: "gold", label: "Золото", grad: "from-amber-400 to-pink-500", category: "classic" },
+  { key: "aurora", label: "Аврора", grad: "from-fuchsia-500 via-purple-500 to-indigo-500", category: "classic" },
+  { key: "candy", label: "Карамель", grad: "from-pink-400 to-rose-500", category: "classic" },
+  { key: "midnight", label: "Ночь", grad: "from-slate-700 to-slate-900", category: "classic" },
+
+  // Illustrated — creatures
+  { key: "dino", label: "Динозавры", grad: "from-emerald-500 to-lime-600", category: "creatures", image: "/card-themes/dino.jpg" },
+  { key: "monsters", label: "Монстрики", grad: "from-fuchsia-500 to-violet-600", category: "creatures", image: "/card-themes/monsters.jpg" },
+  { key: "dragon", label: "Драконы", grad: "from-amber-500 to-red-600", category: "creatures", image: "/card-themes/dragon.jpg" },
+  { key: "unicorn", label: "Единороги", grad: "from-pink-400 via-purple-400 to-indigo-500", category: "creatures", image: "/card-themes/unicorn.jpg" },
+
+  // Illustrated — worlds
+  { key: "space", label: "Космос", grad: "from-indigo-600 to-purple-700", category: "worlds", image: "/card-themes/space.jpg" },
+  { key: "underwater", label: "Подводный мир", grad: "from-cyan-500 to-blue-600", category: "worlds", image: "/card-themes/underwater.jpg" },
+  { key: "robots", label: "Роботы", grad: "from-slate-600 to-cyan-600", category: "worlds", image: "/card-themes/robots.jpg" },
+  { key: "racing", label: "Гонки", grad: "from-red-500 to-orange-500", category: "worlds", image: "/card-themes/racing.jpg" },
 ];
 
+const THEME_BY_KEY: Record<string, CardTheme> = Object.fromEntries(CARD_THEMES.map((t) => [t.key, t]));
+
 const THEME_LABELS: Record<string, Record<string, string>> = {
-  ru: { violet: "Фиолет", ocean: "Океан", sunset: "Закат", forest: "Лес", gold: "Золото", aurora: "Аврора", candy: "Карамель", midnight: "Ночь" },
-  uz: { violet: "Binafsha", ocean: "Okean", sunset: "Shafaq", forest: "O'rmon", gold: "Oltin", aurora: "Aurora", candy: "Karamel", midnight: "Tun" },
-  en: { violet: "Violet", ocean: "Ocean", sunset: "Sunset", forest: "Forest", gold: "Gold", aurora: "Aurora", candy: "Candy", midnight: "Midnight" },
+  ru: {
+    violet: "Фиолет", ocean: "Океан", sunset: "Закат", forest: "Лес", gold: "Золото", aurora: "Аврора", candy: "Карамель", midnight: "Ночь",
+    dino: "Динозавры", monsters: "Монстрики", dragon: "Драконы", unicorn: "Единороги", space: "Космос", underwater: "Подводный мир", robots: "Роботы", racing: "Гонки",
+  },
+  uz: {
+    violet: "Binafsha", ocean: "Okean", sunset: "Shafaq", forest: "O'rmon", gold: "Oltin", aurora: "Aurora", candy: "Karamel", midnight: "Tun",
+    dino: "Dinozavrlar", monsters: "Monstrlar", dragon: "Ajdarlar", unicorn: "Yakkashox", space: "Koinot", underwater: "Suv osti", robots: "Robotlar", racing: "Poyga",
+  },
+  en: {
+    violet: "Violet", ocean: "Ocean", sunset: "Sunset", forest: "Forest", gold: "Gold", aurora: "Aurora", candy: "Candy", midnight: "Midnight",
+    dino: "Dinosaurs", monsters: "Monsters", dragon: "Dragons", unicorn: "Unicorns", space: "Space", underwater: "Underwater", robots: "Robots", racing: "Racing",
+  },
 };
 
 /** Localized card-theme name. */
@@ -30,7 +77,12 @@ export function themeLabel(key: string): string {
 }
 
 export function cardGradient(key: string | null | undefined): string {
-  return (CARD_THEMES.find((t) => t.key === key) ?? CARD_THEMES[0]).grad;
+  return (key && THEME_BY_KEY[key] ? THEME_BY_KEY[key] : CARD_THEMES[0]).grad;
+}
+
+/** Raster background for a theme, or null for pure-gradient (classic) themes. */
+export function cardImage(key: string | null | undefined): string | null {
+  return (key && THEME_BY_KEY[key]?.image) || null;
 }
 
 export interface CardPattern {

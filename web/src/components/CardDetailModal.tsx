@@ -9,7 +9,8 @@ import {
 } from "@/lib/api";
 import { Panel, DInput, DButton, DBadge, DSelect, Pill } from "@/components/dark";
 import { CardSurface } from "@/components/CardSurface";
-import { CARD_THEMES, CARD_PATTERNS, themeLabel, patternLabel } from "@/lib/cardThemes";
+import { CARD_PATTERNS, patternLabel } from "@/lib/cardThemes";
+import { ThemePicker } from "@/components/ThemePicker";
 import { useT } from "@/i18n/locale";
 import { toast } from "sonner";
 import {
@@ -473,14 +474,11 @@ export function CardDetailModal({ card, childName, familyId, onClose }: {
                 {designOpen && !isBlocked && (
                   <div className="space-y-3 pt-1">
                     <p className="text-sm font-medium">{t("kidh.cardColor")}</p>
-                    <div className="grid grid-cols-8 gap-2">
-                      {CARD_THEMES.map((th) => (
-                        <button key={th.key}
-                          onClick={() => setDesign.mutate({ theme: th.key, pattern: card.pattern })}
-                          className={`h-9 rounded-lg bg-gradient-to-br ${th.grad} ${card.theme === th.key ? "ring-2 ring-offset-2 ring-offset-[#15151f] ring-white" : ""}`}
-                          title={themeLabel(th.key)} />
-                      ))}
-                    </div>
+                    <ThemePicker
+                      selected={card.theme}
+                      onSelect={(key) => setDesign.mutate({ theme: key, pattern: card.pattern })}
+                      ringOffset="ring-offset-[#15151f]"
+                    />
                     <p className="text-sm font-medium pt-1">{t("kidh.pattern")}</p>
                     <div className="flex gap-2 flex-wrap">
                       {CARD_PATTERNS.map((p) => (

@@ -8,7 +8,8 @@ import { useChildStore } from "@/store/child";
 import { categoryLabel, periodRemainingLabel } from "@/lib/categories";
 import { useT } from "@/i18n/locale";
 import { CardSurface } from "@/components/CardSurface";
-import { CARD_THEMES, CARD_PATTERNS, themeLabel, patternLabel } from "@/lib/cardThemes";
+import { CARD_PATTERNS, patternLabel } from "@/lib/cardThemes";
+import { ThemePicker } from "@/components/ThemePicker";
 import { KCard, XpBar, LEAGUE_META, leagueLabel, badgeTitle, badgeDesc } from "@/components/kidkit";
 import {
   Palette, Snowflake, TrendingUp, ShieldCheck, Wallet, Send,
@@ -180,16 +181,11 @@ export default function KidHomePage() {
           {showDesign && (
             <KCard className="p-4 space-y-3">
               <p className="text-sm font-bold flex items-center gap-1.5"><Palette className="h-4 w-4 text-fuchsia-300" /> {t("kidh.cardColor")}</p>
-              <div className="grid grid-cols-4 gap-2">
-                {CARD_THEMES.map((th) => (
-                  <button
-                    key={th.key}
-                    onClick={() => setDesign.mutate({ theme: th.key, pattern: card.pattern })}
-                    className={`h-12 rounded-xl bg-gradient-to-br ${th.grad} ${card.theme === th.key ? "ring-2 ring-offset-2 ring-offset-[#08080f] ring-fuchsia-400" : ""}`}
-                    title={themeLabel(th.key)}
-                  />
-                ))}
-              </div>
+              <ThemePicker
+                selected={card.theme}
+                onSelect={(key) => setDesign.mutate({ theme: key, pattern: card.pattern })}
+                ringOffset="ring-offset-[#08080f]"
+              />
               <p className="text-sm font-bold pt-1">{t("kidh.pattern")}</p>
               <div className="flex gap-2 flex-wrap">
                 {CARD_PATTERNS.map((p) => (
