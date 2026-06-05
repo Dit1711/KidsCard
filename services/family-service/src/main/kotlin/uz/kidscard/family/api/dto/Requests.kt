@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uz.kidscard.family.domain.LimitType
+import uz.kidscard.family.domain.LocationKind
 import uz.kidscard.family.domain.Recurrence
 import java.time.LocalDate
 import java.util.UUID
@@ -49,4 +50,13 @@ data class CreateChoreRequest(
     val dueDate: LocalDate? = null,
     val recurrence: Recurrence = Recurrence.NONE,
     val requiresPhoto: Boolean = false,
+)
+
+data class LocationPingRequest(
+    val lat: Double,
+    val lng: Double,
+    val accuracyM: Double? = null,
+    val kind: LocationKind = LocationKind.APP_OPEN,
+    val label: String? = null,
+    val amountUzs: Long? = null,
 )

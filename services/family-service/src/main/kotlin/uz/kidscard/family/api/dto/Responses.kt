@@ -1,6 +1,7 @@
 package uz.kidscard.family.api.dto
 
 import uz.kidscard.family.domain.Child
+import uz.kidscard.family.domain.ChildLocation
 import uz.kidscard.family.domain.Chore
 import uz.kidscard.family.domain.Family
 import uz.kidscard.family.domain.LimitRule
@@ -171,6 +172,26 @@ fun Chore.toDto() = ChoreDto(
     approvedAt = approvedAt,
     requiresPhoto = requiresPhoto,
     hasPhoto = proofPhotoKey != null,
+)
+
+data class ChildLocationDto(
+    val lat: Double,
+    val lng: Double,
+    val accuracyM: Double?,
+    val kind: String,        // APP_OPEN / PURCHASE
+    val label: String?,      // merchant name for purchases
+    val amountUzs: Long?,
+    val capturedAt: Instant,
+)
+
+fun ChildLocation.toDto() = ChildLocationDto(
+    lat = lat,
+    lng = lng,
+    accuracyM = accuracyM,
+    kind = kind.name,
+    label = label,
+    amountUzs = amountUzs,
+    capturedAt = capturedAt,
 )
 
 fun SavingsGoal.toDto() = SavingsGoalDto(

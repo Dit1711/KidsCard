@@ -10,6 +10,7 @@ import { useChildStore } from "@/store/child";
 import { childAuthService } from "@/lib/api";
 import { XpRing, StreakChip, levelTitle } from "@/components/kidkit";
 import { GamificationCelebration } from "@/components/GamificationCelebration";
+import { GeoConsentBanner } from "@/components/GeoConsentBanner";
 import { useT } from "@/i18n/locale";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -87,7 +88,10 @@ export default function KidLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-5 pb-28 w-full space-y-5">{children}</main>
+        <main className="flex-1 px-5 pb-28 w-full space-y-5">
+          <GeoConsentBanner />
+          {children}
+        </main>
 
         {/* Bottom nav */}
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0c0c16]/95 backdrop-blur border-t border-white/[0.07] flex rounded-t-3xl">

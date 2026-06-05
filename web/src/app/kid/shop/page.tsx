@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { CATEGORIES, catLabel, type SpendCategory } from "@/lib/categories";
+import { captureAndReport } from "@/lib/childLocation";
 import { KCard } from "@/components/kidkit";
 import { ShoppingBag, Snowflake } from "lucide-react";
 import { useT } from "@/i18n/locale";
@@ -46,6 +47,8 @@ export default function KidShopPage() {
       qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-tx", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-limit-usage", card?.id] });
+      // Geo-tag the purchase for the parent's spend map (only if consented).
+      captureAndReport("PURCHASE", catLabel(shopCat!.mcc), Math.round(parseFloat(shopAmount)));
       setShopMsg({ ok: true, text: t("kids.bought", { cat: catLabel(shopCat!.mcc) }) });
       setShopAmount("");
     },

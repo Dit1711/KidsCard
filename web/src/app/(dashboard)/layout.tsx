@@ -12,7 +12,7 @@ import { useT } from "@/i18n/locale";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   LayoutGrid, Users, CreditCard, ListChecks, Inbox,
-  BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut,
+  BarChart3, Landmark, ShieldCheck, Wallet, Search, LogOut, MapPin,
 } from "lucide-react";
 
 const golos = Golos_Text({ subsets: ["latin", "cyrillic"], display: "swap" });
@@ -22,6 +22,7 @@ const navItems = [
   { href: "/family", labelKey: "nav.family", icon: Users },
   { href: "/cards", labelKey: "nav.cards", icon: CreditCard },
   { href: "/chores", labelKey: "nav.chores", icon: ListChecks },
+  { href: "/where", labelKey: "nav.whereChild", icon: MapPin },
   { href: "/requests", labelKey: "nav.requests", icon: Inbox },
   { href: "/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/banks", labelKey: "nav.banks", icon: Landmark },

@@ -174,6 +174,16 @@ export const childAuthService = {
       merchantMcc,
     }),
 
+  reportLocation: (payload: {
+    lat: number;
+    lng: number;
+    accuracyM?: number;
+    kind: "APP_OPEN" | "PURCHASE";
+    label?: string;
+    amountUzs?: number;
+  }) =>
+    childFamilyApi.post<ApiResponse<ChildLocationResponse>>("/api/v1/child/location", payload),
+
   myChores: () =>
     childFamilyApi.get<ApiResponse<ChoreResponse[]>>("/api/v1/child/chores"),
 
@@ -373,6 +383,12 @@ export const choreService = {
   approve: (familyId: string, choreId: string) =>
     familyApi.post<ApiResponse<ChoreResponse>>(
       `/api/v1/families/${familyId}/chores/${choreId}/approve`
+    ),
+
+  /** Parent: recent location pings for a child (newest first). */
+  childLocations: (familyId: string, childId: string, days = 30) =>
+    familyApi.get<ApiResponse<ChildLocationResponse[]>>(
+      `/api/v1/families/${familyId}/children/${childId}/locations?days=${days}`
     ),
 
   /** Fetch a chore's proof photo as a Blob (parent). */
@@ -915,6 +931,16 @@ export interface ChoreResponse {
   approvedAt: string | null;
   requiresPhoto: boolean;
   hasPhoto: boolean;
+}
+
+export interface ChildLocationResponse {
+  lat: number;
+  lng: number;
+  accuracyM: number | null;
+  kind: string; // APP_OPEN | PURCHASE
+  label: string | null;
+  amountUzs: number | null;
+  capturedAt: string;
 }
 
 export interface SavingsGoalResponse {
