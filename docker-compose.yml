@@ -38,6 +38,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_datalog:/var/lib/zookeeper/log
 
   kafka:
     image: confluentinc/cp-kafka:7.7.1
@@ -81,4 +82,5 @@ volumes:
   postgres_data:
   redis_data:
   zookeeper_data:
+  zookeeper_datalog:
   kafka_data:
