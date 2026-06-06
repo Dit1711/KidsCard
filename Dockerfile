@@ -10,7 +10,11 @@ COPY gradlew settings.gradle.kts build.gradle.kts ./
 COPY gradle ./gradle
 COPY libs ./libs
 COPY services ./services
-RUN chmod +x gradlew && ./gradlew --no-daemon :services:${SERVICE}:bootJar
+# Cache the Gradle distribution + dependency cache across builds so we don't
+# re-download Gradle from services.gradle.org every time (resilient to network
+# blips on the build host). Survives image rebuilds on the same machine.
+RUN --mount=type=cache,target=/root/.gradle \
+    chmod +x gradlew && ./gradlew --no-daemon :services:${SERVICE}:bootJar
 
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
