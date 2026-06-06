@@ -41,6 +41,17 @@ const PERIODS = [
   { days: 90, label: "analytics.period3mo" },
 ];
 
+type ExportPeriod = "month" | "lastMonth" | "30d" | "90d" | "year" | "all" | "custom";
+const EXPORT_PERIODS: { key: ExportPeriod; label: string }[] = [
+  { key: "month", label: "exp.pMonth" },
+  { key: "lastMonth", label: "exp.pLastMonth" },
+  { key: "30d", label: "exp.p30d" },
+  { key: "90d", label: "exp.p90d" },
+  { key: "year", label: "exp.pYear" },
+  { key: "all", label: "exp.pAll" },
+  { key: "custom", label: "exp.pCustom" },
+];
+
 function Pill({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
   return (
     <button
@@ -125,37 +136,66 @@ export default function AnalyticsPage() {
   });
 
   const [exporting, setExporting] = useState(false);
+  const [period, setPeriod] = useState<ExportPeriod>("month");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+
+  /** Resolve the selected period into a [from, to] window (null = open-ended). */
+  const resolveRange = (): { from: Date | null; to: Date | null } => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    switch (period) {
+      case "month": return { from: new Date(y, m, 1), to: null };
+      case "lastMonth": return { from: new Date(y, m - 1, 1), to: new Date(y, m, 0, 23, 59, 59, 999) };
+      case "30d": return { from: new Date(now.getTime() - 30 * 864e5), to: null };
+      case "90d": return { from: new Date(now.getTime() - 90 * 864e5), to: null };
+      case "year": return { from: new Date(y, 0, 1), to: null };
+      case "all": return { from: null, to: null };
+      case "custom": return {
+        from: customFrom ? new Date(`${customFrom}T00:00:00`) : null,
+        to: customTo ? new Date(`${customTo}T23:59:59.999`) : null,
+      };
+    }
+  };
 
   const exportCsv = async () => {
     if (!family || exporting) return;
+    const { from, to } = resolveRange();
     setExporting(true);
     try {
       const nameById = new Map((children ?? []).map((c) => [c.id, c.fullName]));
-      const all: import("@/lib/api").TransactionResponse[] = [];
+      const rows: import("@/lib/api").TransactionResponse[] = [];
       let page = 0;
-      // Pull every page (capped) so the export covers the full history.
-      while (page < 200) {
+      let done = false;
+      // Transactions come newest-first, so once we pass `from` we can stop paging.
+      while (page < 500 && !done) {
         const res = (await paymentService.getFamilyTransactions(family.id, page, 100)).data.data;
-        all.push(...res.content);
-        if (page >= res.totalPages - 1 || res.content.length === 0) break;
+        for (const tx of res.content) {
+          const ts = new Date(tx.createdAt).getTime();
+          if (to && ts > to.getTime()) continue;
+          if (from && ts < from.getTime()) { done = true; break; }
+          rows.push(tx);
+        }
+        if (done || page >= res.totalPages - 1 || res.content.length === 0) break;
         page++;
       }
-      if (all.length === 0) {
+      if (rows.length === 0) {
         toast.info(t("exp.empty"));
         return;
       }
       downloadCsv(
-        `kidscard-history-${new Date().toISOString().slice(0, 10)}.csv`,
+        `kidscard-history-${period}-${new Date().toISOString().slice(0, 10)}.csv`,
         [t("exp.colDate"), t("exp.colChild"), t("exp.colType"), t("exp.colStatus"),
           t("exp.colDirection"), t("exp.colAmount"), t("exp.colMerchant"), t("exp.colDescription"), t("exp.colBalance")],
-        all.map((tx) => [
+        rows.map((tx) => [
           new Date(tx.createdAt).toLocaleString(),
           nameById.get(tx.childId) ?? tx.childId,
           tx.type, tx.status, tx.direction, tx.amountUzs,
           tx.merchantName ?? "", tx.description ?? "", tx.balanceAfter,
         ]),
       );
-      toast.success(t("exp.done", { count: all.length }));
+      toast.success(t("exp.done", { count: rows.length }));
     } catch {
       toast.error(t("common.error"));
     } finally {
@@ -182,15 +222,40 @@ export default function AnalyticsPage() {
   return (
     <MotionStagger className="space-y-6">
       <MotionItem>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t("nav.analytics")}</h1>
-            <p className="text-white/50 mt-1 text-sm">{t("analytics.subtitle")}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("nav.analytics")}</h1>
+        <p className="text-white/50 mt-1 text-sm">{t("analytics.subtitle")}</p>
+      </MotionItem>
+
+      {/* Export history (whole family) */}
+      <MotionItem>
+        <div className={panel}>
+          <div className="flex items-center gap-2 mb-3">
+            <Download className="h-4 w-4 text-white/60" />
+            <p className="font-medium tracking-tight">{t("exp.title")}</p>
           </div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {EXPORT_PERIODS.map((p) => (
+              <Pill key={p.key} active={period === p.key} onClick={() => setPeriod(p.key)}>{t(p.label)}</Pill>
+            ))}
+          </div>
+          {period === "custom" && (
+            <div className="flex flex-wrap items-end gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-white/40 mb-1">{t("exp.from")}</label>
+                <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+                  className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white focus:border-fuchsia-400/50 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs text-white/40 mb-1">{t("exp.to")}</label>
+                <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
+                  className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white focus:border-fuchsia-400/50 focus:outline-none" />
+              </div>
+            </div>
+          )}
           <button
             onClick={exportCsv}
             disabled={exporting}
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.1] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.1] disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
             {exporting ? t("exp.exporting") : t("exp.button")}
