@@ -20,6 +20,7 @@ import java.util.UUID
 class SavingsGoalService(
     private val savingsGoalRepository: SavingsGoalRepository,
     private val savingsClient: SavingsClient,
+    private val savingsMatchService: SavingsMatchService,
     private val childRepository: uz.kidscard.family.repository.ChildRepository,
     private val familyService: FamilyService,
 ) {
@@ -78,10 +79,26 @@ class SavingsGoalService(
         val goal = requireOwnGoal(goalId, childId)
         savingsClient.deposit(cardId, childId, familyId, goalId, amountUzs, token)
         goal.currentAmount += amountUzs
+
+        // SAV-04: parent match, funded from the family wallet. Best-effort — an
+        // empty wallet (or any payment hiccup) must never fail the child's deposit.
+        var appliedMatch = 0L
+        val plannedMatch = savingsMatchService.plannedMatch(childId, amountUzs)
+        if (plannedMatch > 0) {
+            try {
+                savingsClient.contribute(familyId, goal.childId, goalId, plannedMatch, token)
+                goal.currentAmount += plannedMatch
+                savingsMatchService.recordAward(childId, goalId, plannedMatch)
+                appliedMatch = plannedMatch
+            } catch (ex: Exception) {
+                log.warn("Savings match skipped for goal={}: {}", goalId, ex.message)
+            }
+        }
+
         if (goal.currentAmount >= goal.targetAmount) goal.status = GoalStatus.COMPLETED
         goal.updatedAt = Instant.now()
-        log.info("Savings deposit: goal={} +{} → {}/{}", goalId, amountUzs, goal.currentAmount, goal.targetAmount)
-        return savingsGoalRepository.save(goal).toDto()
+        log.info("Savings deposit: goal={} +{} (match +{}) → {}/{}", goalId, amountUzs, appliedMatch, goal.currentAmount, goal.targetAmount)
+        return savingsGoalRepository.save(goal).toDto().copy(matchUzs = appliedMatch.takeIf { it > 0 })
     }
 
     fun withdraw(goalId: UUID, childId: UUID, familyId: UUID, cardId: UUID, amountUzs: Long, token: String): SavingsGoalDto {

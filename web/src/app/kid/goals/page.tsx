@@ -7,6 +7,7 @@ import { childAuthService } from "@/lib/api";
 import { useChildStore } from "@/store/child";
 import { KCard } from "@/components/kidkit";
 import { PiggyBank, TrendingUp, Trophy, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "@/i18n/locale";
 
 export default function KidGoalsPage() {
@@ -71,10 +72,12 @@ export default function KidGoalsPage() {
   const depositGoal = useMutation({
     mutationFn: ({ goalId, amount }: { goalId: string; amount: number }) =>
       childAuthService.depositGoal(goalId, card!.id, amount),
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["child-goals"] });
       qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-gamification"] });
+      const bonus = res.data.data.matchUzs;
+      if (bonus && bonus > 0) toast.success(t("kidg.matchBonus", { sum: formatSum(bonus) }));
     },
   });
 

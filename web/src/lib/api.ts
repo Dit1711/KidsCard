@@ -598,6 +598,31 @@ export const allowanceService = {
     ),
 };
 
+// ── Savings match (parent matches the child's deposits, SAV-04) ────────────────
+
+export interface SavingsMatchResponse {
+  percent: number;
+  monthlyCapUzs: number | null;
+  usedThisMonthUzs: number;
+}
+
+export const savingsMatchService = {
+  get: (familyId: string, childId: string) =>
+    familyApi.get<ApiResponse<SavingsMatchResponse>>(
+      `/api/v1/families/${familyId}/children/${childId}/savings-match`
+    ),
+
+  set: (
+    familyId: string,
+    childId: string,
+    payload: { percent: number; monthlyCapUzs: number | null }
+  ) =>
+    familyApi.put<ApiResponse<SavingsMatchResponse>>(
+      `/api/v1/families/${familyId}/children/${childId}/savings-match`,
+      payload
+    ),
+};
+
 // ── Payment ───────────────────────────────────────────────────────────────────
 
 export const paymentService = {
@@ -1062,4 +1087,5 @@ export interface SavingsGoalResponse {
   deadline: string | null;
   status: string; // ACTIVE, COMPLETED, CANCELLED
   imageUrl: string | null;
+  matchUzs?: number | null; // parent match credited with the just-made deposit
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { formatSum } from "@/lib/format";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { familyService, cardService, allowanceService } from "@/lib/api";
+import { familyService, cardService, allowanceService, savingsMatchService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { Panel, DInput, DLabel, DButton, DBadge, Pill } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
@@ -24,6 +24,8 @@ export default function AllowancePage() {
   const [allowanceAmount, setAllowanceAmount] = useState("");
   const [allowanceFreq, setAllowanceFreq] = useState("WEEKLY");
   const [allowanceDow, setAllowanceDow] = useState(1);
+  const [matchPercent, setMatchPercent] = useState("");
+  const [matchCap, setMatchCap] = useState("");
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
@@ -61,6 +63,30 @@ export default function AllowancePage() {
       qc.invalidateQueries({ queryKey: ["allowance", family!.id, childCard!.id] });
       setAllowanceAmount("");
       toast.success(t("allowance.toastSet"));
+    },
+    onError: () => toast.error(t("allowance.toastSetError")),
+  });
+
+  const { data: match } = useQuery({
+    queryKey: ["savings-match", family?.id, selectedChild],
+    queryFn: async () => (await savingsMatchService.get(family!.id, selectedChild)).data.data,
+    enabled: !!family?.id && !!selectedChild,
+  });
+
+  useEffect(() => {
+    setMatchPercent(match && match.percent > 0 ? String(match.percent) : "");
+    setMatchCap(match?.monthlyCapUzs ? String(match.monthlyCapUzs) : "");
+  }, [match]);
+
+  const setMatch = useMutation({
+    mutationFn: () =>
+      savingsMatchService.set(family!.id, selectedChild, {
+        percent: matchPercent.trim() === "" ? 0 : Math.round(parseFloat(matchPercent)),
+        monthlyCapUzs: matchCap.trim() === "" ? null : Math.round(parseFloat(matchCap)),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["savings-match", family!.id, selectedChild] });
+      toast.success(t("match.toastSet"));
     },
     onError: () => toast.error(t("allowance.toastSetError")),
   });
@@ -157,6 +183,48 @@ export default function AllowancePage() {
                 </div>
               </>
             )}
+          </Panel>
+        </MotionItem>
+      )}
+
+      {selectedChild && (
+        <MotionItem>
+          <Panel className="p-6 max-w-xl space-y-4">
+            <div>
+              <p className="font-medium tracking-tight">{t("match.title")}</p>
+              <p className="text-xs text-white/40">{t("match.subtitle")}</p>
+            </div>
+
+            {match && match.percent > 0 ? (
+              <div className="p-3.5 rounded-2xl bg-violet-500/[0.08] border border-violet-500/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-violet-200">{t("match.active", { percent: match.percent })}</span>
+                  {match.monthlyCapUzs && <DBadge tone="muted">{t("match.capBadge", { sum: formatSum(match.monthlyCapUzs) })}</DBadge>}
+                </div>
+                {match.monthlyCapUzs != null && (
+                  <p className="text-xs text-violet-300/70 mt-1">{t("match.usedThisMonth", { sum: formatSum(match.usedThisMonthUzs) })}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-white/40">{t("match.off")}</p>
+            )}
+
+            <div className="h-px bg-white/[0.06]" />
+
+            <div className="space-y-3">
+              <div>
+                <DLabel>{t("match.percentLabel")}</DLabel>
+                <DInput type="number" placeholder="50" value={matchPercent} onChange={(e) => setMatchPercent(e.target.value)} />
+                <p className="text-[11px] text-white/35 mt-1">{t("match.percentHint")}</p>
+              </div>
+              <div>
+                <DLabel>{t("match.capLabel")}</DLabel>
+                <DInput type="number" placeholder={t("match.capPlaceholder")} value={matchCap} onChange={(e) => setMatchCap(e.target.value)} />
+              </div>
+              <DButton onClick={() => setMatch.mutate()} disabled={setMatch.isPending} className="w-full">
+                {setMatch.isPending ? t("common.saving") : t("match.set")}
+              </DButton>
+            </div>
           </Panel>
         </MotionItem>
       )}

@@ -77,12 +77,21 @@ data class SavingsGoalDto(
     val deadline: LocalDate?,
     val status: String,
     val imageUrl: String?,
+    /** Parent match credited alongside the just-made deposit (deposit response only). */
+    val matchUzs: Long? = null,
 )
 
 data class LessonProgressDto(
     val totalStars: Int,
     val completedCount: Int,
     val completedLessonIds: List<String>,
+)
+
+/** Parent savings-match rule for one child + this month's payout so far. */
+data class SavingsMatchDto(
+    val percent: Int,
+    val monthlyCapUzs: Long?,
+    val usedThisMonthUzs: Long,
 )
 
 /** Gamification snapshot for the teen kid cabinet — all values derived at read time. */
