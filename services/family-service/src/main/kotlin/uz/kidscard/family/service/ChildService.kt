@@ -22,6 +22,7 @@ class ChildService(
     private val childRepository: ChildRepository,
     private val familyRepository: FamilyRepository,
     private val familyService: FamilyService,
+    private val consentService: ConsentService,
     private val outboxService: OutboxService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -32,6 +33,9 @@ class ChildService(
         request: AddChildRequest,
     ): ChildDto {
         familyService.requireOwner(familyId, requestingUserId)
+        // KYC-04: a child cannot be added until the parent has accepted the
+        // required legal documents (incl. consent to process the child's data).
+        consentService.requireAllConsents(requestingUserId)
 
         val family = familyRepository.findById(familyId).orElseThrow {
             ResourceNotFoundException("Family", familyId)

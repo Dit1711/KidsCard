@@ -2,15 +2,21 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { familyService } from "@/lib/api";
+import { familyService, consentService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { useAuthStore } from "@/store/auth";
 import { ChildAccessPanel } from "@/components/ChildAccessPanel";
 import { Panel, DInput, DLabel, DButton, DBadge } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { toast } from "sonner";
-import { UserPlus, Plus } from "lucide-react";
+import { UserPlus, Plus, ShieldCheck } from "lucide-react";
 import { useT } from "@/i18n/locale";
+
+const CONSENT_DOCS = [
+  { type: "TERMS", label: "consent.terms" },
+  { type: "PRIVACY", label: "consent.privacy" },
+  { type: "CHILD_DATA", label: "consent.childData" },
+];
 
 function calcAge(dob: string) {
   return new Date().getFullYear() - new Date(dob).getFullYear();
@@ -81,6 +87,21 @@ export default function FamilyPage() {
     },
     onError: () => toast.error(t("family.toastAddError")),
   });
+
+  // KYC-04: parental e-consent gate (only the owner accepts).
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const { data: consent } = useQuery({
+    queryKey: ["consent-status", family?.id],
+    queryFn: async () => (await consentService.status()).data.data,
+    enabled: !!family?.id,
+  });
+  const consentGranted = consent?.allGranted ?? false;
+  const acceptConsent = useMutation({
+    mutationFn: () => consentService.accept(CONSENT_DOCS.map((d) => d.type)),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["consent-status", family!.id] }); toast.success(t("consent.toastAccepted")); },
+    onError: () => toast.error(t("family.toastAddError")),
+  });
+  const allChecked = CONSENT_DOCS.every((d) => checked[d.type]);
 
   const inviteCoParent = useMutation({
     mutationFn: () => familyService.inviteCoParent(family!.id, coPhone.trim(), coName.trim()),
@@ -198,16 +219,50 @@ export default function FamilyPage() {
             </div>
           </MotionItem>
 
+          {/* KYC-04: consent gate (owner only, until accepted) */}
+          {isOwner && consent && !consentGranted && (
+            <MotionItem>
+              <Panel className="p-5 space-y-3 border-amber-500/20">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-amber-300" />
+                  <p className="font-semibold">{t("consent.title")}</p>
+                </div>
+                <p className="text-sm text-white/50">{t("consent.subtitle")}</p>
+                <div className="space-y-2">
+                  {CONSENT_DOCS.map((d) => (
+                    <label key={d.type} className="flex items-start gap-2.5 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!checked[d.type]}
+                        onChange={(e) => setChecked((c) => ({ ...c, [d.type]: e.target.checked }))}
+                        className="mt-0.5 h-4 w-4 accent-fuchsia-500"
+                      />
+                      <span className="text-white/80">
+                        {t("consent.accept")}{" "}
+                        <span className="font-medium text-white">{t(d.label)}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <DButton onClick={() => acceptConsent.mutate()} disabled={!allChecked || acceptConsent.isPending} className="w-full">
+                  {acceptConsent.isPending ? t("common.saving") : t("consent.confirm")}
+                </DButton>
+              </Panel>
+            </MotionItem>
+          )}
+
           {/* Children */}
           <MotionItem>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold tracking-tight">{t("family.children")}</h2>
-              <DButton variant="outline" onClick={() => setShowAddChild(!showAddChild)} className="py-2">
+              <DButton variant="outline" onClick={() => setShowAddChild(!showAddChild)} disabled={!consentGranted} className="py-2">
                 {showAddChild ? t("common.cancel") : <><Plus className="h-4 w-4" /> {t("common.add")}</>}
               </DButton>
             </div>
 
-            {showAddChild && (
+            {!consentGranted && <p className="text-xs text-amber-300/80 mb-3">{t("consent.gateHint")}</p>}
+
+            {showAddChild && consentGranted && (
               <Panel className="p-5 mb-3 space-y-3">
                 <div>
                   <DLabel>{t("family.childName")}</DLabel>

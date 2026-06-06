@@ -351,6 +351,21 @@ export interface LessonProgressResponse {
 
 // ── Family ────────────────────────────────────────────────────────────────────
 
+export interface ConsentStatusResponse {
+  version: string;
+  required: string[];
+  granted: string[];
+  allGranted: boolean;
+}
+
+export const consentService = {
+  status: () =>
+    familyApi.get<ApiResponse<ConsentStatusResponse>>("/api/v1/consents"),
+
+  accept: (types: string[]) =>
+    familyApi.post<ApiResponse<ConsentStatusResponse>>("/api/v1/consents", { types }),
+};
+
 export const familyService = {
   create: (familyName: string, fullName: string) =>
     familyApi.post<ApiResponse<FamilyResponse>>("/api/v1/families", {
