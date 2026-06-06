@@ -58,6 +58,28 @@ class EventConsumer(
                     "🚫",
                 )
             }
+
+            "payment.approval.required" -> {
+                val amount = node.get("amountUzs")?.asLong()
+                val merchant = node.get("merchantName")?.takeIf { !it.isNull }?.asText()
+                notificationService.create(
+                    familyId, NotificationCategory.REQUEST,
+                    "Нужно одобрить покупку",
+                    "Ребёнок хочет потратить ${money(amount)}${merchant?.let { " — $it" } ?: ""}. Подтвердите или отклоните.",
+                    "🔔",
+                )
+            }
+
+            "payment.approval.declined" -> {
+                val amount = node.get("amountUzs")?.asLong()
+                val merchant = node.get("merchantName")?.takeIf { !it.isNull }?.asText()
+                notificationService.create(
+                    familyId, NotificationCategory.PAYMENT,
+                    "Покупка отклонена",
+                    "Покупка ${merchant ?: ""} на ${money(amount)} отклонена родителем, деньги возвращены на карту",
+                    "↩️",
+                )
+            }
         }
     }
 

@@ -186,9 +186,10 @@ class TransactionService(
         }
 
         // Check spending limits (best-effort — skipped if family-service is unavailable)
+        var requiresApproval = false
         if (!authToken.isNullOrBlank()) {
             try {
-                if (asChild) {
+                requiresApproval = if (asChild) {
                     limitCheckService.checkLimitsChild(req.cardId, req.amountUzs, req.merchantMcc, authToken)
                 } else {
                     limitCheckService.checkLimits(req.cardId, req.childId, req.familyId, req.amountUzs, req.merchantMcc, authToken)
@@ -262,6 +263,32 @@ class TransactionService(
         ledgerEntryRepository.save(cardEntry)
         ledgerEntryRepository.save(revenueEntry)
 
+        // PC-05: over the parent's threshold — hold the (already-reserved) purchase
+        // PENDING and notify the parent. Approve captures it; decline refunds the card.
+        if (requiresApproval) {
+            tx.status = TransactionStatus.PENDING
+            tx.authorizedAt = Instant.now()
+            tx.updatedAt = Instant.now()
+            transactionRepository.save(tx)
+            outboxService.publish(
+                aggregateType = "Transaction",
+                aggregateId = tx.id.toString(),
+                eventType = "payment.approval.required",
+                topic = "payment.events",
+                payload = mapOf(
+                    "eventType" to "payment.approval.required",
+                    "transactionId" to tx.id,
+                    "familyId" to req.familyId,
+                    "childId" to req.childId,
+                    "cardId" to req.cardId,
+                    "amountUzs" to req.amountUzs,
+                    "merchantName" to req.merchantName,
+                ),
+            )
+            log.info("Purchase held for approval: cardId={} amount={} merchant={}", req.cardId, req.amountUzs, req.merchantName)
+            return tx.toDto(newBalance)
+        }
+
         tx.status = TransactionStatus.COMPLETED
         tx.authorizedAt = Instant.now()
         tx.capturedAt = Instant.now()
@@ -271,6 +298,76 @@ class TransactionService(
         publishTransactionEvent(tx, newBalance)
         log.info("Purchase completed: cardId={} amount={} merchant={} newBalance={}", req.cardId, req.amountUzs, req.merchantName, newBalance)
         return tx.toDto(newBalance)
+    }
+
+    // ── PC-05: parent approval of held purchases ──────────────────────────────
+
+    /** Purchases waiting for a parent's decision in this family. */
+    @Transactional(readOnly = true)
+    fun listPendingApprovals(familyId: UUID): List<TransactionDto> =
+        transactionRepository
+            .findByFamilyIdAndStatusAndTypeOrderByCreatedAtDesc(familyId, TransactionStatus.PENDING, TransactionType.PURCHASE)
+            .map { it.toDto(ledgerEntryRepository.computeBalance(it.cardId.toString())) }
+
+    /** Approve a held purchase: the funds were already reserved, so just capture it. */
+    fun approvePurchase(transactionId: UUID): TransactionDto {
+        val tx = requirePendingPurchase(transactionId)
+        tx.status = TransactionStatus.COMPLETED
+        tx.capturedAt = Instant.now()
+        tx.updatedAt = Instant.now()
+        transactionRepository.save(tx)
+        val balance = ledgerEntryRepository.computeBalance(tx.cardId.toString())
+        publishTransactionEvent(tx, balance)
+        log.info("Approval: purchase approved tx={} amount={}", tx.id, tx.amountUzs)
+        return tx.toDto(balance)
+    }
+
+    /** Decline a held purchase: refund the reserved amount back to the card. */
+    fun declinePurchase(transactionId: UUID): TransactionDto {
+        val tx = requirePendingPurchase(transactionId)
+        val refundedBalance = ledgerEntryRepository.computeBalance(tx.cardId.toString()) + tx.amountUzs
+        // Reversing pair keeps the transaction's ledger net-zero (reconciliation-safe).
+        ledgerEntryRepository.save(
+            LedgerEntry(
+                transaction = tx, accountId = tx.cardId.toString(), accountType = AccountType.CARD,
+                direction = Direction.CREDIT, amountUzs = tx.amountUzs, runningBalance = refundedBalance,
+            ),
+        )
+        ledgerEntryRepository.save(
+            LedgerEntry(
+                transaction = tx, accountId = "MERCHANT_FLOAT", accountType = AccountType.REVENUE,
+                direction = Direction.DEBIT, amountUzs = tx.amountUzs, runningBalance = 0L,
+            ),
+        )
+        tx.status = TransactionStatus.REVERSED
+        tx.updatedAt = Instant.now()
+        transactionRepository.save(tx)
+        outboxService.publish(
+            aggregateType = "Transaction",
+            aggregateId = tx.id.toString(),
+            eventType = "payment.approval.declined",
+            topic = "payment.events",
+            payload = mapOf(
+                "eventType" to "payment.approval.declined",
+                "transactionId" to tx.id,
+                "familyId" to tx.familyId,
+                "childId" to tx.childId,
+                "cardId" to tx.cardId,
+                "amountUzs" to tx.amountUzs,
+                "merchantName" to tx.merchantName,
+            ),
+        )
+        log.info("Approval: purchase declined+refunded tx={} amount={}", tx.id, tx.amountUzs)
+        return tx.toDto(refundedBalance)
+    }
+
+    private fun requirePendingPurchase(transactionId: UUID): Transaction {
+        val tx = transactionRepository.findById(transactionId)
+            .orElseThrow { ResourceNotFoundException("Transaction", transactionId) }
+        if (tx.type != TransactionType.PURCHASE || tx.status != TransactionStatus.PENDING) {
+            throw BusinessException("NOT_PENDING_APPROVAL", "Покупка не ожидает одобрения", HttpStatus.UNPROCESSABLE_ENTITY)
+        }
+        return tx
     }
 
     private fun publishTransactionEvent(tx: Transaction, balanceAfter: Long) {

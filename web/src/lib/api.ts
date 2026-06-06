@@ -689,6 +689,21 @@ export const paymentService = {
     ),
 };
 
+// ── Purchase approvals (PC-05) ────────────────────────────────────────────────
+
+export const approvalService = {
+  pending: (familyId: string) =>
+    paymentApi.get<ApiResponse<TransactionResponse[]>>(
+      `/api/v1/approvals?familyId=${familyId}`
+    ),
+
+  approve: (transactionId: string) =>
+    paymentApi.post<ApiResponse<TransactionResponse>>(`/api/v1/approvals/${transactionId}/approve`),
+
+  decline: (transactionId: string) =>
+    paymentApi.post<ApiResponse<TransactionResponse>>(`/api/v1/approvals/${transactionId}/decline`),
+};
+
 // ── Disputes ──────────────────────────────────────────────────────────────────
 
 export type DisputeReason = "UNRECOGNIZED" | "WRONG_AMOUNT" | "NOT_RECEIVED" | "DUPLICATE" | "OTHER";

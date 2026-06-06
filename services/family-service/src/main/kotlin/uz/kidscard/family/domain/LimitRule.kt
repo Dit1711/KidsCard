@@ -45,4 +45,6 @@ class LimitRule(
     var updatedAt: Instant = Instant.now(),
 )
 
-enum class LimitType { DAILY, WEEKLY, MONTHLY, CATEGORY }
+// APPROVAL: not a spending cap — amount_uzs is the threshold above which a
+// child's purchase needs parent approval (PC-05).
+enum class LimitType { DAILY, WEEKLY, MONTHLY, CATEGORY, APPROVAL }

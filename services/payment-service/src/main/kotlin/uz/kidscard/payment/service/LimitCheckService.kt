@@ -24,12 +24,12 @@ class LimitCheckService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /** Parent-initiated purchase: limits fetched via the family path. */
-    fun checkLimits(cardId: UUID, childId: UUID, familyId: UUID, amountUzs: Long, merchantMcc: String?, token: String) =
+    /** Parent-initiated purchase: limits via the family path. Returns true if the amount needs parent approval (PC-05). */
+    fun checkLimits(cardId: UUID, childId: UUID, familyId: UUID, amountUzs: Long, merchantMcc: String?, token: String): Boolean =
         evaluate(cardId, amountUzs, merchantMcc, familyLimitClient.getLimitsForChild(familyId, childId, token))
 
-    /** Child-initiated purchase: limits fetched via the child path. */
-    fun checkLimitsChild(cardId: UUID, amountUzs: Long, merchantMcc: String?, token: String) =
+    /** Child-initiated purchase: limits via the child path. Returns true if the amount needs parent approval (PC-05). */
+    fun checkLimitsChild(cardId: UUID, amountUzs: Long, merchantMcc: String?, token: String): Boolean =
         evaluate(cardId, amountUzs, merchantMcc, familyLimitClient.getLimitsForChildSelf(token))
 
     /** Child cabinet: each of the child's limits with how much is spent/left. */
@@ -58,10 +58,14 @@ class LimitCheckService(
     }
 
     /**
-     * Checks spending limits against current ledger. Throws BusinessException if exceeded.
+     * Checks spending limits against the current ledger. Throws BusinessException if a
+     * hard cap is exceeded; returns true when an APPROVAL threshold means this purchase
+     * must wait for a parent's decision (PC-05).
      */
-    private fun evaluate(cardId: UUID, amountUzs: Long, merchantMcc: String?, limits: List<LimitRuleDto>) {
-        if (limits.isEmpty()) return
+    private fun evaluate(cardId: UUID, amountUzs: Long, merchantMcc: String?, limits: List<LimitRuleDto>): Boolean {
+        if (limits.isEmpty()) return false
+
+        val requiresApproval = limits.any { it.limitType == "APPROVAL" && amountUzs >= it.amountUzs }
 
         val now = Instant.now()
 
@@ -107,6 +111,8 @@ class LimitCheckService(
                 )
             }
         }
+
+        return requiresApproval
     }
 
     private fun Instant.dayOfWeek(): Long {

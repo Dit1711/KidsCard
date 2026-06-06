@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Wallet, ShieldCheck } from "lucide-react";
+import { Wallet, ShieldCheck, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { formatSum } from "@/lib/format";
-import { familyService, moneyRequestService } from "@/lib/api";
+import { familyService, moneyRequestService, approvalService } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { Panel, DButton, DBadge } from "@/components/dark";
 import { MotionStagger, MotionItem } from "@/components/motion";
@@ -49,6 +49,24 @@ export default function RequestsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["money-requests", family!.id] }); toast(t("requests.toastDeclined")); },
   });
 
+  // PC-05: purchases held for parent approval.
+  const { data: approvals } = useQuery({
+    queryKey: ["purchase-approvals", family?.id],
+    queryFn: async () => (await approvalService.pending(family!.id)).data.data,
+    enabled: !!family?.id,
+    refetchInterval: 15_000,
+  });
+
+  const approvePurchase = useMutation({
+    mutationFn: (id: string) => approvalService.approve(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["purchase-approvals", family!.id] }); toast.success(t("approvals.toastApproved")); },
+    onError: () => toast.error(t("requests.toastApproveError")),
+  });
+  const declinePurchase = useMutation({
+    mutationFn: (id: string) => approvalService.decline(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["purchase-approvals", family!.id] }); toast(t("approvals.toastDeclined")); },
+  });
+
   if (!family) {
     return (
       <div className="space-y-3">
@@ -59,6 +77,7 @@ export default function RequestsPage() {
   }
 
   const childName = (id: string) => children?.find((c) => c.id === id)?.fullName ?? t("common.child");
+  const purchaseApprovals = approvals ?? [];
   const pending = requests?.filter((r) => r.status === "PENDING") ?? [];
   const resolved = requests?.filter((r) => r.status !== "PENDING") ?? [];
 
@@ -78,6 +97,33 @@ export default function RequestsPage() {
         <h1 className="text-2xl font-bold tracking-tight">{t("requests.title")}</h1>
         <p className="text-white/50 mt-1 text-sm">{t("requests.subtitle")}</p>
       </MotionItem>
+
+      {/* Purchase approvals (PC-05) */}
+      {purchaseApprovals.length > 0 && (
+        <MotionItem>
+          <Panel className="p-6 border-amber-500/20">
+            <p className="font-medium tracking-tight">{t("approvals.title")}</p>
+            <p className="text-xs text-white/40 mb-4">{t("approvals.hint")}</p>
+            <div className="space-y-2.5">
+              {purchaseApprovals.map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/[0.07] border border-amber-500/20">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      <ShoppingCart className="inline h-4 w-4 -mt-0.5 mr-1.5 text-amber-300/70" />
+                      {childName(p.childId)}: {p.merchantName ?? t("approvals.purchase")} — {formatSum(p.amountUzs)}
+                    </p>
+                    <p className="text-xs text-white/40 mt-0.5">{new Date(p.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <DButton className="py-2" onClick={() => approvePurchase.mutate(p.id)} disabled={approvePurchase.isPending || declinePurchase.isPending}>{t("requests.approve")}</DButton>
+                    <DButton variant="outline" className="py-2" onClick={() => declinePurchase.mutate(p.id)} disabled={approvePurchase.isPending || declinePurchase.isPending}>{t("requests.decline")}</DButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </MotionItem>
+      )}
 
       {/* Pending */}
       <MotionItem>

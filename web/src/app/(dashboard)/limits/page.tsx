@@ -25,6 +25,7 @@ export default function LimitsPage() {
   const [periodAmount, setPeriodAmount] = useState("");
   const [catMcc, setCatMcc] = useState("");
   const [catAmount, setCatAmount] = useState("");
+  const [approvalAmount, setApprovalAmount] = useState("");
 
   const { data: children } = useQuery({
     queryKey: ["family-children", family?.id],
@@ -47,7 +48,7 @@ export default function LimitsPage() {
       limitService.set(family!.id, selectedChild, p),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["limits", family!.id, selectedChild] });
-      setPeriodAmount(""); setCatAmount(""); setCatMcc("");
+      setPeriodAmount(""); setCatAmount(""); setCatMcc(""); setApprovalAmount("");
       toast.success(t("limits.toastSet"));
     },
     onError: () => toast.error(t("limits.toastSetError")),
@@ -67,8 +68,9 @@ export default function LimitsPage() {
     );
   }
 
-  const periodLimits = limits?.filter((l) => l.limitType !== "CATEGORY") ?? [];
+  const periodLimits = limits?.filter((l) => l.limitType !== "CATEGORY" && l.limitType !== "APPROVAL") ?? [];
   const categoryLimits = limits?.filter((l) => l.limitType === "CATEGORY") ?? [];
+  const approvalLimit = limits?.find((l) => l.limitType === "APPROVAL");
 
   return (
     <MotionStagger className="space-y-6">
@@ -178,6 +180,37 @@ export default function LimitsPage() {
               </div>
             </Panel>
           </div>
+        </MotionItem>
+      )}
+
+      {/* Approval threshold (PC-05) */}
+      {selectedChild && (
+        <MotionItem>
+          <Panel className="p-6 max-w-xl space-y-4">
+            <div>
+              <p className="font-medium tracking-tight">{t("approvals.thresholdTitle")}</p>
+              <p className="text-xs text-white/40">{t("approvals.thresholdHint")}</p>
+            </div>
+            {approvalLimit ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.05]">
+                <span className="text-sm">{t("approvals.thresholdActive", { sum: formatSum(approvalLimit.amountUzs) })}</span>
+                <button onClick={() => removeLimit.mutate(approvalLimit.id)} className="text-xs text-rose-300/80 hover:text-rose-300">{t("common.remove")}</button>
+              </div>
+            ) : (
+              <p className="text-sm text-white/40">{t("approvals.thresholdNone")}</p>
+            )}
+            <div className="space-y-2">
+              <DLabel>{t("approvals.thresholdLabel")}</DLabel>
+              <DInput type="number" placeholder="100000" value={approvalAmount} onChange={(e) => setApprovalAmount(e.target.value)} />
+            </div>
+            <DButton
+              onClick={() => setLimit.mutate({ limitType: "APPROVAL", amountUzs: Math.round(parseFloat(approvalAmount)) })}
+              disabled={!approvalAmount || setLimit.isPending}
+              className="w-full"
+            >
+              {setLimit.isPending ? t("common.saving") : t("approvals.thresholdSet")}
+            </DButton>
+          </Panel>
         </MotionItem>
       )}
     </MotionStagger>

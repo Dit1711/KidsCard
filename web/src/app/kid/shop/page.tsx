@@ -43,13 +43,15 @@ export default function KidShopPage() {
   const spend = useMutation({
     mutationFn: () =>
       childAuthService.spend(card!.id, Math.round(parseFloat(shopAmount)), shopCat!.label, shopCat!.mcc),
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["child-balance", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-tx", card?.id] });
       qc.invalidateQueries({ queryKey: ["child-limit-usage", card?.id] });
       // Geo-tag the purchase for the parent's spend map (only if consented).
       captureAndReport("PURCHASE", catLabel(shopCat!.mcc), Math.round(parseFloat(shopAmount)));
-      setShopMsg({ ok: true, text: t("kids.bought", { cat: catLabel(shopCat!.mcc) }) });
+      // PC-05: a large purchase is held until a parent approves it.
+      const pending = res.data.data.status === "PENDING";
+      setShopMsg({ ok: true, text: pending ? t("kids.boughtPending") : t("kids.bought", { cat: catLabel(shopCat!.mcc) }) });
       setShopAmount("");
     },
     onError: (err: unknown) => {
