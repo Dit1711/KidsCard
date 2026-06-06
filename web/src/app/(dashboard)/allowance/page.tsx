@@ -24,6 +24,7 @@ export default function AllowancePage() {
   const [allowanceAmount, setAllowanceAmount] = useState("");
   const [allowanceFreq, setAllowanceFreq] = useState("WEEKLY");
   const [allowanceDow, setAllowanceDow] = useState(1);
+  const [allowanceDom, setAllowanceDom] = useState(1);
   const [matchPercent, setMatchPercent] = useState("");
   const [matchCap, setMatchCap] = useState("");
 
@@ -57,7 +58,7 @@ export default function AllowancePage() {
         amountUzs: Math.round(parseFloat(allowanceAmount)),
         frequency: allowanceFreq,
         dayOfWeek: allowanceFreq === "WEEKLY" ? allowanceDow : undefined,
-        dayOfMonth: allowanceFreq === "MONTHLY" ? 1 : undefined,
+        dayOfMonth: allowanceFreq === "MONTHLY" ? allowanceDom : undefined,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["allowance", family!.id, childCard!.id] });
@@ -169,7 +170,19 @@ export default function AllowancePage() {
                   )}
 
                   {allowanceFreq === "MONTHLY" && (
-                    <p className="text-xs text-white/40">{t("allowance.monthlyHint")}</p>
+                    <div>
+                      <DLabel>{t("allowance.dayOfMonth")}</DLabel>
+                      <select
+                        value={allowanceDom}
+                        onChange={(e) => setAllowanceDom(Number(e.target.value))}
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm text-white focus:border-fuchsia-400/50 focus:outline-none"
+                      >
+                        {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                          <option key={d} value={d} className="bg-neutral-900">{t("allowance.dayOfMonthN", { day: d })}</option>
+                        ))}
+                      </select>
+                      <p className="text-[11px] text-white/35 mt-1">{t("allowance.monthlyHint")}</p>
+                    </div>
                   )}
 
                   <div>
