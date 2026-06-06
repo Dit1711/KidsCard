@@ -9,16 +9,19 @@ import {
   analyticsService,
   choreService,
   parentSavingsService,
+  paymentService,
 } from "@/lib/api";
 import { useFamilyStore } from "@/store/family";
 import { categoryByMcc, catLabel } from "@/lib/categories";
+import { downloadCsv } from "@/lib/exportCsv";
 import { useT } from "@/i18n/locale";
+import { toast } from "sonner";
 import { SpendChart } from "@/components/SpendChart";
 import { MotionStagger, MotionItem } from "@/components/motion";
 import { LEAGUE_META, leagueLabel, levelTitle, badgeTitle, badgeDesc } from "@/components/kidkit";
 import {
   Flame, Trophy, Zap, Award, Lock, Target, GraduationCap, PiggyBank,
-  TrendingUp, Crown, type LucideIcon,
+  TrendingUp, Crown, Sparkles, Download, type LucideIcon,
 } from "lucide-react";
 
 const BADGE_ICON: Record<string, LucideIcon> = {
@@ -27,6 +30,7 @@ const BADGE_ICON: Record<string, LucideIcon> = {
   first_lesson: GraduationCap,
   lesson_5: Award,
   first_goal: PiggyBank,
+  study_5: Sparkles,
   streak_7: TrendingUp,
   saver_1m: Crown,
 };
@@ -120,6 +124,45 @@ export default function AnalyticsPage() {
     enabled: !!family?.id && !!selectedChild,
   });
 
+  const [exporting, setExporting] = useState(false);
+
+  const exportCsv = async () => {
+    if (!family || exporting) return;
+    setExporting(true);
+    try {
+      const nameById = new Map((children ?? []).map((c) => [c.id, c.fullName]));
+      const all: import("@/lib/api").TransactionResponse[] = [];
+      let page = 0;
+      // Pull every page (capped) so the export covers the full history.
+      while (page < 200) {
+        const res = (await paymentService.getFamilyTransactions(family.id, page, 100)).data.data;
+        all.push(...res.content);
+        if (page >= res.totalPages - 1 || res.content.length === 0) break;
+        page++;
+      }
+      if (all.length === 0) {
+        toast.info(t("exp.empty"));
+        return;
+      }
+      downloadCsv(
+        `kidscard-history-${new Date().toISOString().slice(0, 10)}.csv`,
+        [t("exp.colDate"), t("exp.colChild"), t("exp.colType"), t("exp.colStatus"),
+          t("exp.colDirection"), t("exp.colAmount"), t("exp.colMerchant"), t("exp.colDescription"), t("exp.colBalance")],
+        all.map((tx) => [
+          new Date(tx.createdAt).toLocaleString(),
+          nameById.get(tx.childId) ?? tx.childId,
+          tx.type, tx.status, tx.direction, tx.amountUzs,
+          tx.merchantName ?? "", tx.description ?? "", tx.balanceAfter,
+        ]),
+      );
+      toast.success(t("exp.done", { count: all.length }));
+    } catch {
+      toast.error(t("common.error"));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (!family) {
     return (
       <div className="space-y-3">
@@ -139,8 +182,20 @@ export default function AnalyticsPage() {
   return (
     <MotionStagger className="space-y-6">
       <MotionItem>
-        <h1 className="text-2xl font-bold tracking-tight">{t("nav.analytics")}</h1>
-        <p className="text-white/50 mt-1 text-sm">{t("analytics.subtitle")}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{t("nav.analytics")}</h1>
+            <p className="text-white/50 mt-1 text-sm">{t("analytics.subtitle")}</p>
+          </div>
+          <button
+            onClick={exportCsv}
+            disabled={exporting}
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.1] disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? t("exp.exporting") : t("exp.button")}
+          </button>
+        </div>
       </MotionItem>
 
       {/* Child selector */}

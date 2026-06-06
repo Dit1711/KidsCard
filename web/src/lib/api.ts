@@ -682,6 +682,11 @@ export const paymentService = {
     paymentApi.get<ApiResponse<PageResponse<TransactionResponse>>>(
       `/api/v1/transactions/card/${cardId}?page=${page}&size=${size}`
     ),
+
+  getFamilyTransactions: (familyId: string, page = 0, size = 50) =>
+    paymentApi.get<ApiResponse<PageResponse<TransactionResponse>>>(
+      `/api/v1/transactions/family/${familyId}?page=${page}&size=${size}`
+    ),
 };
 
 // ── Disputes ──────────────────────────────────────────────────────────────────
